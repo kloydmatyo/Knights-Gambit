@@ -7,7 +7,7 @@
     "dev": "webpack serve --mode development",
     "build": "webpack --mode production",
     "electron": "electron .",
-    "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:8080 && electron .\"",
+    "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
     "dist": "npm run build && electron-builder"
   },
   "keywords": ["game", "phaser", "typescript", "electron", "roguelike"],
