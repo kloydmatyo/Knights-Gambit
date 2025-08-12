@@ -49,8 +49,29 @@ export class MenuScene extends Phaser.Scene {
       startButton.setStyle({ color: '#ffe66d' });
     });
 
+    // Test Sprites button
+    const testButton = this.add.text(centerX, centerY + 60, 'TEST SPRITES', {
+      fontSize: '24px',
+      color: '#4ecdc4',
+      fontFamily: 'Courier New, monospace',
+      backgroundColor: '#16213e',
+      padding: { x: 15, y: 8 }
+    }).setOrigin(0.5).setInteractive();
+
+    testButton.on('pointerdown', () => {
+      this.scene.start('SpriteTestScene');
+    });
+
+    testButton.on('pointerover', () => {
+      testButton.setStyle({ color: '#ff6b6b' });
+    });
+
+    testButton.on('pointerout', () => {
+      testButton.setStyle({ color: '#4ecdc4' });
+    });
+
     // Instructions
-    this.add.text(centerX, centerY + 100, 'Roll dice to move around the board\nFight enemies, collect treasure, and survive!', {
+    this.add.text(centerX, centerY + 120, 'Roll dice to move around the board\nFight enemies, collect treasure, and survive!', {
       fontSize: '18px',
       color: '#a8a8a8',
       fontFamily: 'Courier New, monospace',

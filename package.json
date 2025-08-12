@@ -10,12 +10,21 @@
     "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3001 && electron .\"",
     "dist": "npm run build && electron-builder"
   },
-  "keywords": ["game", "phaser", "typescript", "electron", "roguelike", "knight", "chess"],
+  "keywords": [
+    "game",
+    "phaser",
+    "typescript",
+    "electron",
+    "roguelike",
+    "knight",
+    "chess"
+  ],
   "author": "Knight's Gambit Dev Team",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.0.0",
     "concurrently": "^8.0.0",
+    "copy-webpack-plugin": "^13.0.1",
     "electron": "^28.0.0",
     "electron-builder": "^24.0.0",
     "html-webpack-plugin": "^5.5.0",

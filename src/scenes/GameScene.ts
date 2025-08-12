@@ -2,18 +2,32 @@ import Phaser from "phaser";
 import { Player, TileType, GameState } from "../types/GameTypes";
 import { GameManager } from "../managers/GameManager";
 import { BoardManager } from "../managers/BoardManager";
+import { SpriteManager, CharacterType } from "../managers/SpriteManager";
 
 export class GameScene extends Phaser.Scene {
   private gameManager!: GameManager;
   private boardManager!: BoardManager;
+  private spriteManager!: SpriteManager;
   private player!: Player;
   private gameState!: GameState;
   private diceButton!: Phaser.GameObjects.Text;
-  private playerSprite!: Phaser.GameObjects.Rectangle;
+  private playerSprite!: Phaser.GameObjects.Image;
   private uiElements: { [key: string]: Phaser.GameObjects.Text } = {};
 
   constructor() {
     super({ key: "GameScene" });
+  }
+
+  preload() {
+    console.log('GameScene: Starting preload...');
+    // Load all sprites
+    this.spriteManager = new SpriteManager(this);
+    this.spriteManager.preloadAll();
+    
+    // Add completion callback
+    this.load.on('complete', () => {
+      console.log('GameScene: All assets loaded successfully');
+    });
   }
 
   init(data: any) {
@@ -26,6 +40,7 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.gameManager = new GameManager();
     this.boardManager = new BoardManager(this);
+    this.spriteManager = new SpriteManager(this);
 
     if (!this.gameState) {
       this.gameState = this.gameManager.initializeGame();
@@ -45,13 +60,9 @@ export class GameScene extends Phaser.Scene {
 
   private createPlayer() {
     const currentTile = this.gameState.board[this.player.position];
-    this.playerSprite = this.add.rectangle(
-      currentTile.x,
-      currentTile.y,
-      20,
-      20,
-      0xff6b6b
-    );
+    console.log('Creating player sprite at:', currentTile.x, currentTile.y);
+    this.playerSprite = this.spriteManager.createKnight(currentTile.x, currentTile.y, 1);
+    console.log('Player sprite created:', this.playerSprite);
   }
 
   private createUI() {

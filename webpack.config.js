@@ -1,5 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: "./src/main.ts",
@@ -28,12 +29,23 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: "./src/index.html",
     }),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: "assets", to: "assets" }
+      ],
+    }),
   ],
   devServer: {
-    static: {
-      directory: path.join(__dirname, "assets"),
-      publicPath: "/assets",
-    },
+    static: [
+      {
+        directory: path.join(__dirname, "assets"),
+        publicPath: "/assets",
+      },
+      {
+        directory: path.join(__dirname, "dist"),
+        publicPath: "/",
+      }
+    ],
     port: 3001,
     hot: true,
   },

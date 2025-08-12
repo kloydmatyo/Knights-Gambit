@@ -1,18 +1,26 @@
 import Phaser from 'phaser';
 import { Player, Enemy, GameState } from '../types/GameTypes';
+import { SpriteManager, CharacterType, EnemyType } from '../managers/SpriteManager';
 
 export class CombatScene extends Phaser.Scene {
   private player!: Player;
   private enemy!: Enemy;
   private gameState!: GameState;
-  private playerSprite!: Phaser.GameObjects.Rectangle;
-  private enemySprite!: Phaser.GameObjects.Rectangle;
+  private spriteManager!: SpriteManager;
+  private playerSprite!: Phaser.GameObjects.Image;
+  private enemySprite!: Phaser.GameObjects.Image;
   private uiElements: { [key: string]: Phaser.GameObjects.Text } = {};
   private actionButtons: Phaser.GameObjects.Text[] = [];
   private isPlayerTurn = true;
 
   constructor() {
     super({ key: 'CombatScene' });
+  }
+
+  preload() {
+    // Load all sprites
+    this.spriteManager = new SpriteManager(this);
+    this.spriteManager.preloadAll();
   }
 
   init(data: any) {
@@ -22,6 +30,8 @@ export class CombatScene extends Phaser.Scene {
   }
 
   create() {
+    this.spriteManager = new SpriteManager(this);
+    
     // Background
     this.add.rectangle(this.cameras.main.width / 2, this.cameras.main.height / 2, 
       this.cameras.main.width, this.cameras.main.height, 0x0f0f23);
@@ -40,7 +50,7 @@ export class CombatScene extends Phaser.Scene {
 
   private createCombatants() {
     // Player sprite (left side)
-    this.playerSprite = this.add.rectangle(200, 300, 60, 60, 0xff6b6b);
+    this.playerSprite = this.spriteManager.createKnight(200, 300, 2);
     this.add.text(200, 380, this.player.name || 'Knight', {
       fontSize: '18px',
       color: '#ffffff',
@@ -48,12 +58,23 @@ export class CombatScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Enemy sprite (right side)
-    this.enemySprite = this.add.rectangle(800, 300, 60, 60, 0xff4757);
+    const enemyType = this.getEnemyType(this.enemy.name);
+    this.enemySprite = this.spriteManager.createEnemy(800, 300, enemyType, 2);
     this.add.text(800, 380, this.enemy.name, {
       fontSize: '18px',
       color: '#ffffff',
       fontFamily: 'Courier New, monospace'
     }).setOrigin(0.5);
+  }
+
+  private getEnemyType(enemyName: string): EnemyType {
+    switch (enemyName.toLowerCase()) {
+      case 'goblin': return EnemyType.GOBLIN;
+      case 'orc': return EnemyType.ORC;
+      case 'skeleton': return EnemyType.SKELETON;
+      case 'troll': return EnemyType.TROLL;
+      default: return EnemyType.GOBLIN;
+    }
   }
 
   private createUI() {
@@ -224,12 +245,12 @@ export class CombatScene extends Phaser.Scene {
     });
   }
 
-  private animateAttack(attacker: Phaser.GameObjects.Rectangle, target: Phaser.GameObjects.Rectangle) {
+  private animateAttack(attacker: Phaser.GameObjects.Image, target: Phaser.GameObjects.Image) {
     // Simple attack animation
     this.tweens.add({
       targets: attacker,
-      scaleX: 1.2,
-      scaleY: 1.2,
+      scaleX: attacker.scaleX * 1.2,
+      scaleY: attacker.scaleY * 1.2,
       duration: 200,
       yoyo: true,
       ease: 'Power2'
