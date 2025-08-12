@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knight's Gambit - Enemy Preview</title>
+    <style>
+        body {
+            background: #1a1a2e;
+            color: white;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+        .enemy-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .enemy {
+            text-align: center;
+            background: #16213e;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #ff4757;
+        }
+        .enemy object {
+            width: 128px;
+            height: 128px;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        .enemy h3 {
+            margin: 10px 0 5px 0;
+            color: #ff6b6b;
+        }
+        .enemy p {
+            margin: 0;
+            font-size: 12px;
+            color: #a8a8a8;
+        }
+        .stats {
+            font-size: 11px;
+            color: #4ecdc4;
+            margin-top: 5px;
+        }
+        .preview-large {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .preview-large svg {
+            width: 512px;
+            height: 128px;
+            image-rendering: pixelated;
+            border: 2px solid #ff4757;
+            background: #16213e;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐉 Knight's Gambit - Enemy Sprites</h1>
+    <p>Pixel-art style SVG enemies for the roguelike board game</p>
+
+    <div class="preview-large">
+        <h2>Enemy Spritesheet</h2>
+        <svg width="512" height="128" viewBox="0 0 128 32" xmlns="http://www.w3.org/2000/svg">
+            <use href="enemies.svg#goblin"/>
+            <use href="enemies.svg#orc" x="32"/>
+            <use href="enemies.svg#skeleton" x="64"/>
+            <use href="enemies.svg#troll" x="96"/>
+        </svg>
+    </div>
+
+    <div class="enemy-grid">
+        <div class="enemy">
+            <object data="goblin.svg" type="image/svg+xml" width="128" height="128"></object>
+            <h3>Goblin</h3>
+            <p>Small, green, sneaky</p>
+            <div class="stats">HP: 30 | ATK: 8 | DEF: 2 | Coins: 15</div>
+        </div>
+
+        <div class="enemy">
+            <object data="orc.svg" type="image/svg+xml" width="128" height="128"></object>
+            <h3>Orc</h3>
+            <p>Large, brutish, tusks</p>
+            <div class="stats">HP: 50 | ATK: 12 | DEF: 4 | Coins: 25</div>
+        </div>
+
+        <div class="enemy">
+            <object data="skeleton.svg" type="image/svg+xml" width="128" height="128"></object>
+            <h3>Skeleton</h3>
+            <p>Undead, bones, spear</p>
+            <div class="stats">HP: 40 | ATK: 10 | DEF: 3 | Coins: 20</div>
+        </div>
+
+        <div class="enemy">
+            <object data="troll.svg" type="image/svg+xml" width="128" height="128"></object>
+            <h3>Troll</h3>
+            <p>Massive, club, regenerating</p>
+            <div class="stats">HP: 80 | ATK: 15 | DEF: 6 | Coins: 40</div>
+        </div>
+    </div>
+
+    <h2>Enemy Details</h2>
+    <ul>
+        <li><strong>🟢 Goblin</strong> - Weakest enemy, fast and sneaky with a dagger</li>
+        <li><strong>🟤 Orc</strong> - Medium strength, brutish warrior with war axe</li>
+        <li><strong>💀 Skeleton</strong> - Undead fighter with spear, medium difficulty</li>
+        <li><strong>🟫 Troll</strong> - Strongest enemy, massive with club and regeneration</li>
+    </ul>
+
+    <h2>Technical Details</h2>
+    <ul>
+        <li>✅ Pure SVG using only &lt;rect&gt; elements</li>
+        <li>✅ 32×32 pixel grid per enemy</li>
+        <li>✅ Solid colors only (no gradients)</li>
+        <li>✅ Scalable without quality loss</li>
+        <li>✅ Each enemy has unique ID</li>
+        <li>✅ Matches GameManager enemy stats</li>
+        <li>✅ 128×32 total spritesheet size</li>
+    </ul>
+
+    <h2>Usage in Phaser</h2>
+    <pre><code>// Load individual enemies
+this.load.svg('goblin', 'assets/goblin.svg');
+this.load.svg('orc', 'assets/orc.svg');
+this.load.svg('skeleton', 'assets/skeleton.svg');
+this.load.svg('troll', 'assets/troll.svg');
+
+// Use in combat
+const enemy = this.add.image(x, y, 'goblin').setScale(4);</code></pre>
+</body>
+</html>

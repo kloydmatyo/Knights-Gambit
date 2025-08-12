@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cleric - White robe, golden cross staff, healing aura -->
+  <g id="cleric">
+    <!-- Head -->
+    <rect x="12" y="6" width="8" height="4" fill="#FFDBAC"/>
+    <rect x="14" y="8" width="2" height="1" fill="#000000"/>
+    <rect x="18" y="8" width="2" height="1" fill="#000000"/>
+    <!-- Hair -->
+    <rect x="10" y="6" width="12" height="2" fill="#8B4513"/>
+    <!-- White robe -->
+    <rect x="6" y="10" width="20" height="18" fill="#FFFFFF"/>
+    <rect x="8" y="12" width="16" height="14" fill="#F5F5F5"/>
+    <!-- Arms -->
+    <rect x="4" y="12" width="4" height="8" fill="#FFDBAC"/>
+    <rect x="24" y="12" width="4" height="8" fill="#FFDBAC"/>
+    <!-- Cross staff -->
+    <rect x="2" y="4" width="2" height="18" fill="#8B4513"/>
+    <rect x="0" y="6" width="6" height="2" fill="#FFD700"/>
+    <rect x="1" y="4" width="4" height="2" fill="#FFD700"/>
+    <!-- Healing aura (golden glow) -->
+    <rect x="10" y="4" width="12" height="2" fill="#FFD700"/>
+    <rect x="8" y="6" width="16" height="2" fill="#FFFF00"/>
+    <!-- Feet -->
+    <rect x="10" y="28" width="12" height="4" fill="#FFFFFF"/>
+  </g>
+</svg>
