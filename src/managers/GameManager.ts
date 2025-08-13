@@ -158,23 +158,27 @@ export class GameManager {
   // Status effect management
   addStatusEffect(player: Player, effect: StatusEffect): void {
     // Remove existing effect of same type
-    player.statusEffects = player.statusEffects.filter(e => e.type !== effect.type);
+    player.statusEffects = player.statusEffects.filter(
+      (e) => e.type !== effect.type
+    );
     // Add new effect
     player.statusEffects.push(effect);
   }
 
   removeStatusEffect(player: Player, effectType: StatusEffectType): void {
-    player.statusEffects = player.statusEffects.filter(e => e.type !== effectType);
+    player.statusEffects = player.statusEffects.filter(
+      (e) => e.type !== effectType
+    );
   }
 
   hasStatusEffect(player: Player, effectType: StatusEffectType): boolean {
-    return player.statusEffects.some(e => e.type === effectType);
+    return player.statusEffects.some((e) => e.type === effectType);
   }
 
   applyStatusEffects(player: Player): string[] {
     const messages: string[] = [];
-    
-    player.statusEffects.forEach(effect => {
+
+    player.statusEffects.forEach((effect) => {
       switch (effect.type) {
         case StatusEffectType.POISON:
           if (effect.damage) {
@@ -184,20 +188,23 @@ export class GameManager {
           break;
         case StatusEffectType.REGENERATION:
           if (effect.damage) {
-            const healed = Math.min(effect.damage, player.maxHealth - player.health);
+            const healed = Math.min(
+              effect.damage,
+              player.maxHealth - player.health
+            );
             player.health += healed;
             if (healed > 0) {
               messages.push(`Regeneration heals ${healed} HP!`);
             }
           }
           break;
-          case StatusEffectType.BLESSING:
-            // Buff stats by +5 each turn while blessing is active
-            player.attack += 5;
-            player.defense += 5;
-            player.health = Math.min(player.maxHealth, player.health + 5);
-            messages.push(`Blessing: +5 to health, attack, and defense!`);
-            break;
+        case StatusEffectType.BLESSING:
+          // Buff stats by +5 each turn while blessing is active
+          player.attack += 5;
+          player.defense += 5;
+          player.health = Math.min(player.maxHealth, player.health + 5);
+          messages.push(`Blessing: +5 to health, attack, and defense!`);
+          break;
       }
     });
 
@@ -209,7 +216,7 @@ export class GameManager {
       type: StatusEffectType.POISON,
       duration: -1, // Permanent until cured
       damage: 3, // 3 damage per turn
-      description: 'Poisoned - loses 3 HP each turn until cured'
+      description: "Poisoned - loses 3 HP each turn until cured",
     };
   }
 
@@ -217,8 +224,7 @@ export class GameManager {
     return {
       type: StatusEffectType.BLESSING,
       duration: 3,
-      damage: 10,
-      description: 'Blessings of the realm'
+      description: "Blessings of the realm",
     };
   }
 
@@ -227,7 +233,7 @@ export class GameManager {
       type: StatusEffectType.REGENERATION,
       duration: 3, // 3 turns of healing
       damage: 5, // 5 healing per turn
-      description: 'Antidote effect - heals 5 HP per turn for 3 turns'
+      description: "Antidote effect - heals 5 HP per turn for 3 turns",
     };
   }
 }

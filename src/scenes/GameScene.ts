@@ -56,6 +56,11 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-E", () => {
       this.handleEventTile();
     });
+
+    // Add keyboard shortcut for simulating turns (T key)
+    this.input.keyboard?.on("keydown-T", () => {
+      this.simulateTurn();
+    });
   }
 
   private createPlayer() {
@@ -147,6 +152,26 @@ export class GameScene extends Phaser.Scene {
     );
     testButton.on("pointerout", () =>
       testButton.setStyle({ color: "#4ecdc4" })
+    );
+
+    // Test turn button - positioned to the right of dice button
+    const testTurnButton = this.add
+      .text(centerX + 150, bottomY, "SIMULATE TURN", {
+        fontSize: "16px",
+        color: "#e74c3c",
+        fontFamily: "Courier New, monospace",
+        backgroundColor: "#16213e",
+        padding: { x: 12, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setInteractive();
+
+    testTurnButton.on("pointerdown", () => this.simulateTurn());
+    testTurnButton.on("pointerover", () =>
+      testTurnButton.setStyle({ color: "#ff6b6b" })
+    );
+    testTurnButton.on("pointerout", () =>
+      testTurnButton.setStyle({ color: "#e74c3c" })
     );
   }
 
@@ -560,6 +585,32 @@ export class GameScene extends Phaser.Scene {
       this.diceButton.setStyle({ color: "#ffe66d" });
       this.diceButton.setInteractive();
     });
+  }
+
+  private simulateTurn() {
+    // Apply status effects without moving or triggering events
+    const statusMessages = this.gameManager.applyStatusEffects(this.player);
+    
+    // Show what happened this turn
+    let turnMessage = "Turn simulated!";
+    if (statusMessages.length > 0) {
+      turnMessage = `Turn simulated!\n${statusMessages.join('\n')}`;
+    } else {
+      turnMessage = "Turn simulated!\nNo status effects active.";
+    }
+    
+    this.showMessage(turnMessage, "#e74c3c");
+    this.updateUI();
+    
+    // Check if player died from poison
+    if (this.player.health <= 1 && this.gameManager.hasStatusEffect(this.player, StatusEffectType.POISON)) {
+      this.time.delayedCall(2000, () => {
+        this.showMessage("You died from poison!", "#ff0000");
+        this.time.delayedCall(2000, () => {
+          this.scene.start("MenuScene");
+        });
+      });
+    }
   }
 
   private updateUI() {
