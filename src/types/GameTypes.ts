@@ -80,6 +80,7 @@ export enum StatusEffectType {
   REGENERATION = "regeneration",
   STRENGTH_BOOST = "strength_boost",
   DEFENSE_BOOST = "defense_boost",
+  BLESSING = "blessing",
 }
 
 export interface BoardTile {

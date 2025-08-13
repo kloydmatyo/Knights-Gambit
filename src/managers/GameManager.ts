@@ -191,6 +191,13 @@ export class GameManager {
             }
           }
           break;
+          case StatusEffectType.BLESSING:
+            // Buff stats by +5 each turn while blessing is active
+            player.attack += 5;
+            player.defense += 5;
+            player.health = Math.min(player.maxHealth, player.health + 5);
+            messages.push(`Blessing: +5 to health, attack, and defense!`);
+            break;
       }
     });
 
@@ -203,6 +210,15 @@ export class GameManager {
       duration: -1, // Permanent until cured
       damage: 3, // 3 damage per turn
       description: 'Poisoned - loses 3 HP each turn until cured'
+    };
+  }
+
+  createBlessingEffect(): StatusEffect {
+    return {
+      type: StatusEffectType.BLESSING,
+      duration: 3,
+      damage: 10,
+      description: 'Blessings of the realm'
     };
   }
 

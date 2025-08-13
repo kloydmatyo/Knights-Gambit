@@ -419,6 +419,19 @@ export class GameScene extends Phaser.Scene {
         color: "#8e44ad",
       },
       {
+        text: "Blessing!",
+        effect: () => {
+          if (this.gameManager.hasStatusEffect(this.player, StatusEffectType.BLESSING)) {
+            return "Already Blessed!";
+          } else {
+            const blessingEffect = this.gameManager.createBlessingEffect();
+            this.gameManager.addStatusEffect(this.player, blessingEffect);
+            return "Blessings of the realm";
+          }
+        },
+        color: "#ff9f43",
+      },
+      {
         text: "Found an antidote!",
         effect: () => {
           if (this.gameManager.hasStatusEffect(this.player, StatusEffectType.POISON)) {
