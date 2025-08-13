@@ -45,6 +45,11 @@ export class GameManager {
         floorsCompleted: 0,
       },
       statusEffects: [],
+      baseStats: {
+        attack: 15,
+        defense: 5,
+        maxHealth: 100,
+      },
     };
   }
 
@@ -207,17 +212,29 @@ export class GameManager {
           }
           break;
         case StatusEffectType.BLESSING:
-          // Buff stats by +5 each turn while blessing is active
-          player.attack += 5;
-          player.defense += 5;
-          player.health = Math.min(player.maxHealth, player.health + 5);
-          messages.push(`Blessing: +5 to health, attack, and defense!`);
+          // Apply blessing buff only once when first applied
+          if (!effect.applied) {
+            player.attack += 5;
+            player.defense += 5;
+            player.maxHealth += 5;
+            player.health = Math.min(player.maxHealth, player.health + 5);
+            effect.applied = true;
+            messages.push(`Blessing applied: +5 to health, attack, and defense!`);
+          }
           
           // Decrement duration for blessing
           if (effect.duration > 0) {
             effect.duration--;
             if (effect.duration === 0) {
-              messages.push(`Blessing effect ended.`);
+              // Remove blessing buff when it expires
+              player.attack = player.baseStats.attack;
+              player.defense = player.baseStats.defense;
+              player.maxHealth = player.baseStats.maxHealth;
+              // Adjust current health if it exceeds new max
+              if (player.health > player.maxHealth) {
+                player.health = player.maxHealth;
+              }
+              messages.push(`Blessing effect ended. Stats returned to normal.`);
             }
           }
           break;
@@ -253,6 +270,7 @@ export class GameManager {
       type: StatusEffectType.BLESSING,
       duration: 3,
       description: "Blessings of the realm",
+      applied: false, // Mark as not yet applied
     };
   }
 
@@ -263,5 +281,30 @@ export class GameManager {
       damage: 5, // 5 healing per turn
       description: "Antidote effect - heals 5 HP per turn for 3 turns",
     };
+  }
+
+  // Update base stats for permanent upgrades
+  updateBaseStats(player: Player, attackBonus: number = 0, defenseBonus: number = 0, healthBonus: number = 0): void {
+    player.baseStats.attack += attackBonus;
+    player.baseStats.defense += defenseBonus;
+    player.baseStats.maxHealth += healthBonus;
+    
+    // Update current stats to match base stats (unless buffed)
+    const hasBlessing = this.hasStatusEffect(player, StatusEffectType.BLESSING);
+    if (!hasBlessing) {
+      player.attack = player.baseStats.attack;
+      player.defense = player.baseStats.defense;
+      player.maxHealth = player.baseStats.maxHealth;
+    } else {
+      // If blessed, maintain the +5 buff on top of new base stats
+      player.attack = player.baseStats.attack + 5;
+      player.defense = player.baseStats.defense + 5;
+      player.maxHealth = player.baseStats.maxHealth + 5;
+    }
+    
+    // Add health bonus to current health
+    if (healthBonus > 0) {
+      player.health = Math.min(player.maxHealth, player.health + healthBonus);
+    }
   }
 }

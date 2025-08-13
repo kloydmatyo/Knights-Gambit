@@ -12,6 +12,13 @@ export interface Player {
   inventory: Item[];
   stats: PlayerStats;
   statusEffects: StatusEffect[];
+  baseStats: BaseStats; // Store original stats before buffs
+}
+
+export interface BaseStats {
+  attack: number;
+  defense: number;
+  maxHealth: number;
 }
 
 export interface StatusEffect {
@@ -19,6 +26,7 @@ export interface StatusEffect {
   duration: number; // -1 for permanent until cured
   damage?: number; // damage per turn for poison
   description: string;
+  applied?: boolean; // Track if buff has been applied
 }
 
 export interface Equipment {

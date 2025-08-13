@@ -425,7 +425,7 @@ export class GameScene extends Phaser.Scene {
       {
         text: "Found a Sword!",
         effect: () => {
-          this.player.attack += 3;
+          this.gameManager.updateBaseStats(this.player, 3, 0, 0);
           return "Attack increased by 3!";
         },
         color: "#ff9f43",
