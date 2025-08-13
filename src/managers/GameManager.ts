@@ -14,7 +14,7 @@ export class GameManager {
 
   initializeGame(): GameState {
     const player = this.createPlayer();
-    const board = this.generateBoard();
+    const board = this.generateBoard(1);
 
     return {
       player,
@@ -53,7 +53,7 @@ export class GameManager {
     };
   }
 
-  generateBoard(): BoardTile[] {
+  generateBoard(floor: number = 1): BoardTile[] {
     const board: BoardTile[] = [];
     const centerX = 512;
     const centerY = 300;
@@ -65,12 +65,16 @@ export class GameManager {
       const y = centerY + Math.sin(angle) * radius;
 
       let tileType: TileType;
+      
       if (i === 0) {
         tileType = TileType.START;
+      } else if (floor === 15) {
+        // Floor 15: Only boss tiles (no regular enemies or shops)
+        tileType = TileType.BOSS;
       } else if (i === this.BOARD_SIZE - 1) {
         tileType = TileType.BOSS;
       } else {
-        // Random tile distribution
+        // Random tile distribution for regular floors
         const rand = Math.random();
         if (rand < 0.4) {
           tileType = TileType.ENEMY;
@@ -313,5 +317,50 @@ export class GameManager {
     if (healthBonus > 0) {
       player.health = Math.min(player.maxHealth, player.health + healthBonus);
     }
+  }
+
+  // Floor progression system
+  advanceFloor(gameState: GameState): void {
+    gameState.currentFloor++;
+    console.log(`Advanced to floor ${gameState.currentFloor}`);
+    
+    // Regenerate board for new floor
+    gameState.board = this.generateBoard(gameState.currentFloor);
+    
+    // Reset player position to start
+    gameState.player.position = 0;
+  }
+
+  // Check if shop is available at tile 0 for current floor
+  isShopFloor(floor: number): boolean {
+    return floor === 4 || floor === 8 || floor === 12;
+  }
+
+  // Check if this is the final boss floor
+  isFinalFloor(floor: number): boolean {
+    return floor === 15;
+  }
+
+  // Generate boss enemy for final floor
+  generateBossEnemy(floor: number): Enemy {
+    const bossTemplate = {
+      name: "Ancient Dragon",
+      baseHealth: 200,
+      baseAttack: 25,
+      baseDefense: 10,
+      coins: 100,
+    };
+
+    const floorMultiplier = 1 + (floor - 1) * 0.3;
+
+    return {
+      id: `boss_${Date.now()}`,
+      name: bossTemplate.name,
+      health: Math.round(bossTemplate.baseHealth * floorMultiplier),
+      maxHealth: Math.round(bossTemplate.baseHealth * floorMultiplier),
+      attack: Math.round(bossTemplate.baseAttack * floorMultiplier),
+      defense: Math.round(bossTemplate.baseDefense * floorMultiplier),
+      coins: Math.round(bossTemplate.coins * floorMultiplier),
+    };
   }
 }

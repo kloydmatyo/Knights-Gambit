@@ -204,6 +204,7 @@ export class GameScene extends Phaser.Scene {
   private movePlayer(steps: number) {
     const boardSize = this.gameState.board.length;
     let currentStep = 0;
+    const startingPosition = this.player.position;
 
     const moveStep = () => {
       if (currentStep < steps) {
@@ -221,7 +222,12 @@ export class GameScene extends Phaser.Scene {
         currentStep++;
         this.time.delayedCall(400, moveStep);
       } else {
-        this.handleTileEvent();
+        // Check if player completed a loop (returned to tile 0 from a different position)
+        if (this.player.position === 0 && startingPosition !== 0) {
+          this.handleFloorProgression();
+        } else {
+          this.handleTileEvent();
+        }
       }
     };
 
@@ -232,6 +238,14 @@ export class GameScene extends Phaser.Scene {
     const currentTile = this.gameState.board[this.player.position];
 
     switch (currentTile.type) {
+      case TileType.START:
+        // Handle special shop floors at tile 0
+        if (this.gameManager.isShopFloor(this.gameState.currentFloor)) {
+          this.showShopMenu();
+        } else {
+          this.endTurn();
+        }
+        break;
       case TileType.ENEMY:
         this.handleEnemyTile();
         break;
@@ -273,78 +287,80 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showShopMenu() {
+    const isSpecialShop = this.gameManager.isShopFloor(this.gameState.currentFloor);
+    
     // Create shop background
     const shopBg = this.add.rectangle(
       this.cameras.main.width / 2,
       this.cameras.main.height / 2,
+      500,
       400,
-      300,
       0x16213e
     );
-    shopBg.setStrokeStyle(2, 0x4ecdc4);
+    shopBg.setStrokeStyle(2, isSpecialShop ? 0xf39c12 : 0x4ecdc4);
 
     // Shop title
     const shopTitle = this.add.text(
       this.cameras.main.width / 2,
-      this.cameras.main.height / 2 - 120,
-      'SHOP',
+      this.cameras.main.height / 2 - 160,
+      isSpecialShop ? 'SPECIAL SHOP' : 'SHOP',
       {
         fontSize: '32px',
-        color: '#4ecdc4',
+        color: isSpecialShop ? '#f39c12' : '#4ecdc4',
         fontFamily: 'Courier New, monospace'
       }
     ).setOrigin(0.5);
 
-    // Antidote option
+    const shopItems: Phaser.GameObjects.GameObject[] = [shopBg, shopTitle];
+
+    // Regular items
     const antidotePrice = 25;
-    const antidoteText = this.add.text(
+    const antidoteText = this.createShopItem(
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2 - 100,
+      `Antidote - ${antidotePrice} coins`,
+      antidotePrice,
+      () => this.buyAntidote(antidotePrice)
+    );
+    shopItems.push(antidoteText);
+
+    const healingPrice = 15;
+    const healingText = this.createShopItem(
       this.cameras.main.width / 2,
       this.cameras.main.height / 2 - 60,
-      `Antidote - ${antidotePrice} coins`,
-      {
-        fontSize: '20px',
-        color: this.player.coins >= antidotePrice ? '#27ae60' : '#e74c3c',
-        fontFamily: 'Courier New, monospace'
-      }
-    ).setOrigin(0.5);
-
-    if (this.player.coins >= antidotePrice) {
-      antidoteText.setInteractive();
-      antidoteText.on('pointerdown', () => {
-        this.buyAntidote(antidotePrice);
-        this.closeShop([shopBg, shopTitle, antidoteText, healingText, closeButton]);
-      });
-      antidoteText.on('pointerover', () => antidoteText.setStyle({ color: '#2ecc71' }));
-      antidoteText.on('pointerout', () => antidoteText.setStyle({ color: '#27ae60' }));
-    }
-
-    // Healing potion option
-    const healingPrice = 15;
-    const healingText = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2 - 20,
       `Healing Potion - ${healingPrice} coins`,
-      {
-        fontSize: '20px',
-        color: this.player.coins >= healingPrice ? '#f39c12' : '#e74c3c',
-        fontFamily: 'Courier New, monospace'
-      }
-    ).setOrigin(0.5);
+      healingPrice,
+      () => this.buyHealing(healingPrice)
+    );
+    shopItems.push(healingText);
 
-    if (this.player.coins >= healingPrice) {
-      healingText.setInteractive();
-      healingText.on('pointerdown', () => {
-        this.buyHealing(healingPrice);
-        this.closeShop([shopBg, shopTitle, antidoteText, healingText, closeButton]);
-      });
-      healingText.on('pointerover', () => healingText.setStyle({ color: '#e67e22' }));
-      healingText.on('pointerout', () => healingText.setStyle({ color: '#f39c12' }));
+    // Special shop items (floors 4, 8, 12)
+    if (isSpecialShop) {
+      const upgradePrice = 50;
+      const upgradeText = this.createShopItem(
+        this.cameras.main.width / 2,
+        this.cameras.main.height / 2 - 20,
+        `Stat Upgrade - ${upgradePrice} coins`,
+        upgradePrice,
+        () => this.buyStatUpgrade(upgradePrice)
+      );
+      shopItems.push(upgradeText);
+
+      const blessingPrice = 75;
+      const blessingText = this.createShopItem(
+        this.cameras.main.width / 2,
+        this.cameras.main.height / 2 + 20,
+        `Blessing Scroll - ${blessingPrice} coins`,
+        blessingPrice,
+        () => this.buyBlessing(blessingPrice)
+      );
+      shopItems.push(blessingText);
     }
 
     // Close button
     const closeButton = this.add.text(
       this.cameras.main.width / 2,
-      this.cameras.main.height / 2 + 60,
+      this.cameras.main.height / 2 + 100,
       'LEAVE SHOP',
       {
         fontSize: '18px',
@@ -356,10 +372,46 @@ export class GameScene extends Phaser.Scene {
     ).setOrigin(0.5).setInteractive();
 
     closeButton.on('pointerdown', () => {
-      this.closeShop([shopBg, shopTitle, antidoteText, healingText, closeButton]);
+      this.closeShop(shopItems.concat([closeButton]));
     });
     closeButton.on('pointerover', () => closeButton.setStyle({ color: '#ff6b6b' }));
     closeButton.on('pointerout', () => closeButton.setStyle({ color: '#ffe66d' }));
+
+    shopItems.push(closeButton);
+  }
+
+  private createShopItem(x: number, y: number, text: string, price: number, onBuy: () => void): Phaser.GameObjects.Text {
+    const canAfford = this.player.coins >= price;
+    const itemText = this.add.text(x, y, text, {
+      fontSize: '20px',
+      color: canAfford ? '#27ae60' : '#e74c3c',
+      fontFamily: 'Courier New, monospace'
+    }).setOrigin(0.5);
+
+    if (canAfford) {
+      itemText.setInteractive();
+      itemText.on('pointerdown', () => {
+        onBuy();
+        this.closeShop([]);
+      });
+      itemText.on('pointerover', () => itemText.setStyle({ color: '#2ecc71' }));
+      itemText.on('pointerout', () => itemText.setStyle({ color: '#27ae60' }));
+    }
+
+    return itemText;
+  }
+
+  private buyStatUpgrade(price: number) {
+    this.player.coins -= price;
+    this.gameManager.updateBaseStats(this.player, 2, 2, 10);
+    this.showMessage('Stats upgraded! +2 ATK, +2 DEF, +10 Max HP!', '#f39c12');
+  }
+
+  private buyBlessing(price: number) {
+    this.player.coins -= price;
+    const blessingEffect = this.gameManager.createBlessingEffect();
+    this.gameManager.addStatusEffect(this.player, blessingEffect);
+    this.showMessage('Blessing purchased! +5 to all stats for 3 turns!', '#f39c12');
   }
 
   private buyAntidote(price: number) {
@@ -506,8 +558,60 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleBossTile() {
-    this.showMessage("Boss fight coming soon!", "#ff6b6b");
-    this.endTurn();
+    if (this.gameManager.isFinalFloor(this.gameState.currentFloor)) {
+      // Final boss encounter
+      this.scene.start("CombatScene", {
+        player: this.player,
+        enemy: this.gameManager.generateBossEnemy(this.gameState.currentFloor),
+        gameState: this.gameState,
+      });
+    } else {
+      // Regular boss
+      this.scene.start("CombatScene", {
+        player: this.player,
+        enemy: this.gameManager.generateEnemy(this.gameState.currentFloor),
+        gameState: this.gameState,
+      });
+    }
+  }
+
+  private handleFloorProgression() {
+    // Advance to next floor
+    this.gameManager.advanceFloor(this.gameState);
+    
+    // Show floor progression message
+    this.showMessage(`Floor ${this.gameState.currentFloor} reached!`, "#4ecdc4");
+    
+    // Check if this is a shop floor
+    if (this.gameManager.isShopFloor(this.gameState.currentFloor)) {
+      this.time.delayedCall(2000, () => {
+        this.showMessage("A special shop has appeared!", "#f39c12");
+        this.time.delayedCall(2000, () => {
+          this.showShopMenu();
+        });
+      });
+    } else if (this.gameManager.isFinalFloor(this.gameState.currentFloor)) {
+      this.time.delayedCall(2000, () => {
+        this.showMessage("FINAL FLOOR! Only bosses remain!", "#ff0000");
+        this.time.delayedCall(2000, () => {
+          this.endTurn();
+        });
+      });
+    } else {
+      // Regular floor progression
+      this.time.delayedCall(2000, () => {
+        this.endTurn();
+      });
+    }
+    
+    // Regenerate the board visually
+    this.boardManager.createBoard(this.gameState.board);
+    
+    // Update player sprite position
+    const startTile = this.gameState.board[0];
+    this.playerSprite.setPosition(startTile.x, startTile.y);
+    
+    this.updateUI();
   }
 
   private showMessage(text: string, color: string) {
