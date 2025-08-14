@@ -506,7 +506,8 @@ export class GameScene extends Phaser.Scene {
 
   private buyStatUpgrade(price: number) {
     this.player.coins -= price;
-    if(this.player.coins >= price){
+    if(this.player.coins > price){
+    !this.buyStatUpgrade;
     this.gameManager.updateBaseStats(this.player, 2, 2, 10);
     this.showMessage("Stats upgraded! +2 ATK, +2 DEF, +10 Max HP!", "#f39c12");
     } else {
@@ -516,7 +517,8 @@ export class GameScene extends Phaser.Scene {
 
   private buyBlessing(price: number) {
     this.player.coins -= price;
-    if (this.player.coins >= price){
+    if (this.player.coins > price){
+    !this.buyBlessing;
     const blessingEffect = this.gameManager.createBlessingEffect();
     this.gameManager.addStatusEffect(this.player, blessingEffect);
     this.showMessage(
@@ -530,7 +532,8 @@ export class GameScene extends Phaser.Scene {
 
   private buyAntidote(price: number) {
     this.player.coins -= price;
-      if (this.player.coins >= price){
+      if (this.player.coins > price){
+        !this.buyStatUpgrade;
         if (
           this.gameManager.hasStatusEffect(this.player, StatusEffectType.POISON)
         ) {
@@ -551,8 +554,9 @@ export class GameScene extends Phaser.Scene {
     }
 
   private buyHealing(price: number) {
-        this.player.coins -= price;
-        if (this.player.coins >= price){
+        this.player.coins - price;
+        if (this.player.coins > price){
+          !this.buyStatUpgrade;
         const oldHealth = this.player.health;
         this.player.health = Math.min(
           this.player.maxHealth,
