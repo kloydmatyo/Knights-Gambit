@@ -533,7 +533,7 @@ export class GameScene extends Phaser.Scene {
   private buyAntidote(price: number) {
     this.player.coins -= price;
       if (this.player.coins > price){
-        !this.buyAntidote;
+        // !this.buyAntidote;
         if (
           this.gameManager.hasStatusEffect(this.player, StatusEffectType.POISON)
         ) {
@@ -556,7 +556,7 @@ export class GameScene extends Phaser.Scene {
   private buyHealing(price: number) {
         this.player.coins - price;
         if (this.player.coins > price){
-          !this.buyHealing;
+          // !this.buyHealing;
         const oldHealth = this.player.health;
         this.player.health = Math.min(
           this.player.maxHealth,
