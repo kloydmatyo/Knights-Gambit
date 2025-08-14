@@ -7,13 +7,15 @@ import {
   PlayerStats,
   StatusEffect,
   StatusEffectType,
+  CharacterClass,
+  CharacterClassName,
 } from "../types/GameTypes";
 
 export class GameManager {
   private readonly BOARD_SIZE = 20;
 
-  initializeGame(): GameState {
-    const player = this.createPlayer();
+  initializeGame(selectedClass?: CharacterClass): GameState {
+    const player = selectedClass ? this.createPlayerWithClass(selectedClass) : this.createPlayer();
     const board = this.generateBoard(1);
 
     return {
@@ -26,15 +28,32 @@ export class GameManager {
   }
 
   private createPlayer(): Player {
+    // Default knight class for backwards compatibility
+    const defaultClass: CharacterClass = {
+      name: CharacterClassName.KNIGHT,
+      description: "Balanced warrior with strong defense and moderate attack",
+      baseHealth: 100,
+      baseAttack: 15,
+      baseDefense: 5,
+      startingCoins: 50,
+      specialAbility: "Shield Block - Reduce damage by 2",
+      sprite: "knight",
+    };
+
+    return this.createPlayerWithClass(defaultClass);
+  }
+
+  private createPlayerWithClass(characterClass: CharacterClass): Player {
     return {
       id: "player1",
-      name: "Knight",
+      name: characterClass.name.charAt(0).toUpperCase() + characterClass.name.slice(1),
+      class: characterClass,
       level: 1,
-      health: 100,
-      maxHealth: 100,
-      attack: 15,
-      defense: 5,
-      coins: 50,
+      health: characterClass.baseHealth,
+      maxHealth: characterClass.baseHealth,
+      attack: characterClass.baseAttack,
+      defense: characterClass.baseDefense,
+      coins: characterClass.startingCoins,
       position: 0,
       equipment: {},
       inventory: [],
@@ -46,9 +65,9 @@ export class GameManager {
       },
       statusEffects: [],
       baseStats: {
-        attack: 15,
-        defense: 5,
-        maxHealth: 100,
+        attack: characterClass.baseAttack,
+        defense: characterClass.baseDefense,
+        maxHealth: characterClass.baseHealth,
       },
     };
   }

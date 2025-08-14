@@ -1,6 +1,7 @@
 export interface Player {
   id: string;
   name: string;
+  class: CharacterClass;
   level: number;
   health: number;
   maxHealth: number;
@@ -13,6 +14,24 @@ export interface Player {
   stats: PlayerStats;
   statusEffects: StatusEffect[];
   baseStats: BaseStats; // Store original stats before buffs
+}
+
+export interface CharacterClass {
+  name: string;
+  description: string;
+  baseHealth: number;
+  baseAttack: number;
+  baseDefense: number;
+  startingCoins: number;
+  specialAbility: string;
+  sprite: string;
+}
+
+export enum CharacterClassName {
+  KNIGHT = "knight",
+  ARCHER = "archer",
+  BARBARIAN = "barbarian",
+  ASSASSIN = "assassin",
 }
 
 export interface BaseStats {

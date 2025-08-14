@@ -141,6 +141,22 @@ export class SpriteManager {
     return this.createCharacter(x, y, CharacterType.ARCHER, scale);
   }
 
+  createBarbarian(
+    x: number,
+    y: number,
+    scale: number = 4
+  ): Phaser.GameObjects.Image {
+    return this.createCharacter(x, y, CharacterType.BARBARIAN, scale);
+  }
+
+  createAssassin(
+    x: number,
+    y: number,
+    scale: number = 4
+  ): Phaser.GameObjects.Image {
+    return this.createCharacter(x, y, CharacterType.ASSASSIN, scale);
+  }
+
   // Helper methods for specific enemies
   createGoblin(
     x: number,

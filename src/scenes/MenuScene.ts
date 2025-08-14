@@ -38,7 +38,7 @@ export class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive();
 
     startButton.on('pointerdown', () => {
-      this.scene.start('GameScene');
+      this.scene.start('ClassSelectionScene');
     });
 
     startButton.on('pointerover', () => {

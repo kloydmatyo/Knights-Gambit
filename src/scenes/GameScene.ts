@@ -15,6 +15,7 @@ export class GameScene extends Phaser.Scene {
   private spriteManager!: SpriteManager;
   private player!: Player;
   private gameState!: GameState;
+  private selectedClass: any;
   private diceButton!: Phaser.GameObjects.Text;
   private playerSprite!: Phaser.GameObjects.Image;
   private uiElements: { [key: string]: Phaser.GameObjects.Text } = {};
@@ -39,6 +40,9 @@ export class GameScene extends Phaser.Scene {
     if (data && data.gameState) {
       this.gameState = data.gameState;
       this.player = this.gameState.player;
+    } else if (data && data.selectedClass) {
+      // Store selected class for game initialization
+      this.selectedClass = data.selectedClass;
     }
   }
 
@@ -48,7 +52,7 @@ export class GameScene extends Phaser.Scene {
     this.spriteManager = new SpriteManager(this);
 
     if (!this.gameState) {
-      this.gameState = this.gameManager.initializeGame();
+      this.gameState = this.gameManager.initializeGame(this.selectedClass);
       this.player = this.gameState.player;
     }
 
@@ -71,11 +75,31 @@ export class GameScene extends Phaser.Scene {
   private createPlayer() {
     const currentTile = this.gameState.board[this.player.position];
     console.log("Creating player sprite at:", currentTile.x, currentTile.y);
-    this.playerSprite = this.spriteManager.createKnight(
-      currentTile.x,
-      currentTile.y,
-      1
-    );
+    
+    // Create sprite based on player's class
+    const className = this.player.class?.name || "knight";
+    try {
+      switch (className) {
+        case "knight":
+          this.playerSprite = this.spriteManager.createKnight(currentTile.x, currentTile.y, 1);
+          break;
+        case "archer":
+          this.playerSprite = this.spriteManager.createArcher(currentTile.x, currentTile.y, 1);
+          break;
+        case "barbarian":
+          this.playerSprite = this.spriteManager.createBarbarian(currentTile.x, currentTile.y, 1);
+          break;
+        case "assassin":
+          this.playerSprite = this.spriteManager.createAssassin(currentTile.x, currentTile.y, 1);
+          break;
+        default:
+          this.playerSprite = this.spriteManager.createKnight(currentTile.x, currentTile.y, 1);
+      }
+    } catch (error) {
+      console.warn("Failed to create class sprite, using knight:", error);
+      this.playerSprite = this.spriteManager.createKnight(currentTile.x, currentTile.y, 1);
+    }
+    
     console.log("Player sprite created:", this.playerSprite);
   }
 
