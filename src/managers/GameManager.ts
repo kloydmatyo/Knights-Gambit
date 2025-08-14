@@ -308,9 +308,9 @@ export class GameManager {
       player.maxHealth = player.baseStats.maxHealth;
     } else {
       // If blessed, maintain the +5 buff on top of new base stats
-      player.attack = player.baseStats.attack + 5;
-      player.defense = player.baseStats.defense + 5;
-      player.maxHealth = player.baseStats.maxHealth + 5;
+      player.attack = player.baseStats.attack + 20;
+      player.defense = player.baseStats.defense + 20;
+      player.maxHealth = player.baseStats.maxHealth + 20;
     }
 
     // Add health bonus to current health
