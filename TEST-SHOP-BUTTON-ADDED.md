@@ -25,22 +25,20 @@
 
 ## 🎮 How to Use:
 
-### Testing Regular Shop:
+### Testing Complete Shop (All Items):
 1. **Click "TEST SHOP"** button
-2. **Shop opens** with regular items:
+2. **Special test shop opens** with ALL items:
    - Healing Potion (15 coins)
    - Antidote (25 coins)
-3. **Test purchases** with current coin balance
+   - Stat Upgrade (50 coins) *Special item*
+   - Blessing Scroll (75 coins) *Special item*
+3. **Test all purchases** with current coin balance
 4. **Test affordability** - items show green/red based on coins
 
-### Testing Special Shop:
-1. **Click "ADVANCE FLOOR"** to reach floor 4, 8, or 12
-2. **Click "TEST SHOP"** button
-3. **Shop opens** with special items:
-   - Healing Potion (15 coins)
-   - Antidote (25 coins)
-   - Stat Upgrade (50 coins) *Special only*
-   - Blessing Scroll (75 coins) *Special only*
+### Testing Regular vs Special Shops:
+1. **Use "TEST SHOP"** to test all items at once
+2. **Use "ADVANCE FLOOR"** + normal gameplay to test actual shop floors
+3. **Compare behavior** between test shop and real shops
 
 ### Testing Purchase Protection:
 1. **Start with various coin amounts** (low/high)
@@ -64,7 +62,8 @@ Player has 10 coins → Click "TEST SHOP"
 Player has 30 coins → Click "TEST SHOP"
 - Healing Potion: GREEN (affordable)
 - Antidote: GREEN (affordable)
-- Stat Upgrade: RED (unaffordable, if special shop)
+- Stat Upgrade: RED (unaffordable - 50 coins)
+- Blessing Scroll: RED (unaffordable - 75 coins)
 - Can purchase healing/antidote successfully
 ```
 
@@ -93,9 +92,9 @@ const testShopButton = this.add.text(centerX - 250, bottomY, "TEST SHOP", {
 ### Button Handler:
 ```typescript
 private testShop() {
-  this.showMessage("TEST: Opening shop menu!", "#f39c12");
+  this.showMessage("TEST: Opening SPECIAL shop menu with all items!", "#f39c12");
   this.time.delayedCall(1500, () => {
-    this.showShopMenu(); // Opens regular shop
+    this.showTestShopMenu(); // Opens special test shop with ALL items
   });
 }
 ```
@@ -104,8 +103,9 @@ private testShop() {
 
 ### Quick Access:
 - **No setup required** - works from any game state
-- **Instant shop access** - no need to find shop tiles
-- **Consistent testing** - same shop every time
+- **Instant shop access** - no need to find shop tiles or reach shop floors
+- **Complete item testing** - shows ALL items (regular + special)
+- **Consistent testing** - same comprehensive shop every time
 
 ### Purchase Testing:
 - **Test coin validation** - try purchases with various coin amounts
