@@ -5,8 +5,10 @@ import { SpriteManager } from "../managers/SpriteManager";
 export class ClassSelectionScene extends Phaser.Scene {
   private spriteManager!: SpriteManager;
   private selectedClass: CharacterClass | null = null;
-  private classCards: Phaser.GameObjects.Container[] = [];
+  private classIcons: Phaser.GameObjects.Container[] = [];
+  private detailsPanel: Phaser.GameObjects.Container | null = null;
   private confirmButton!: Phaser.GameObjects.Text;
+  private instructionElements: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super({ key: "ClassSelectionScene" });
@@ -19,13 +21,13 @@ export class ClassSelectionScene extends Phaser.Scene {
   }
 
   create() {
-    const centerX = this.cameras.main.width / 2;
-    const centerY = this.cameras.main.height / 2;
+    const screenWidth = this.cameras.main.width;
+    const screenHeight = this.cameras.main.height;
 
     // Title
     this.add
-      .text(centerX, 80, "CHOOSE YOUR CLASS", {
-        fontSize: "48px",
+      .text(screenWidth / 2, 60, "⚔️ CHARACTER SELECTION ⚔️", {
+        fontSize: "42px",
         color: "#ff6b6b",
         fontFamily: "Courier New, monospace",
       })
@@ -33,20 +35,23 @@ export class ClassSelectionScene extends Phaser.Scene {
 
     // Subtitle
     this.add
-      .text(centerX, 130, "Each class has unique stats and abilities", {
-        fontSize: "20px",
+      .text(screenWidth / 2, 110, "Click on a class to view details", {
+        fontSize: "18px",
         color: "#4ecdc4",
         fontFamily: "Courier New, monospace",
       })
       .setOrigin(0.5);
 
-    // Create class cards
-    this.createClassCards();
+    // Create class selection grid (left side)
+    this.createClassGrid();
 
-    // Confirm button (initially disabled) - positioned below the 2-row layout
+    // Create initial instruction panel (right side)
+    this.createInstructionPanel();
+
+    // Confirm button (bottom center)
     this.confirmButton = this.add
-      .text(centerX, centerY + 350, "SELECT A CLASS", {
-        fontSize: "24px",
+      .text(screenWidth / 2, screenHeight - 80, "SELECT A CLASS FIRST", {
+        fontSize: "20px",
         color: "#666666",
         fontFamily: "Courier New, monospace",
         backgroundColor: "#2c2c2c",
@@ -56,12 +61,12 @@ export class ClassSelectionScene extends Phaser.Scene {
 
     // Back button
     const backButton = this.add
-      .text(100, 50, "← BACK TO MENU", {
-        fontSize: "18px",
+      .text(80, 40, "← BACK", {
+        fontSize: "16px",
         color: "#4ecdc4",
         fontFamily: "Courier New, monospace",
         backgroundColor: "#16213e",
-        padding: { x: 15, y: 8 },
+        padding: { x: 12, y: 6 },
       })
       .setOrigin(0.5)
       .setInteractive();
@@ -78,177 +83,164 @@ export class ClassSelectionScene extends Phaser.Scene {
     );
   }
 
-  private createClassCards() {
+  private createClassGrid() {
     const classes = this.getCharacterClasses();
-    const cardWidth = 200;
-    const cardHeight = 300;
-    const spacingX = 230;
-    const spacingY = 320;
+    const iconSize = 120;
+    const spacing = 140;
     const classesPerRow = 3;
-
-    // Calculate starting positions for centered 2-row layout
-    const totalWidth = spacingX * (classesPerRow - 1);
-    const startX = this.cameras.main.width / 2 - totalWidth / 2;
-    const startY = this.cameras.main.height / 2 - spacingY / 2;
+    
+    // Position grid on left side of screen
+    const gridStartX = 200;
+    const gridStartY = 200;
 
     classes.forEach((characterClass, index) => {
       const row = Math.floor(index / classesPerRow);
       const col = index % classesPerRow;
-      const cardX = startX + col * spacingX;
-      const cardY = startY + row * spacingY;
+      const iconX = gridStartX + col * spacing;
+      const iconY = gridStartY + row * spacing;
 
-      const card = this.createClassCard(
-        cardX,
-        cardY,
-        characterClass,
-        cardWidth,
-        cardHeight
-      );
-      this.classCards.push(card);
+      const icon = this.createClassIcon(iconX, iconY, characterClass, iconSize);
+      this.classIcons.push(icon);
     });
   }
 
-  private createClassCard(
+  private createInstructionPanel() {
+    const panelX = 850;
+    const panelY = 440;
+    const panelWidth = 500;
+    const panelHeight = 600;
+
+    // Create instruction panel background
+    const instructionBg = this.add.rectangle(panelX, panelY, panelWidth, panelHeight, 0x16213e);
+    instructionBg.setStrokeStyle(3, 0x4ecdc4);
+
+    // Instruction text
+    const instructionText = this.add.text(panelX, panelY - 200, "📜 CLASS DETAILS", {
+      fontSize: "28px",
+      color: "#ffe66d",
+      fontFamily: "Courier New, monospace",
+    }).setOrigin(0.5);
+
+    const helpText = this.add.text(panelX, panelY - 100, 
+      "Click on any class icon to view:\n\n" +
+      "• Complete stat breakdown\n" +
+      "• All 3 unique skills\n" +
+      "• Skill descriptions & effects\n" +
+      "• Class strengths & playstyle\n\n" +
+      "Choose wisely, adventurer!", {
+      fontSize: "16px",
+      color: "#a8a8a8",
+      fontFamily: "Courier New, monospace",
+      align: "center",
+      lineSpacing: 8,
+    }).setOrigin(0.5);
+
+    // Store instruction elements for later removal
+    this.instructionElements = [instructionBg, instructionText, helpText];
+  }
+
+  private createClassIcon(
     x: number,
     y: number,
     characterClass: CharacterClass,
-    width: number,
-    height: number
+    size: number
   ): Phaser.GameObjects.Container {
-    const card = this.add.container(x, y);
+    const icon = this.add.container(x, y);
 
-    // Card background
-    const bg = this.add.rectangle(0, 0, width, height, 0x16213e);
-    bg.setStrokeStyle(2, 0x4ecdc4);
-    card.add(bg);
+    // Icon background
+    const bg = this.add.rectangle(0, 0, size, size, 0x16213e);
+    bg.setStrokeStyle(3, this.getClassColor(characterClass.name));
+    icon.add(bg);
 
     // Character sprite
     let sprite: Phaser.GameObjects.Image;
     try {
-      // Use the specific character creation methods
       switch (characterClass.sprite) {
         case "knight":
-          sprite = this.spriteManager.createKnight(0, -80, 2);
+          sprite = this.spriteManager.createKnight(0, -10, 2.5);
           break;
         case "archer":
-          sprite = this.spriteManager.createArcher(0, -80, 2);
+          sprite = this.spriteManager.createArcher(0, -10, 2.5);
           break;
         case "mage":
-          sprite = this.spriteManager.createMage(0, -80, 2);
+          sprite = this.spriteManager.createMage(0, -10, 2.5);
           break;
         case "barbarian":
-          sprite = this.spriteManager.createBarbarian(0, -80, 2);
+          sprite = this.spriteManager.createBarbarian(0, -10, 2.5);
           break;
         case "assassin":
-          sprite = this.spriteManager.createAssassin(0, -80, 2);
+          sprite = this.spriteManager.createAssassin(0, -10, 2.5);
           break;
         case "cleric":
-          sprite = this.spriteManager.createCleric(0, -80, 2);
+          sprite = this.spriteManager.createCleric(0, -10, 2.5);
           break;
         default:
-          sprite = this.spriteManager.createKnight(0, -80, 2);
+          sprite = this.spriteManager.createKnight(0, -10, 2.5);
       }
     } catch (error) {
-      // Fallback to colored rectangle if sprite fails
-      sprite = this.add.rectangle(
-        0,
-        -80,
-        60,
-        60,
-        this.getClassColor(characterClass.name)
-      ) as any;
+      sprite = this.add.rectangle(0, -10, 60, 60, this.getClassColor(characterClass.name)) as any;
     }
-    card.add(sprite);
+    icon.add(sprite);
 
     // Class name
-    const nameText = this.add
-      .text(0, -20, characterClass.name.toUpperCase(), {
-        fontSize: "20px",
-        color: "#ffe66d",
-        fontFamily: "Courier New, monospace",
-      })
-      .setOrigin(0.5);
-    card.add(nameText);
+    const nameText = this.add.text(0, 35, characterClass.name.toUpperCase(), {
+      fontSize: "14px",
+      color: "#ffe66d",
+      fontFamily: "Courier New, monospace",
+    }).setOrigin(0.5);
+    icon.add(nameText);
 
-    // Stats
-    const statsText = this.add
-      .text(
-        0,
-        15,
-        `HP: ${characterClass.baseHealth}\\n` +
-          `ATK: ${characterClass.baseAttack}\\n` +
-          `DEF: ${characterClass.baseDefense}\\n` +
-          `Coins: ${characterClass.startingCoins}`,
-        {
-          fontSize: "13px",
-          color: "#ffffff",
-          fontFamily: "Courier New, monospace",
-          align: "center",
-        }
-      )
-      .setOrigin(0.5);
-    card.add(statsText);
+    // Class emoji
+    const emoji = this.getClassEmoji(characterClass.name);
+    const emojiText = this.add.text(-40, -40, emoji, {
+      fontSize: "24px",
+    }).setOrigin(0.5);
+    icon.add(emojiText);
 
-    // Description
-    const descText = this.add
-      .text(0, 75, characterClass.description, {
-        fontSize: "11px",
-        color: "#a8a8a8",
-        fontFamily: "Courier New, monospace",
-        align: "center",
-        wordWrap: { width: width - 20 },
-      })
-      .setOrigin(0.5);
-    card.add(descText);
-
-    // Special ability (skills)
-    const abilityText = this.add
-      .text(0, 125, `Skills: ${characterClass.specialAbility}`, {
-        fontSize: "10px",
-        color: "#f39c12",
-        fontFamily: "Courier New, monospace",
-        align: "center",
-        wordWrap: { width: width - 15 },
-      })
-      .setOrigin(0.5);
-    card.add(abilityText);
-
-    // Make card interactive
+    // Make icon interactive
     bg.setInteractive();
-    bg.on("pointerdown", () => this.selectClass(characterClass, card));
+    bg.on("pointerdown", () => this.selectClass(characterClass, icon));
     bg.on("pointerover", () => {
-      bg.setStrokeStyle(3, 0xff6b6b);
-      card.setScale(1.05);
+      bg.setStrokeStyle(4, 0xff6b6b);
+      icon.setScale(1.1);
     });
     bg.on("pointerout", () => {
       if (this.selectedClass !== characterClass) {
-        bg.setStrokeStyle(2, 0x4ecdc4);
-        card.setScale(1);
+        bg.setStrokeStyle(3, this.getClassColor(characterClass.name));
+        icon.setScale(1);
       }
     });
 
-    return card;
+    return icon;
   }
 
   private selectClass(
     characterClass: CharacterClass,
-    card: Phaser.GameObjects.Container
+    icon: Phaser.GameObjects.Container
   ) {
     // Deselect previous class
-    this.classCards.forEach((c, index) => {
+    this.classIcons.forEach((c) => {
       const bg = c.list[0] as Phaser.GameObjects.Rectangle;
-      bg.setStrokeStyle(2, 0x4ecdc4);
+      const className = this.getCharacterClasses().find(cls => 
+        c.list.some(item => item instanceof Phaser.GameObjects.Text && 
+          item.text === cls.name.toUpperCase())
+      )?.name || "knight";
+      bg.setStrokeStyle(3, this.getClassColor(className));
       c.setScale(1);
     });
 
     // Select new class
     this.selectedClass = characterClass;
-    const bg = card.list[0] as Phaser.GameObjects.Rectangle;
-    bg.setStrokeStyle(3, 0xff6b6b);
-    card.setScale(1.05);
+    const bg = icon.list[0] as Phaser.GameObjects.Rectangle;
+    bg.setStrokeStyle(4, 0xff6b6b);
+    icon.setScale(1.1);
+
+    // Remove instruction panel and create details panel
+    this.removeInstructionPanel();
+    this.createDetailsPanel(characterClass);
 
     // Enable confirm button
-    this.confirmButton.setText("START ADVENTURE");
+    this.confirmButton.setText("🗡️ START ADVENTURE 🗡️");
     this.confirmButton.setStyle({
       color: "#ffe66d",
       backgroundColor: "#16213e",
@@ -268,6 +260,167 @@ export class ClassSelectionScene extends Phaser.Scene {
     this.confirmButton.on("pointerout", () =>
       this.confirmButton.setStyle({ color: "#ffe66d" })
     );
+  }
+
+  private getClassEmoji(className: string): string {
+    switch (className) {
+      case CharacterClassName.KNIGHT: return "🛡️";
+      case CharacterClassName.ARCHER: return "🏹";
+      case CharacterClassName.MAGE: return "🔮";
+      case CharacterClassName.BARBARIAN: return "⚔️";
+      case CharacterClassName.ASSASSIN: return "🗡️";
+      case CharacterClassName.CLERIC: return "✨";
+      default: return "⚔️";
+    }
+  }
+
+  private removeInstructionPanel() {
+    this.instructionElements.forEach(element => element.destroy());
+    this.instructionElements = [];
+  }
+
+  private createDetailsPanel(characterClass: CharacterClass) {
+    // Remove existing details panel
+    if (this.detailsPanel) {
+      this.detailsPanel.destroy();
+    }
+
+    const panelX = 850;
+    const panelY = 440;
+    const panelWidth = 500;
+    const panelHeight = 650;
+
+    this.detailsPanel = this.add.container(panelX, panelY);
+
+    // Panel background
+    const bg = this.add.rectangle(0, 0, panelWidth, panelHeight, 0x16213e);
+    bg.setStrokeStyle(3, this.getClassColor(characterClass.name));
+    this.detailsPanel.add(bg);
+
+    // Class header
+    const emoji = this.getClassEmoji(characterClass.name);
+    const header = this.add.text(0, -280, `${emoji} ${characterClass.name.toUpperCase()} ${emoji}`, {
+      fontSize: "32px",
+      color: "#ffe66d",
+      fontFamily: "Courier New, monospace",
+    }).setOrigin(0.5);
+    this.detailsPanel.add(header);
+
+    // Description
+    const description = this.add.text(0, -230, characterClass.description, {
+      fontSize: "16px",
+      color: "#a8a8a8",
+      fontFamily: "Courier New, monospace",
+      align: "center",
+      wordWrap: { width: panelWidth - 40 },
+    }).setOrigin(0.5);
+    this.detailsPanel.add(description);
+
+    // Stats section
+    const statsTitle = this.add.text(0, -170, "📊 STATS", {
+      fontSize: "20px",
+      color: "#4ecdc4",
+      fontFamily: "Courier New, monospace",
+    }).setOrigin(0.5);
+    this.detailsPanel.add(statsTitle);
+
+    const statsText = this.add.text(0, -130, 
+      `Health: ${characterClass.baseHealth} HP\n` +
+      `Attack: ${characterClass.baseAttack} ATK\n` +
+      `Defense: ${characterClass.baseDefense} DEF\n` +
+      `Starting Coins: ${characterClass.startingCoins}\n` +
+      (characterClass.baseMana ? `Mana: ${characterClass.baseMana} MP` : ""), {
+      fontSize: "16px",
+      color: "#ffffff",
+      fontFamily: "Courier New, monospace",
+      align: "center",
+      lineSpacing: 4,
+    }).setOrigin(0.5);
+    this.detailsPanel.add(statsText);
+
+    // Skills section
+    const skillsTitle = this.add.text(0, -40, "⚡ CLASS SKILLS", {
+      fontSize: "20px",
+      color: "#f39c12",
+      fontFamily: "Courier New, monospace",
+    }).setOrigin(0.5);
+    this.detailsPanel.add(skillsTitle);
+
+    // Get skills from SkillManager
+    const skills = this.getClassSkills(characterClass.name as CharacterClassName);
+    let skillY = 10;
+
+    skills.forEach((skill, index) => {
+      const skillName = this.add.text(-220, skillY, `${index + 1}. ${skill.name}`, {
+        fontSize: "14px",
+        color: "#ffe66d",
+        fontFamily: "Courier New, monospace",
+      });
+      this.detailsPanel!.add(skillName);
+
+      const skillType = this.add.text(-220, skillY + 20, `Type: ${skill.type.toUpperCase()}`, {
+        fontSize: "12px",
+        color: skill.type === "active" ? "#2ecc71" : "#9b59b6",
+        fontFamily: "Courier New, monospace",
+      });
+      this.detailsPanel!.add(skillType);
+
+      const skillDesc = this.add.text(-220, skillY + 40, skill.description, {
+        fontSize: "11px",
+        color: "#a8a8a8",
+        fontFamily: "Courier New, monospace",
+        wordWrap: { width: 440 },
+      });
+      this.detailsPanel!.add(skillDesc);
+
+      const cooldownText = skill.cooldown > 0 ? `Cooldown: ${skill.cooldown} turns` : "Always Active";
+      const cooldown = this.add.text(-220, skillY + 80, cooldownText, {
+        fontSize: "10px",
+        color: "#4ecdc4",
+        fontFamily: "Courier New, monospace",
+      });
+      this.detailsPanel!.add(cooldown);
+
+      skillY += 110;
+    });
+  }
+
+  private getClassSkills(className: CharacterClassName) {
+    // Define skills for each class (simplified version)
+    const skillsData = {
+      [CharacterClassName.KNIGHT]: [
+        { name: "Shield Wall", type: "active", description: "Blocks next 3 attacks and reflects 50% damage back to attackers", cooldown: 5 },
+        { name: "Guardian's Resolve", type: "passive", description: "Gains +3 Defense per defeated ally", cooldown: 0 },
+        { name: "Righteous Strike", type: "active", description: "200% weapon damage with 30% stun chance, +50% vs evil", cooldown: 4 }
+      ],
+      [CharacterClassName.ARCHER]: [
+        { name: "Piercing Shot", type: "active", description: "Arrow pierces through 3 enemies, ignoring armor", cooldown: 3 },
+        { name: "Hunter's Mark", type: "passive", description: "+100% crit chance vs enemies below 50% HP", cooldown: 0 },
+        { name: "Explosive Arrow", type: "active", description: "150% damage to target, 75% to adjacent, applies burn", cooldown: 5 }
+      ],
+      [CharacterClassName.MAGE]: [
+        { name: "Arcane Missiles", type: "active", description: "5 auto-targeting missiles with escalating damage", cooldown: 4 },
+        { name: "Mana Shield", type: "passive", description: "Damage absorbed by mana at 2:1 ratio", cooldown: 0 },
+        { name: "Elemental Mastery", type: "active", description: "Cycles Fire/Ice/Lightning with unique effects", cooldown: 3 }
+      ],
+      [CharacterClassName.BARBARIAN]: [
+        { name: "Berserker Rage", type: "active", description: "+100% damage, +50% resistance, extra attack for 4 turns", cooldown: 6 },
+        { name: "Bloodthirst", type: "passive", description: "Heal 25% HP on kill, +5 ATK per kill (stacks)", cooldown: 0 },
+        { name: "Earthquake Slam", type: "active", description: "150% damage to all enemies, 40% knockdown chance", cooldown: 5 }
+      ],
+      [CharacterClassName.ASSASSIN]: [
+        { name: "Shadow Step", type: "active", description: "Become untargetable, next attack deals 300% critical damage", cooldown: 4 },
+        { name: "Poison Mastery", type: "passive", description: "35% poison chance, +25% damage vs poisoned enemies", cooldown: 0 },
+        { name: "Thousand Cuts", type: "active", description: "5 escalating attacks, final crit if all connect", cooldown: 6 }
+      ],
+      [CharacterClassName.CLERIC]: [
+        { name: "Divine Healing", type: "active", description: "Heal based on missing HP, removes all debuffs", cooldown: 3 },
+        { name: "Blessed Aura", type: "passive", description: "Party-wide regen and defense, doubles when critical", cooldown: 0 },
+        { name: "Wrath of Heaven", type: "active", description: "AoE holy damage that heals allies", cooldown: 5 }
+      ]
+    };
+
+    return skillsData[className] || [];
   }
 
   private getCharacterClasses(): CharacterClass[] {
