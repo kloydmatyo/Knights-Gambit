@@ -23,64 +23,98 @@ export class ClassSelectionScene extends Phaser.Scene {
     const centerY = this.cameras.main.height / 2;
 
     // Title
-    this.add.text(centerX, 80, "CHOOSE YOUR CLASS", {
-      fontSize: "48px",
-      color: "#ff6b6b",
-      fontFamily: "Courier New, monospace",
-    }).setOrigin(0.5);
+    this.add
+      .text(centerX, 80, "CHOOSE YOUR CLASS", {
+        fontSize: "48px",
+        color: "#ff6b6b",
+        fontFamily: "Courier New, monospace",
+      })
+      .setOrigin(0.5);
 
     // Subtitle
-    this.add.text(centerX, 130, "Each class has unique stats and abilities", {
-      fontSize: "20px",
-      color: "#4ecdc4",
-      fontFamily: "Courier New, monospace",
-    }).setOrigin(0.5);
+    this.add
+      .text(centerX, 130, "Each class has unique stats and abilities", {
+        fontSize: "20px",
+        color: "#4ecdc4",
+        fontFamily: "Courier New, monospace",
+      })
+      .setOrigin(0.5);
 
     // Create class cards
     this.createClassCards();
 
-    // Confirm button (initially disabled)
-    this.confirmButton = this.add.text(centerX, centerY + 200, "SELECT A CLASS", {
-      fontSize: "24px",
-      color: "#666666",
-      fontFamily: "Courier New, monospace",
-      backgroundColor: "#2c2c2c",
-      padding: { x: 20, y: 10 },
-    }).setOrigin(0.5);
+    // Confirm button (initially disabled) - positioned below the 2-row layout
+    this.confirmButton = this.add
+      .text(centerX, centerY + 350, "SELECT A CLASS", {
+        fontSize: "24px",
+        color: "#666666",
+        fontFamily: "Courier New, monospace",
+        backgroundColor: "#2c2c2c",
+        padding: { x: 20, y: 10 },
+      })
+      .setOrigin(0.5);
 
     // Back button
-    const backButton = this.add.text(100, 50, "← BACK TO MENU", {
-      fontSize: "18px",
-      color: "#4ecdc4",
-      fontFamily: "Courier New, monospace",
-      backgroundColor: "#16213e",
-      padding: { x: 15, y: 8 },
-    }).setOrigin(0.5).setInteractive();
+    const backButton = this.add
+      .text(100, 50, "← BACK TO MENU", {
+        fontSize: "18px",
+        color: "#4ecdc4",
+        fontFamily: "Courier New, monospace",
+        backgroundColor: "#16213e",
+        padding: { x: 15, y: 8 },
+      })
+      .setOrigin(0.5)
+      .setInteractive();
 
     backButton.on("pointerdown", () => {
       this.scene.start("MenuScene");
     });
 
-    backButton.on("pointerover", () => backButton.setStyle({ color: "#ff6b6b" }));
-    backButton.on("pointerout", () => backButton.setStyle({ color: "#4ecdc4" }));
+    backButton.on("pointerover", () =>
+      backButton.setStyle({ color: "#ff6b6b" })
+    );
+    backButton.on("pointerout", () =>
+      backButton.setStyle({ color: "#4ecdc4" })
+    );
   }
 
   private createClassCards() {
     const classes = this.getCharacterClasses();
     const cardWidth = 200;
-    const cardHeight = 280;
-    const spacing = 220;
-    const startX = this.cameras.main.width / 2 - (spacing * (classes.length - 1)) / 2;
-    const cardY = this.cameras.main.height / 2 - 20;
+    const cardHeight = 300;
+    const spacingX = 230;
+    const spacingY = 320;
+    const classesPerRow = 3;
+
+    // Calculate starting positions for centered 2-row layout
+    const totalWidth = spacingX * (classesPerRow - 1);
+    const startX = this.cameras.main.width / 2 - totalWidth / 2;
+    const startY = this.cameras.main.height / 2 - spacingY / 2;
 
     classes.forEach((characterClass, index) => {
-      const cardX = startX + index * spacing;
-      const card = this.createClassCard(cardX, cardY, characterClass, cardWidth, cardHeight);
+      const row = Math.floor(index / classesPerRow);
+      const col = index % classesPerRow;
+      const cardX = startX + col * spacingX;
+      const cardY = startY + row * spacingY;
+
+      const card = this.createClassCard(
+        cardX,
+        cardY,
+        characterClass,
+        cardWidth,
+        cardHeight
+      );
       this.classCards.push(card);
     });
   }
 
-  private createClassCard(x: number, y: number, characterClass: CharacterClass, width: number, height: number): Phaser.GameObjects.Container {
+  private createClassCard(
+    x: number,
+    y: number,
+    characterClass: CharacterClass,
+    width: number,
+    height: number
+  ): Phaser.GameObjects.Container {
     const card = this.add.container(x, y);
 
     // Card background
@@ -116,49 +150,67 @@ export class ClassSelectionScene extends Phaser.Scene {
       }
     } catch (error) {
       // Fallback to colored rectangle if sprite fails
-      sprite = this.add.rectangle(0, -80, 60, 60, this.getClassColor(characterClass.name)) as any;
+      sprite = this.add.rectangle(
+        0,
+        -80,
+        60,
+        60,
+        this.getClassColor(characterClass.name)
+      ) as any;
     }
     card.add(sprite);
 
     // Class name
-    const nameText = this.add.text(0, -20, characterClass.name.toUpperCase(), {
-      fontSize: "20px",
-      color: "#ffe66d",
-      fontFamily: "Courier New, monospace",
-    }).setOrigin(0.5);
+    const nameText = this.add
+      .text(0, -20, characterClass.name.toUpperCase(), {
+        fontSize: "20px",
+        color: "#ffe66d",
+        fontFamily: "Courier New, monospace",
+      })
+      .setOrigin(0.5);
     card.add(nameText);
 
     // Stats
-    const statsText = this.add.text(0, 10, 
-      `HP: ${characterClass.baseHealth}\\n` +
-      `ATK: ${characterClass.baseAttack}\\n` +
-      `DEF: ${characterClass.baseDefense}\\n` +
-      `Coins: ${characterClass.startingCoins}`, {
-      fontSize: "14px",
-      color: "#ffffff",
-      fontFamily: "Courier New, monospace",
-      align: "center",
-    }).setOrigin(0.5);
+    const statsText = this.add
+      .text(
+        0,
+        15,
+        `HP: ${characterClass.baseHealth}\\n` +
+          `ATK: ${characterClass.baseAttack}\\n` +
+          `DEF: ${characterClass.baseDefense}\\n` +
+          `Coins: ${characterClass.startingCoins}`,
+        {
+          fontSize: "13px",
+          color: "#ffffff",
+          fontFamily: "Courier New, monospace",
+          align: "center",
+        }
+      )
+      .setOrigin(0.5);
     card.add(statsText);
 
     // Description
-    const descText = this.add.text(0, 70, characterClass.description, {
-      fontSize: "12px",
-      color: "#a8a8a8",
-      fontFamily: "Courier New, monospace",
-      align: "center",
-      wordWrap: { width: width - 20 },
-    }).setOrigin(0.5);
+    const descText = this.add
+      .text(0, 75, characterClass.description, {
+        fontSize: "11px",
+        color: "#a8a8a8",
+        fontFamily: "Courier New, monospace",
+        align: "center",
+        wordWrap: { width: width - 20 },
+      })
+      .setOrigin(0.5);
     card.add(descText);
 
-    // Special ability
-    const abilityText = this.add.text(0, 110, `Special: ${characterClass.specialAbility}`, {
-      fontSize: "11px",
-      color: "#f39c12",
-      fontFamily: "Courier New, monospace",
-      align: "center",
-      wordWrap: { width: width - 20 },
-    }).setOrigin(0.5);
+    // Special ability (skills)
+    const abilityText = this.add
+      .text(0, 125, `Skills: ${characterClass.specialAbility}`, {
+        fontSize: "10px",
+        color: "#f39c12",
+        fontFamily: "Courier New, monospace",
+        align: "center",
+        wordWrap: { width: width - 15 },
+      })
+      .setOrigin(0.5);
     card.add(abilityText);
 
     // Make card interactive
@@ -178,7 +230,10 @@ export class ClassSelectionScene extends Phaser.Scene {
     return card;
   }
 
-  private selectClass(characterClass: CharacterClass, card: Phaser.GameObjects.Container) {
+  private selectClass(
+    characterClass: CharacterClass,
+    card: Phaser.GameObjects.Container
+  ) {
     // Deselect previous class
     this.classCards.forEach((c, index) => {
       const bg = c.list[0] as Phaser.GameObjects.Rectangle;
@@ -194,7 +249,10 @@ export class ClassSelectionScene extends Phaser.Scene {
 
     // Enable confirm button
     this.confirmButton.setText("START ADVENTURE");
-    this.confirmButton.setStyle({ color: "#ffe66d", backgroundColor: "#16213e" });
+    this.confirmButton.setStyle({
+      color: "#ffe66d",
+      backgroundColor: "#16213e",
+    });
     this.confirmButton.setInteractive();
 
     this.confirmButton.off("pointerdown");
@@ -204,8 +262,12 @@ export class ClassSelectionScene extends Phaser.Scene {
       }
     });
 
-    this.confirmButton.on("pointerover", () => this.confirmButton.setStyle({ color: "#ff6b6b" }));
-    this.confirmButton.on("pointerout", () => this.confirmButton.setStyle({ color: "#ffe66d" }));
+    this.confirmButton.on("pointerover", () =>
+      this.confirmButton.setStyle({ color: "#ff6b6b" })
+    );
+    this.confirmButton.on("pointerout", () =>
+      this.confirmButton.setStyle({ color: "#ffe66d" })
+    );
   }
 
   private getCharacterClasses(): CharacterClass[] {
@@ -246,7 +308,8 @@ export class ClassSelectionScene extends Phaser.Scene {
       },
       {
         name: CharacterClassName.BARBARIAN,
-        description: "Mighty warrior with massive health and devastating attacks",
+        description:
+          "Mighty warrior with massive health and devastating attacks",
         baseHealth: 150,
         baseAttack: 18,
         baseDefense: 5,
@@ -282,13 +345,20 @@ export class ClassSelectionScene extends Phaser.Scene {
 
   private getClassColor(className: string): number {
     switch (className) {
-      case CharacterClassName.KNIGHT: return 0x4ecdc4;
-      case CharacterClassName.ARCHER: return 0x2ecc71;
-      case CharacterClassName.MAGE: return 0x3498db;
-      case CharacterClassName.BARBARIAN: return 0xe74c3c;
-      case CharacterClassName.ASSASSIN: return 0x9b59b6;
-      case CharacterClassName.CLERIC: return 0xf39c12;
-      default: return 0x95a5a6;
+      case CharacterClassName.KNIGHT:
+        return 0x4ecdc4;
+      case CharacterClassName.ARCHER:
+        return 0x2ecc71;
+      case CharacterClassName.MAGE:
+        return 0x3498db;
+      case CharacterClassName.BARBARIAN:
+        return 0xe74c3c;
+      case CharacterClassName.ASSASSIN:
+        return 0x9b59b6;
+      case CharacterClassName.CLERIC:
+        return 0xf39c12;
+      default:
+        return 0x95a5a6;
     }
   }
 }

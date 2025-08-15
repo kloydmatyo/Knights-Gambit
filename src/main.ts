@@ -7,8 +7,8 @@ import { ClassSelectionScene } from "./scenes/ClassSelectionScene";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 1024,
-  height: 768,
+  width: 1400,
+  height: 900,
   parent: "game-container",
   backgroundColor: "#1a1a2e",
   scene: [MenuScene, ClassSelectionScene, GameScene, CombatScene, SpriteTestScene],

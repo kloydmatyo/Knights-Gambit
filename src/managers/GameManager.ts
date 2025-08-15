@@ -89,9 +89,9 @@ export class GameManager {
 
   generateBoard(floor: number = 1): BoardTile[] {
     const board: BoardTile[] = [];
-    const centerX = 512;
-    const centerY = 300;
-    const radius = 200;
+    const centerX = 700; // Centered for 1400px width
+    const centerY = 450; // Centered for 900px height
+    const radius = 250; // Slightly larger radius for bigger screen
 
     for (let i = 0; i < this.BOARD_SIZE; i++) {
       const angle = (i / this.BOARD_SIZE) * Math.PI * 2 - Math.PI / 2;

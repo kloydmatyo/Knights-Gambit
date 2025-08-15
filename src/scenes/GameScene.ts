@@ -158,9 +158,9 @@ export class GameScene extends Phaser.Scene {
     const skillManager = this.gameManager.getSkillManager();
     const playerSkills = this.player.skills.filter(ps => ps.unlocked);
     
-    const startX = this.cameras.main.width - 200;
+    const startX = this.cameras.main.width - 250;
     const startY = 100;
-    const buttonHeight = 35;
+    const buttonHeight = 40;
     
     // Title
     this.add.text(startX, startY - 30, "SKILLS", {
