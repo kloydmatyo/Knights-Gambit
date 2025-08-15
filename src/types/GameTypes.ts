@@ -206,6 +206,7 @@ export interface Enemy {
   defense: number;
   coins: number;
   loot?: Item[];
+  statusEffects?: StatusEffect[];
 }
 
 export interface GameState {
