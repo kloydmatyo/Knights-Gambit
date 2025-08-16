@@ -603,6 +603,8 @@ export class GameScene extends Phaser.Scene {
     );
     shopItems.push(healingText);
 
+    
+
     // Special shop items (floors 4, 8, 12)
     if (isSpecialShop) {
       const upgradePrice = 50;
@@ -630,11 +632,22 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.width / 2,
         this.cameras.main.height / 2 + 60,
         `Heartstone Amulet - ${amuletPrice} coins`,
-        blessingPrice,
+        amuletPrice,
         () => this.buyAmulet(amuletPrice)
       );
       shopItems.push(amuletText);
+
+      const armorPrice = 50;
+      const armorText = this.createShopItem(
+        this.cameras.main.width / 2,
+        this.cameras.main.height / 2 + 100,
+        `Heartstone Amulet - ${armorPrice} coins`,
+        armorPrice,
+        () => this.buyArmor(armorPrice)
+      );
+      shopItems.push(armorText);
     }
+
 
     // Close button
     const closeButton = this.add
@@ -748,6 +761,16 @@ export class GameScene extends Phaser.Scene {
     if (this.player.coins >= price) {
       this.player.coins -= price;
       this.gameManager.updateBaseStats(this.player, 0, 0, 20);
+      this.showMessage("Max Health Increased! +20 Max HP!", "#f39c12");
+    } else {
+      this.showMessage("Not enough coins!", "#e74c3c");
+    }
+  }
+
+  private buyArmor(price: number) {
+    if (this.player.coins >= price) {
+      this.player.coins -= price;
+      this.gameManager.updateBaseStats(this.player, 0, 5, 0);
       this.showMessage("Max Health Increased! +20 Max HP!", "#f39c12");
     } else {
       this.showMessage("Not enough coins!", "#e74c3c");
