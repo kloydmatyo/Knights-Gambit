@@ -107,15 +107,15 @@ export class ClassSelectionScene extends Phaser.Scene {
   private createInstructionPanel() {
     const panelX = 850;
     const panelY = 440;
-    const panelWidth = 500;
-    const panelHeight = 600;
+    const panelWidth = 520;
+    const panelHeight = 650;
 
     // Create instruction panel background
     const instructionBg = this.add.rectangle(panelX, panelY, panelWidth, panelHeight, 0x16213e);
     instructionBg.setStrokeStyle(3, 0x4ecdc4);
 
     // Instruction text
-    const instructionText = this.add.text(panelX, panelY - 200, "📜 CLASS DETAILS", {
+    const instructionText = this.add.text(panelX, panelY - 250, "📜 CLASS DETAILS", {
       fontSize: "28px",
       color: "#ffe66d",
       fontFamily: "Courier New, monospace",
@@ -287,7 +287,7 @@ export class ClassSelectionScene extends Phaser.Scene {
 
     const panelX = 850;
     const panelY = 440;
-    const panelWidth = 500;
+    const panelWidth = 520;
     const panelHeight = 650;
 
     this.detailsPanel = this.add.container(panelX, panelY);
@@ -299,48 +299,49 @@ export class ClassSelectionScene extends Phaser.Scene {
 
     // Class header
     const emoji = this.getClassEmoji(characterClass.name);
-    const header = this.add.text(0, -280, `${emoji} ${characterClass.name.toUpperCase()} ${emoji}`, {
-      fontSize: "32px",
+    const header = this.add.text(0, -300, `${emoji} ${characterClass.name.toUpperCase()} ${emoji}`, {
+      fontSize: "28px",
       color: "#ffe66d",
       fontFamily: "Courier New, monospace",
     }).setOrigin(0.5);
     this.detailsPanel.add(header);
 
-    // Description
-    const description = this.add.text(0, -230, characterClass.description, {
-      fontSize: "16px",
+    // Description - Fixed positioning and wrapping
+    const description = this.add.text(0, -250, characterClass.description, {
+      fontSize: "14px",
       color: "#a8a8a8",
       fontFamily: "Courier New, monospace",
       align: "center",
-      wordWrap: { width: panelWidth - 40 },
+      wordWrap: { width: panelWidth - 60 },
+      lineSpacing: 2,
     }).setOrigin(0.5);
     this.detailsPanel.add(description);
 
     // Stats section
-    const statsTitle = this.add.text(0, -170, "📊 STATS", {
-      fontSize: "20px",
+    const statsTitle = this.add.text(0, -190, "📊 STATS", {
+      fontSize: "18px",
       color: "#4ecdc4",
       fontFamily: "Courier New, monospace",
     }).setOrigin(0.5);
     this.detailsPanel.add(statsTitle);
 
-    const statsText = this.add.text(0, -130, 
+    const statsText = this.add.text(0, -155, 
       `Health: ${characterClass.baseHealth} HP\n` +
       `Attack: ${characterClass.baseAttack} ATK\n` +
       `Defense: ${characterClass.baseDefense} DEF\n` +
       `Starting Coins: ${characterClass.startingCoins}\n` +
       (characterClass.baseMana ? `Mana: ${characterClass.baseMana} MP` : ""), {
-      fontSize: "16px",
+      fontSize: "14px",
       color: "#ffffff",
       fontFamily: "Courier New, monospace",
       align: "center",
-      lineSpacing: 4,
+      lineSpacing: 3,
     }).setOrigin(0.5);
     this.detailsPanel.add(statsText);
 
     // Skills section
-    const skillsTitle = this.add.text(0, -40, "⚡ CLASS SKILLS", {
-      fontSize: "20px",
+    const skillsTitle = this.add.text(0, -70, "⚡ CLASS SKILLS", {
+      fontSize: "18px",
       color: "#f39c12",
       fontFamily: "Courier New, monospace",
     }).setOrigin(0.5);
@@ -348,40 +349,45 @@ export class ClassSelectionScene extends Phaser.Scene {
 
     // Get skills from SkillManager
     const skills = this.getClassSkills(characterClass.name as CharacterClassName);
-    let skillY = 10;
+    let skillY = -40;
 
     skills.forEach((skill, index) => {
-      const skillName = this.add.text(-220, skillY, `${index + 1}. ${skill.name}`, {
-        fontSize: "14px",
+      // Skill name
+      const skillName = this.add.text(-240, skillY, `${index + 1}. ${skill.name}`, {
+        fontSize: "13px",
         color: "#ffe66d",
         fontFamily: "Courier New, monospace",
       });
       this.detailsPanel!.add(skillName);
 
-      const skillType = this.add.text(-220, skillY + 20, `Type: ${skill.type.toUpperCase()}`, {
-        fontSize: "12px",
+      // Skill type
+      const skillType = this.add.text(-240, skillY + 18, `Type: ${skill.type.toUpperCase()}`, {
+        fontSize: "11px",
         color: skill.type === "active" ? "#2ecc71" : "#9b59b6",
         fontFamily: "Courier New, monospace",
       });
       this.detailsPanel!.add(skillType);
 
-      const skillDesc = this.add.text(-220, skillY + 40, skill.description, {
-        fontSize: "11px",
+      // Skill description - Better word wrapping
+      const skillDesc = this.add.text(-240, skillY + 35, skill.description, {
+        fontSize: "10px",
         color: "#a8a8a8",
         fontFamily: "Courier New, monospace",
-        wordWrap: { width: 440 },
+        wordWrap: { width: 460 },
+        lineSpacing: 1,
       });
       this.detailsPanel!.add(skillDesc);
 
+      // Cooldown info
       const cooldownText = skill.cooldown > 0 ? `Cooldown: ${skill.cooldown} turns` : "Always Active";
-      const cooldown = this.add.text(-220, skillY + 80, cooldownText, {
-        fontSize: "10px",
+      const cooldown = this.add.text(-240, skillY + 70, cooldownText, {
+        fontSize: "9px",
         color: "#4ecdc4",
         fontFamily: "Courier New, monospace",
       });
       this.detailsPanel!.add(cooldown);
 
-      skillY += 110;
+      skillY += 95; // Reduced spacing between skills
     });
   }
 
