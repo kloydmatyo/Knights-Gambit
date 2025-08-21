@@ -18,6 +18,8 @@ export interface Player {
   skillCooldowns: { [skillId: string]: number }; // Skill cooldowns
   mana?: number; // For mage class
   maxMana?: number; // For mage class
+  experience: number; // Experience points
+  experienceToNext: number; // Experience needed for next level
 }
 
 export interface CharacterClass {
@@ -121,6 +123,8 @@ export interface Equipment {
   weapon?: Weapon;
   armor?: Armor;
   accessory?: Accessory;
+  helmet?: Armor;
+  boots?: Armor;
 }
 
 export interface Item {
@@ -130,21 +134,72 @@ export interface Item {
   description: string;
   value: number;
   quantity: number;
+  rarity: ItemRarity;
+  level: number;
+}
+
+export enum ItemRarity {
+  COMMON = "common",
+  UNCOMMON = "uncommon", 
+  RARE = "rare",
+  EPIC = "epic",
+  LEGENDARY = "legendary",
 }
 
 export interface Weapon extends Item {
   attack: number;
   critChance: number;
+  durability: number;
+  maxDurability: number;
+  enchantments: Enchantment[];
 }
 
 export interface Armor extends Item {
   defense: number;
   healthBonus: number;
+  durability: number;
+  maxDurability: number;
+  enchantments: Enchantment[];
 }
 
 export interface Accessory extends Item {
   effect: string;
+  effectValue: number;
+  enchantments: Enchantment[];
+}
+
+export interface Enchantment {
+  id: string;
+  name: string;
+  description: string;
+  effect: EnchantmentEffect;
+}
+
+export interface EnchantmentEffect {
+  type: EnchantmentType;
   value: number;
+  duration?: number;
+}
+
+export enum EnchantmentType {
+  ATTACK_BONUS = "attack_bonus",
+  DEFENSE_BONUS = "defense_bonus",
+  HEALTH_BONUS = "health_bonus",
+  MANA_BONUS = "mana_bonus",
+  CRIT_CHANCE = "crit_chance",
+  DAMAGE_REDUCTION = "damage_reduction",
+  REGENERATION = "regeneration",
+  FIRE_DAMAGE = "fire_damage",
+  ICE_DAMAGE = "ice_damage",
+  LIGHTNING_DAMAGE = "lightning_damage",
+}
+
+export enum ItemType {
+  WEAPON = "weapon",
+  ARMOR = "armor",
+  ACCESSORY = "accessory",
+  CONSUMABLE = "consumable",
+  TREASURE = "treasure",
 }
 
 export interface PlayerStats {
@@ -164,12 +219,7 @@ export enum TileType {
   START = "start",
 }
 
-export enum ItemType {
-  WEAPON = "weapon",
-  ARMOR = "armor",
-  ACCESSORY = "accessory",
-  CONSUMABLE = "consumable",
-}
+
 
 export enum StatusEffectType {
   POISON = "poison",
@@ -207,6 +257,36 @@ export interface Enemy {
   coins: number;
   loot?: Item[];
   statusEffects?: StatusEffect[];
+  isBoss?: boolean;
+  bossAbilities?: BossAbility[];
+  experience?: number;
+}
+
+export interface BossAbility {
+  id: string;
+  name: string;
+  type: BossAbilityType;
+  target: BossAbilityTarget;
+  damage?: number;
+  effect?: StatusEffectType;
+  cooldown: number;
+  currentCooldown: number;
+  description: string;
+}
+
+export enum BossAbilityType {
+  ATTACK = "attack",
+  SPECIAL_ATTACK = "special_attack",
+  BUFF = "buff",
+  DEBUFF = "debuff",
+  HEAL = "heal",
+  SUMMON = "summon",
+}
+
+export enum BossAbilityTarget {
+  PLAYER = "player",
+  SELF = "self",
+  ALL = "all",
 }
 
 export interface GameState {

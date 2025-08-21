@@ -79,6 +79,8 @@ export class GameManager {
       },
       skills: [],
       skillCooldowns: {},
+      experience: 0,
+      experienceToNext: 100, // Experience needed for level 2
     };
 
     // Initialize skills
