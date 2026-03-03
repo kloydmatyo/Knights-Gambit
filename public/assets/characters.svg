@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="192" height="32" viewBox="0 0 192 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Knight - Steel armor, gold visor, sword -->
+  <g id="knight" transform="translate(0,0)">
+    <!-- Helmet -->
+    <rect x="10" y="4" width="12" height="8" fill="#C0C0C0"/>
+    <rect x="12" y="6" width="8" height="4" fill="#FFD700"/>
+    <!-- Body armor -->
+    <rect x="8" y="12" width="16" height="12" fill="#A0A0A0"/>
+    <rect x="10" y="14" width="12" height="8" fill="#C0C0C0"/>
+    <!-- Arms -->
+    <rect x="6" y="14" width="4" height="8" fill="#C0C0C0"/>
+    <rect x="22" y="14" width="4" height="8" fill="#C0C0C0"/>
+    <!-- Legs -->
+    <rect x="10" y="24" width="4" height="6" fill="#808080"/>
+    <rect x="18" y="24" width="4" height="6" fill="#808080"/>
+    <!-- Sword -->
+    <rect x="26" y="10" width="2" height="12" fill="#C0C0C0"/>
+    <rect x="25" y="8" width="4" height="2" fill="#8B4513"/>
+    <!-- Feet -->
+    <rect x="8" y="30" width="6" height="2" fill="#654321"/>
+    <rect x="18" y="30" width="6" height="2" fill="#654321"/>
+  </g>
+
+  <!-- Archer - Green tunic, bow, quiver -->
+  <g id="archer" transform="translate(32,0)">
+    <!-- Head -->
+    <rect x="12" y="4" width="8" height="6" fill="#FFDBAC"/>
+    <rect x="14" y="6" width="2" height="2" fill="#000000"/>
+    <rect x="18" y="6" width="2" height="2" fill="#000000"/>
+    <!-- Hair -->
+    <rect x="10" y="4" width="12" height="2" fill="#8B4513"/>
+    <!-- Tunic -->
+    <rect x="8" y="10" width="16" height="14" fill="#228B22"/>
+    <rect x="10" y="12" width="12" height="10" fill="#32CD32"/>
+    <!-- Arms -->
+    <rect x="6" y="12" width="4" height="8" fill="#FFDBAC"/>
+    <rect x="22" y="12" width="4" height="8" fill="#FFDBAC"/>
+    <!-- Legs -->
+    <rect x="10" y="24" width="4" height="6" fill="#8B4513"/>
+    <rect x="18" y="24" width="4" height="6" fill="#8B4513"/>
+    <!-- Bow -->
+    <rect x="4" y="8" width="2" height="12" fill="#8B4513"/>
+    <rect x="3" y="8" width="1" height="1" fill="#8B4513"/>
+    <rect x="3" y="19" width="1" height="1" fill="#8B4513"/>
+    <!-- Quiver -->
+    <rect x="24" y="8" width="3" height="8" fill="#654321"/>
+    <rect x="25" y="6" width="1" height="2" fill="#8B4513"/>
+    <!-- Feet -->
+    <rect x="8" y="30" width="6" height="2" fill="#654321"/>
+    <rect x="18" y="30" width="6" height="2" fill="#654321"/>
+  </g>
+
+  <!-- Mage - Blue robe, staff with orb, pointed hat -->
+  <g id="mage" transform="translate(64,0)">
+    <!-- Pointed hat -->
+    <rect x="14" y="2" width="4" height="2" fill="#4169E1"/>
+    <rect x="12" y="4" width="8" height="2" fill="#4169E1"/>
+    <rect x="10" y="6" width="12" height="2" fill="#4169E1"/>
+    <!-- Head -->
+    <rect x="12" y="8" width="8" height="4" fill="#FFDBAC"/>
+    <rect x="14" y="10" width="2" height="1" fill="#000000"/>
+    <rect x="18" y="10" width="2" height="1" fill="#000000"/>
+    <!-- Robe -->
+    <rect x="6" y="12" width="20" height="16" fill="#0000CD"/>
+    <rect x="8" y="14" width="16" height="12" fill="#4169E1"/>
+    <!-- Arms -->
+    <rect x="4" y="14" width="4" height="6" fill="#FFDBAC"/>
+    <rect x="24" y="14" width="4" height="6" fill="#FFDBAC"/>
+    <!-- Staff -->
+    <rect x="2" y="6" width="2" height="16" fill="#8B4513"/>
+    <!-- Glowing orb -->
+    <rect x="1" y="4" width="4" height="4" fill="#FFD700"/>
+    <rect x="2" y="5" width="2" height="2" fill="#FFFF00"/>
+    <!-- Feet -->
+    <rect x="10" y="28" width="12" height="4" fill="#0000CD"/>
+  </g>
+
+  <!-- Barbarian - Bare chest, leather armor, large axe -->
+  <g id="barbarian" transform="translate(96,0)">
+    <!-- Hair/headband -->
+    <rect x="10" y="4" width="12" height="4" fill="#8B4513"/>
+    <rect x="12" y="6" width="8" height="2" fill="#654321"/>
+    <!-- Head -->
+    <rect x="12" y="8" width="8" height="4" fill="#FFDBAC"/>
+    <rect x="14" y="10" width="2" height="1" fill="#000000"/>
+    <rect x="18" y="10" width="2" height="1" fill="#000000"/>
+    <!-- Bare chest -->
+    <rect x="10" y="12" width="12" height="8" fill="#FFDBAC"/>
+    <!-- Leather armor -->
+    <rect x="8" y="20" width="16" height="8" fill="#8B4513"/>
+    <rect x="10" y="22" width="12" height="4" fill="#A0522D"/>
+    <!-- Arms -->
+    <rect x="6" y="14" width="4" height="8" fill="#FFDBAC"/>
+    <rect x="22" y="14" width="4" height="8" fill="#FFDBAC"/>
+    <!-- Legs -->
+    <rect x="10" y="28" width="4" height="4" fill="#8B4513"/>
+    <rect x="18" y="28" width="4" height="4" fill="#8B4513"/>
+    <!-- Large axe -->
+    <rect x="26" y="8" width="4" height="4" fill="#C0C0C0"/>
+    <rect x="28" y="12" width="2" height="8" fill="#8B4513"/>
+    <!-- Feet -->
+    <rect x="8" y="30" width="6" height="2" fill="#654321"/>
+    <rect x="18" y="30" width="6" height="2" fill="#654321"/>
+  </g>
+
+  <!-- Assassin - Black hood, dual daggers, stealthy pose -->
+  <g id="assassin" transform="translate(128,0)">
+    <!-- Hood -->
+    <rect x="8" y="2" width="16" height="10" fill="#000000"/>
+    <rect x="10" y="4" width="12" height="8" fill="#2F2F2F"/>
+    <!-- Face (partially hidden) -->
+    <rect x="14" y="8" width="4" height="2" fill="#FFDBAC"/>
+    <rect x="15" y="9" width="1" height="1" fill="#FF0000"/>
+    <rect x="18" y="9" width="1" height="1" fill="#FF0000"/>
+    <!-- Body -->
+    <rect x="10" y="12" width="12" height="12" fill="#000000"/>
+    <rect x="12" y="14" width="8" height="8" fill="#2F2F2F"/>
+    <!-- Arms -->
+    <rect x="8" y="14" width="4" height="6" fill="#000000"/>
+    <rect x="20" y="14" width="4" height="6" fill="#000000"/>
+    <!-- Legs -->
+    <rect x="10" y="24" width="4" height="6" fill="#000000"/>
+    <rect x="18" y="24" width="4" height="6" fill="#000000"/>
+    <!-- Dual daggers -->
+    <rect x="6" y="12" width="2" height="6" fill="#C0C0C0"/>
+    <rect x="24" y="12" width="2" height="6" fill="#C0C0C0"/>
+    <rect x="5" y="11" width="4" height="1" fill="#8B4513"/>
+    <rect x="23" y="11" width="4" height="1" fill="#8B4513"/>
+    <!-- Feet -->
+    <rect x="8" y="30" width="6" height="2" fill="#000000"/>
+    <rect x="18" y="30" width="6" height="2" fill="#000000"/>
+  </g>
+
+  <!-- Cleric - White robe, golden cross staff, healing aura -->
+  <g id="cleric" transform="translate(160,0)">
+    <!-- Head -->
+    <rect x="12" y="6" width="8" height="4" fill="#FFDBAC"/>
+    <rect x="14" y="8" width="2" height="1" fill="#000000"/>
+    <rect x="18" y="8" width="2" height="1" fill="#000000"/>
+    <!-- Hair -->
+    <rect x="10" y="6" width="12" height="2" fill="#8B4513"/>
+    <!-- White robe -->
+    <rect x="6" y="10" width="20" height="18" fill="#FFFFFF"/>
+    <rect x="8" y="12" width="16" height="14" fill="#F5F5F5"/>
+    <!-- Arms -->
+    <rect x="4" y="12" width="4" height="8" fill="#FFDBAC"/>
+    <rect x="24" y="12" width="4" height="8" fill="#FFDBAC"/>
+    <!-- Cross staff -->
+    <rect x="2" y="4" width="2" height="18" fill="#8B4513"/>
+    <rect x="0" y="6" width="6" height="2" fill="#FFD700"/>
+    <rect x="1" y="4" width="4" height="2" fill="#FFD700"/>
+    <!-- Healing aura (golden glow) -->
+    <rect x="10" y="4" width="12" height="2" fill="#FFD700"/>
+    <rect x="8" y="6" width="16" height="2" fill="#FFFF00"/>
+    <!-- Feet -->
+    <rect x="10" y="28" width="12" height="4" fill="#FFFFFF"/>
+  </g>
+</svg>

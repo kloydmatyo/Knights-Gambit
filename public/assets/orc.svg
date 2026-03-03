@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Orc - Large, brutish, tusks -->
+  <g id="orc">
+    <!-- Head -->
+    <rect x="10" y="4" width="12" height="8" fill="#8FBC8F"/>
+    <!-- Tusks -->
+    <rect x="12" y="10" width="2" height="3" fill="#FFFFFF"/>
+    <rect x="18" y="10" width="2" height="3" fill="#FFFFFF"/>
+    <!-- Eyes -->
+    <rect x="13" y="6" width="2" height="2" fill="#FF0000"/>
+    <rect x="17" y="6" width="2" height="2" fill="#FF0000"/>
+    <!-- Body -->
+    <rect x="8" y="12" width="16" height="12" fill="#8B4513"/>
+    <rect x="10" y="14" width="12" height="8" fill="#A0522D"/>
+    <!-- Arms -->
+    <rect x="6" y="14" width="4" height="8" fill="#8FBC8F"/>
+    <rect x="22" y="14" width="4" height="8" fill="#8FBC8F"/>
+    <!-- Legs -->
+    <rect x="10" y="24" width="4" height="6" fill="#8FBC8F"/>
+    <rect x="18" y="24" width="4" height="6" fill="#8FBC8F"/>
+    <!-- War axe -->
+    <rect x="26" y="8" width="4" height="4" fill="#C0C0C0"/>
+    <rect x="28" y="12" width="2" height="8" fill="#8B4513"/>
+    <!-- Feet -->
+    <rect x="8" y="30" width="6" height="2" fill="#654321"/>
+    <rect x="18" y="30" width="6" height="2" fill="#654321"/>
+  </g>
+</svg>
