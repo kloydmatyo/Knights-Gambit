@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "npx browserslist@latest --update-db"
+    "lint": "next lint"
   },
   "keywords": [
     "game",
@@ -21,11 +20,9 @@
   "author": "Knight's Gambit Dev Team",
   "license": "MIT",
   "dependencies": {
-    "browserslist": "^4.23.0",
     "clsx": "^2.1.0",
     "framer-motion": "^11.0.0",
     "next": "^14.2.0",
-    "phaser": "^3.70.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "tailwind-merge": "^2.2.0",
