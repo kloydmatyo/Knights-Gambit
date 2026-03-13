@@ -21,7 +21,7 @@ export default function Home() {
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >
-          ⚔️ KNIGHT'S GAMBIT ⚔️
+          🎲 DICEBOUND 🎲
         </motion.h1>
 
         <motion.p
@@ -116,8 +116,8 @@ export default function Home() {
         transition={{ delay: 1.2 }}
         className="absolute bottom-4 text-center text-gray-500 text-sm"
       >
-        <p>Built with Next.js, TypeScript & Phaser</p>
-        <p className="mt-1">© 2024 Knight's Gambit</p>
+        <p>Built with Next.js, TypeScript & React</p>
+        <p className="mt-1">© 2024 Dicebound</p>
       </motion.div>
     </div>
   );
