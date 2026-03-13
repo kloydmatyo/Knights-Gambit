@@ -9,7 +9,7 @@ export class CharacterEngine {
   static createPlayer(characterClass: CharacterClass): Player {
     const stats = CLASS_STATS[characterClass];
     
-    return {
+    const basePlayer = {
       id: `player-${Date.now()}`,
       class: characterClass,
       health: stats.baseHealth,
@@ -21,11 +21,18 @@ export class CharacterEngine {
       inventory: [],
       skills: this.getClassSkills(characterClass),
       statusEffects: [],
-      ...(stats.baseMana && {
+    };
+
+    // Add mana for mage class
+    if ('baseMana' in stats) {
+      return {
+        ...basePlayer,
         mana: stats.baseMana,
         maxMana: stats.baseMana,
-      }),
-    };
+      };
+    }
+
+    return basePlayer;
   }
 
   /**
