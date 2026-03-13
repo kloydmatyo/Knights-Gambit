@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html,
+  body {
+    @apply w-full h-full m-0 p-0 bg-game-bg font-game overflow-hidden;
+  }
+
+  body {
+    @apply flex justify-center items-center;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-game-accent text-white font-bold rounded-lg transition-all hover:bg-opacity-90 hover:scale-105 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-game-primary text-game-gold font-bold rounded-lg border-2 border-game-gold transition-all hover:bg-game-secondary;
+  }
+
+  .card {
+    @apply bg-game-primary border-2 border-game-secondary rounded-lg p-6 shadow-lg;
+  }
+
+  .stat-display {
+    @apply flex items-center gap-2 text-white font-mono;
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  }
+
+  .glow {
+    box-shadow: 0 0 20px rgba(255, 230, 109, 0.5);
+  }
+}
+
+#game-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#game-container canvas {
+  display: block !important;
+  margin: 0 auto !important;
+}
