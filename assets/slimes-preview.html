@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slimes Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1a2e;
+    color: #eee;
+    font-family: monospace;
+    padding: 24px;
+  }
+  h1 { text-align: center; margin-bottom: 24px; font-size: 1.6rem; color: #a0e0ff; }
+  .slime-section {
+    margin-bottom: 40px;
+  }
+  .slime-title {
+    font-size: 1.2rem;
+    color: #7fdbff;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 6px;
+  }
+  .anim-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .anim-card {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    min-width: 160px;
+  }
+  .anim-label {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .sprite-canvas {
+    display: block;
+    margin: 0 auto;
+    image-rendering: pixelated;
+    width: 128px;
+    height: 128px;
+    background: #0a0a1a;
+    border-radius: 4px;
+  }
+  .controls {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .controls label { margin-right: 8px; color: #aaa; }
+  .controls input[type=range] { vertical-align: middle; }
+  .speed-val { color: #7fdbff; }
+</style>
+</head>
+<body>
+<h1>🟢 Slimes Sprite Preview</h1>
+
+<div class="controls">
+  <label>Animation Speed:</label>
+  <input type="range" id="speedSlider" min="50" max="500" value="150" step="10">
+  <span class="speed-val" id="speedVal">150ms</span>
+</div>
+
+<div id="app"></div>
+
+<script>
+const FRAME_W = 128;
+const FRAME_H = 128; // top half of the 256px tall sheet
+
+const slimes = ['Slime1', 'Slime2', 'Slime3'];
+const animations = {
+  Idle:   { frames: 3 },
+  Walk:   { frames: 4 },
+  Run:    { frames: 4 },
+  Attack: { frames: 5 },
+  Hurt:   { frames: 2 },
+  Death:  { frames: 5 },
+};
+
+// Slime2 Attack has 5.5 frames worth (704px), use 5
+// Slime3 Attack has 4.5 frames worth (576px), use 4
+const frameOverrides = {
+  'Slime2_Attack': 5,
+  'Slime3_Attack': 4,
+  'Slime1_Hurt':   2,
+  'Slime2_Hurt':   2,
+  'Slime3_Hurt':   2,
+  'Slime3_Death':  4,
+};
+
+let frameInterval = 150;
+const timers = [];
+
+function getFrameCount(slime, anim) {
+  const key = `${slime}_${anim}`;
+  return frameOverrides[key] ?? animations[anim].frames;
+}
+
+function getSpritePath(slime, anim) {
+  return `Game assets/SLIMES/PNG/${slime}/Without_shadow/${slime}_${anim}_without_shadow.png`;
+}
+
+function createAnimCard(slime, anim) {
+  const card = document.createElement('div');
+  card.className = 'anim-card';
+
+  const label = document.createElement('div');
+  label.className = 'anim-label';
+  label.textContent = anim;
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'sprite-canvas';
+  canvas.width = FRAME_W;
+  canvas.height = FRAME_H;
+  canvas.title = `${slime} - ${anim}`;
+
+  card.appendChild(label);
+  card.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  const frameCount = getFrameCount(slime, anim);
+  let currentFrame = 0;
+
+  img.onload = () => {
+    function draw() {
+      ctx.clearRect(0, 0, FRAME_W, FRAME_H);
+      ctx.drawImage(img,
+        currentFrame * FRAME_W, 0,   // source x, y (top row only)
+        FRAME_W, FRAME_H,             // source w, h
+        0, 0,                         // dest x, y
+        FRAME_W, FRAME_H              // dest w, h
+      );
+    }
+    draw();
+    const timer = { card, slime, anim, frameCount, draw, currentFrame: 0 };
+    timers.push(timer);
+    timer._draw = draw;
+    timer._next = () => {
+      timer.currentFrame = (timer.currentFrame + 1) % timer.frameCount;
+      currentFrame = timer.currentFrame;
+      draw();
+    };
+  };
+
+  img.onerror = () => {
+    ctx.fillStyle = '#333';
+    ctx.fillRect(0, 0, FRAME_W, FRAME_H);
+    ctx.fillStyle = '#f66';
+    ctx.font = '10px monospace';
+    ctx.fillText('missing', 10, 64);
+  };
+
+  img.src = getSpritePath(slime, anim);
+  return { card, getNext: () => timers.find(t => t.slime === slime && t.anim === anim) };
+}
+
+// Build UI
+const app = document.getElementById('app');
+slimes.forEach(slime => {
+  const section = document.createElement('div');
+  section.className = 'slime-section';
+
+  const title = document.createElement('div');
+  title.className = 'slime-title';
+  title.textContent = slime;
+
+  const grid = document.createElement('div');
+  grid.className = 'anim-grid';
+
+  Object.keys(animations).forEach(anim => {
+    const { card } = createAnimCard(slime, anim);
+    grid.appendChild(card);
+  });
+
+  section.appendChild(title);
+  section.appendChild(grid);
+  app.appendChild(section);
+});
+
+// Animation loop
+function tick() {
+  timers.forEach(t => { if (t._next) t._next(); });
+}
+
+let intervalId = setInterval(tick, frameInterval);
+
+const slider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+slider.addEventListener('input', () => {
+  frameInterval = parseInt(slider.value);
+  speedVal.textContent = frameInterval + 'ms';
+  clearInterval(intervalId);
+  intervalId = setInterval(tick, frameInterval);
+});
+</script>
+</body>
+</html>

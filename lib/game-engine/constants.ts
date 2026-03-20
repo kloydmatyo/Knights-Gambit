@@ -93,6 +93,9 @@ export const ENEMY_TYPES = {
   ORC: 'orc',
   SKELETON: 'skeleton',
   TROLL: 'troll',
+  SLIME1: 'slime1',
+  SLIME2: 'slime2',
+  SLIME3: 'slime3',
 } as const;
 
 // Enemy Stats
@@ -125,7 +128,55 @@ export const ENEMY_STATS = {
     baseDefense: 6,
     coinReward: 40,
   },
+  slime1: {
+    name: 'Green Slime',
+    baseHealth: 25,
+    baseAttack: 6,
+    baseDefense: 1,
+    coinReward: 12,
+  },
+  slime2: {
+    name: 'Blue Slime',
+    baseHealth: 35,
+    baseAttack: 9,
+    baseDefense: 2,
+    coinReward: 18,
+  },
+  slime3: {
+    name: 'Red Slime',
+    baseHealth: 45,
+    baseAttack: 13,
+    baseDefense: 3,
+    coinReward: 28,
+  },
 } as const;
+
+// Sprite config for animated enemies
+export const ENEMY_SPRITES: Partial<Record<string, {
+  sheet: (anim: string) => string;
+  frameW: number;
+  frameH: number;
+  frames: Partial<Record<string, number>>;
+}>> = {
+  slime1: {
+    sheet: (anim) => `/sprites/slimes/Slime1_${anim}.png`,
+    frameW: 128,
+    frameH: 128,
+    frames: { Idle: 3, Attack: 5, Run: 4, Walk: 4, Hurt: 2, Death: 5 },
+  },
+  slime2: {
+    sheet: (anim) => `/sprites/slimes/Slime2_${anim}.png`,
+    frameW: 128,
+    frameH: 128,
+    frames: { Idle: 3, Attack: 5, Run: 4, Walk: 4, Hurt: 2, Death: 5 },
+  },
+  slime3: {
+    sheet: (anim) => `/sprites/slimes/Slime3_${anim}.png`,
+    frameW: 128,
+    frameH: 128,
+    frames: { Idle: 3, Attack: 4, Run: 4, Walk: 4, Hurt: 2, Death: 4 },
+  },
+};
 
 // Status Effects
 export const STATUS_EFFECTS = {

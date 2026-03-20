@@ -1,10 +1,32 @@
 'use client';
 
-import { Player, Enemy, Skill } from '@/lib/game-engine';
+import { Player, Enemy } from '@/lib/game-engine';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import { cn } from '@/lib/utils';
+import { ENEMY_SPRITES } from '@/lib/game-engine/constants';
+import SpriteAnimator from '@/components/game/SpriteAnimator';
+
+function EnemySprite({ enemy, isHurt }: { enemy: Enemy; isHurt: boolean }) {
+  const sprite = ENEMY_SPRITES[enemy.type];
+  if (!sprite) return <div className="text-6xl mb-3">👹</div>;
+
+  const anim = isHurt ? 'Hurt' : 'Idle';
+  const frameCount = isHurt ? (sprite.frames['Hurt'] ?? 2) : (sprite.frames['Idle'] ?? 3);
+  const fps = isHurt ? 8 : 4;
+
+  return (
+    <SpriteAnimator
+      sheet={sprite.sheet(anim)}
+      frameW={128}
+      frameCount={frameCount}
+      fps={fps}
+      scale={2}
+      className="mx-auto mb-3"
+    />
+  );
+}
+
 
 interface CombatUIProps {
   player: Player;
@@ -14,6 +36,7 @@ interface CombatUIProps {
   onFlee?: () => void;
   combatLog: string[];
   isPlayerTurn: boolean;
+  enemyHurt?: boolean;
 }
 
 export default function CombatUI({
@@ -24,6 +47,7 @@ export default function CombatUI({
   onFlee,
   combatLog,
   isPlayerTurn,
+  enemyHurt = false,
 }: CombatUIProps) {
   const enemyHealthPercent = (enemy.health / enemy.maxHealth) * 100;
   const playerHealthPercent = (player.health / player.maxHealth) * 100;
@@ -76,7 +100,7 @@ export default function CombatUI({
 
             {/* Enemy */}
             <div className="text-center">
-              <div className="text-6xl mb-3">👹</div>
+              <EnemySprite enemy={enemy} isHurt={enemyHurt} />
               <h3 className="text-xl font-bold text-game-accent mb-2">
                 {enemy.name.toUpperCase()}
               </h3>

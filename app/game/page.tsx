@@ -12,7 +12,9 @@ import {
   Item,
   CombatResult,
   BoardTile,
+  EnemyEngine,
 } from '@/lib/game-engine';
+import { ENEMY_TYPES } from '@/lib/game-engine/constants';
 import CharacterSelection from '@/components/game/CharacterSelection';
 import HUD from '@/components/game/HUD';
 import GameBoard from '@/components/game/GameBoard';
@@ -35,6 +37,7 @@ export default function GamePage() {
   const [combatLog, setCombatLog] = useState<string[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [enemyHurt, setEnemyHurt] = useState(false);
 
   // Initialize game with selected character
   const handleCharacterSelect = (characterClass: CharacterClass) => {
@@ -150,6 +153,11 @@ export default function GamePage() {
     setGameState(newState);
     setCombatLog((prev) => [...prev, ...result.messages]);
 
+    if (result.playerDamage > 0) {
+      setEnemyHurt(true);
+      setTimeout(() => setEnemyHurt(false), 600);
+    }
+
     if (result.isEnemyDefeated) {
       setTimeout(() => {
         setPhase('playing');
@@ -158,11 +166,8 @@ export default function GamePage() {
       }, 1500);
     }
 
-    // Check if player died
     if (GameEngine.isGameOver(newState)) {
-      setTimeout(() => {
-        setPhase('game-over');
-      }, 1500);
+      setTimeout(() => setPhase('game-over'), 1500);
     }
   };
 
@@ -173,6 +178,11 @@ export default function GamePage() {
     const { state: newState, result } = GameEngine.executeCombatTurn(gameState, skillId);
     setGameState(newState);
     setCombatLog((prev) => [...prev, ...result.messages]);
+
+    if (result.playerDamage > 0) {
+      setEnemyHurt(true);
+      setTimeout(() => setEnemyHurt(false), 600);
+    }
 
     if (result.isEnemyDefeated) {
       setTimeout(() => {
@@ -412,6 +422,19 @@ export default function GamePage() {
     showNotification('Set to winning position!');
   };
 
+  const debugFightEnemy = (type: string) => {
+    if (!gameState) return;
+    const enemy = EnemyEngine.createEnemy(type as any, gameState.currentFloor);
+    const newState: GameState = {
+      ...gameState,
+      isInCombat: true,
+      currentEnemy: enemy,
+    };
+    setGameState(newState);
+    setPhase('combat');
+    setCombatLog([`[DEBUG] A wild ${enemy.name} appears!`]);
+  };
+
   if (phase === 'character-selection') {
     return <CharacterSelection onSelect={handleCharacterSelect} />;
   }
@@ -457,6 +480,7 @@ export default function GamePage() {
             onUseSkill={handleUseSkill}
             combatLog={combatLog}
             isPlayerTurn={true}
+            enemyHurt={enemyHurt}
           />
         )}
       </AnimatePresence>
@@ -574,6 +598,18 @@ export default function GamePage() {
               >
                 🏆 Win Position
               </button>
+              <div className="border-t border-purple-400 pt-2 mt-1">
+                <p className="text-purple-300 text-xs mb-2 font-bold">⚔️ Fight Enemy</p>
+                {Object.entries(ENEMY_TYPES).map(([key, type]) => (
+                  <button
+                    key={type}
+                    onClick={() => debugFightEnemy(type)}
+                    className="w-full bg-red-800 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-bold mb-1"
+                  >
+                    {type.replace(/(\d)/, ' $1').replace(/^./, s => s.toUpperCase())}
+                  </button>
+                ))}
+              </div>
               <button
                 onClick={handleRandomEvent}
                 className="bg-pink-600 hover:bg-pink-700 text-white px-3 py-2 rounded text-xs font-bold"
