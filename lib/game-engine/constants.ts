@@ -154,27 +154,28 @@ export const ENEMY_STATS = {
 // Sprite config for animated enemies
 export const ENEMY_SPRITES: Partial<Record<string, {
   sheet: (anim: string) => string;
-  frameW: number;
-  frameH: number;
+  frameW: number | Partial<Record<string, number>>;
+  frameH: number | Partial<Record<string, number>>;
   frames: Partial<Record<string, number>>;
 }>> = {
   slime1: {
     sheet: (anim) => `/sprites/slimes/Slime1_${anim}.png`,
-    frameW: 128,
-    frameH: 128,
-    frames: { Idle: 3, Attack: 5, Run: 4, Walk: 4, Hurt: 2, Death: 5 },
+    // Idle/Hurt sheets: 175x60 with 3/2 frames; Attack/Death: 128px square frames
+    frameW: { Idle: 58, Hurt: 58, Attack: 128, Run: 128, Walk: 128, Death: 128 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 128, Run: 128, Walk: 128, Death: 128 },
+    frames: { Idle: 3, Attack: 3, Run: 3, Walk: 3, Hurt: 3, Death: 3 },
   },
   slime2: {
     sheet: (anim) => `/sprites/slimes/Slime2_${anim}.png`,
-    frameW: 128,
-    frameH: 128,
-    frames: { Idle: 3, Attack: 5, Run: 4, Walk: 4, Hurt: 2, Death: 5 },
+    frameW: { Idle: 58, Hurt: 58, Attack: 128, Run: 128, Walk: 128, Death: 128 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 128, Run: 128, Walk: 128, Death: 128 },
+    frames: { Idle: 3, Attack: 3, Run: 3, Walk: 3, Hurt: 3, Death: 3 },
   },
   slime3: {
     sheet: (anim) => `/sprites/slimes/Slime3_${anim}.png`,
-    frameW: 128,
-    frameH: 128,
-    frames: { Idle: 3, Attack: 4, Run: 4, Walk: 4, Hurt: 2, Death: 4 },
+    frameW: { Idle: 58, Hurt: 58, Attack: 128, Run: 128, Walk: 128, Death: 128 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 128, Run: 128, Walk: 128, Death: 128 },
+    frames: { Idle: 3, Attack: 3, Run: 3, Walk: 3, Hurt: 3, Death: 3 },
   },
 };
 

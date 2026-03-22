@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 interface SpriteAnimatorProps {
   sheet: string;
   frameW: number;
+  frameH?: number;
   frameCount: number;
   fps?: number;
   scale?: number;
@@ -14,6 +15,7 @@ interface SpriteAnimatorProps {
 export default function SpriteAnimator({
   sheet,
   frameW,
+  frameH,
   frameCount,
   fps = 8,
   scale = 2,
@@ -21,6 +23,10 @@ export default function SpriteAnimator({
 }: SpriteAnimatorProps) {
   const [frame, setFrame] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Actual rendered frame dimensions
+  const displayH = (frameH ?? frameW) * scale;
+  const displayW = frameW * scale;
 
   useEffect(() => {
     setFrame(0);
@@ -33,14 +39,12 @@ export default function SpriteAnimator({
     };
   }, [sheet, frameCount, fps]);
 
-  const size = frameW * scale;
-
   return (
     <div
       className={className}
       style={{
-        width: size,
-        height: size,
+        width: displayW,
+        height: displayH,
         overflow: 'hidden',
         position: 'relative',
       }}
@@ -52,9 +56,9 @@ export default function SpriteAnimator({
         style={{
           position: 'absolute',
           top: 0,
-          left: -(frame * size),
-          width: frameCount * size,
-          height: size,
+          left: -(frame * displayW),
+          width: frameCount * displayW,
+          height: displayH,
           imageRendering: 'pixelated',
           display: 'block',
           maxWidth: 'none',

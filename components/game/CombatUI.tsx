@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Player, Enemy } from '@/lib/game-engine';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
@@ -9,16 +10,33 @@ import SpriteAnimator from '@/components/game/SpriteAnimator';
 
 function EnemySprite({ enemy, isHurt }: { enemy: Enemy; isHurt: boolean }) {
   const sprite = ENEMY_SPRITES[enemy.type];
+  const [playingHurt, setPlayingHurt] = useState(false);
+
+  useEffect(() => {
+    if (!isHurt) return;
+    setPlayingHurt(true);
+    const hurtFrames = sprite?.frames['Hurt'] ?? 2;
+    const hurtFps = 8;
+    const duration = (hurtFrames / hurtFps) * 1000;
+    const timer = setTimeout(() => setPlayingHurt(false), duration);
+    return () => clearTimeout(timer);
+  }, [isHurt, sprite]);
+
   if (!sprite) return <div className="text-6xl mb-3">👹</div>;
 
-  const anim = isHurt ? 'Hurt' : 'Idle';
-  const frameCount = isHurt ? (sprite.frames['Hurt'] ?? 2) : (sprite.frames['Idle'] ?? 3);
-  const fps = isHurt ? 8 : 4;
+  const anim = playingHurt ? 'Hurt' : 'Idle';
+  const frameCount = playingHurt ? (sprite.frames['Hurt'] ?? 2) : (sprite.frames['Idle'] ?? 3);
+  const fps = playingHurt ? 8 : 4;
+
+  // Resolve per-animation or global frameW/frameH
+  const frameW = typeof sprite.frameW === 'object' ? (sprite.frameW[anim] ?? 128) : sprite.frameW;
+  const frameH = typeof sprite.frameH === 'object' ? (sprite.frameH[anim] ?? frameW) : (sprite.frameH ?? frameW);
 
   return (
     <SpriteAnimator
       sheet={sprite.sheet(anim)}
-      frameW={128}
+      frameW={frameW}
+      frameH={frameH}
       frameCount={frameCount}
       fps={fps}
       scale={2}
