@@ -164,12 +164,12 @@ export class CombatEngine {
   /**
    * Calculate critical hit
    */
-  static isCriticalHit(player: Player, enemy: Enemy): boolean {
-    const baseCritChance = 0.1; // 10% base crit chance
+  static isCriticalHit(player: Player, enemy: Enemy, critChanceBonus = 0): boolean {
+    const baseCritChance = 0.1 + critChanceBonus;
     
     // Archer passive: +100% crit vs enemies below 50% HP
     if (player.class === 'archer' && enemy.health < enemy.maxHealth / 2) {
-      return Math.random() < 0.3; // 30% crit chance
+      return Math.random() < Math.min(0.95, baseCritChance + 0.2);
     }
 
     return Math.random() < baseCritChance;
@@ -178,7 +178,7 @@ export class CombatEngine {
   /**
    * Apply critical damage
    */
-  static applyCritical(damage: number): number {
-    return Math.floor(damage * 2);
+  static applyCritical(damage: number, critMultiplier = 2.0): number {
+    return Math.floor(damage * critMultiplier);
   }
 }

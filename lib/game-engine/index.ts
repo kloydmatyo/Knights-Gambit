@@ -5,6 +5,7 @@ export { BoardEngine } from './BoardEngine';
 export { CombatEngine } from './CombatEngine';
 export { EnemyEngine } from './EnemyEngine';
 export { InventoryEngine } from './InventoryEngine';
+export { WeaponUpgradeEngine } from './WeaponUpgradeEngine';
 
 // Export types
 export type * from './types';

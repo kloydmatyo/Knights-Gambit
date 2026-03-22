@@ -41,28 +41,44 @@ export default function InventoryPanel({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {player.inventory.map((item, index) => (
             <motion.div
-              key={`${item.id}-${index}`}
+              key={item.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
               <Card variant="bordered" className="hover:border-game-gold transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="text-4xl">{itemEmojis[item.type] || '📦'}</div>
+                  <div className="relative">
+                    <div className="text-4xl">{itemEmojis[item.type] || '📦'}</div>
+                    {item.quantity > 1 && (
+                      <span className="absolute -bottom-1 -right-1 bg-game-gold text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+                        {item.quantity}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-game-gold mb-1">
-                      {item.name}
-                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-lg font-bold text-game-gold">
+                        {item.name}
+                      </h3>
+                      {item.quantity > 1 && (
+                        <span className="text-xs text-gray-400">×{item.quantity}</span>
+                      )}
+                    </div>
                     <p className="text-gray-400 text-sm mb-3">
                       {item.description}
                     </p>
-                    <Button
-                      size="sm"
-                      onClick={() => onUseItem(item.id)}
-                      className="w-full"
-                    >
-                      Use Item
-                    </Button>
+                    {item.autoConsume ? (
+                      <span className="text-xs text-green-400 italic">✅ Applied on purchase</span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => onUseItem(item.id)}
+                        className="w-full"
+                      >
+                        Use Item
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -75,7 +91,7 @@ export default function InventoryPanel({
         <div className="flex justify-between items-center">
           <span className="text-gray-400">Total Items:</span>
           <span className="text-game-gold font-bold text-xl">
-            {player.inventory.length}
+            {player.inventory.reduce((sum, i) => sum + i.quantity, 0)}
           </span>
         </div>
       </div>

@@ -68,9 +68,16 @@ export default function ShopPanel({
                 <div className="flex items-start gap-3">
                   <div className="text-4xl">{itemEmojis[item.type] || '📦'}</div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-game-gold mb-1">
-                      {item.name}
-                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-lg font-bold text-game-gold">
+                        {item.name}
+                      </h3>
+                      {item.autoConsume && (
+                        <span className="text-xs bg-green-900/50 border border-green-600 text-green-400 px-1.5 py-0.5 rounded">
+                          ⚡ Instant
+                        </span>
+                      )}
+                    </div>
                     <p className="text-gray-400 text-sm mb-3">
                       {item.description}
                     </p>

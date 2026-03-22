@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { GameState, UIState } from './types';
+import { WeaponUpgradeState } from '@/lib/game-engine/types';
+import { WeaponUpgradeEngine } from '@/lib/game-engine/WeaponUpgradeEngine';
 
 interface Store {
   // Game State
@@ -8,6 +10,9 @@ interface Store {
   
   // UI State
   ui: UIState;
+
+  // Weapon Upgrade State
+  weaponUpgrades: WeaponUpgradeState;
   
   // Game Actions
   initializeGame: (characterClass: string) => void;
@@ -15,6 +20,7 @@ interface Store {
   updatePlayerPosition: (position: number) => void;
   addToInventory: (item: any) => void;
   removeFromInventory: (itemId: string) => void;
+  purchaseWeaponUpgrade: (upgradeId: string) => { success: boolean; message: string };
   
   // UI Actions
   openModal: (modalType: string) => void;
@@ -46,6 +52,9 @@ export const useStore = create<Store>()(
           isMobileMenuOpen: false,
           notifications: [],
         },
+
+        // Initial Weapon Upgrade State
+        weaponUpgrades: WeaponUpgradeEngine.createInitialState(),
         
         // Game Actions
         initializeGame: (characterClass) =>
@@ -65,6 +74,7 @@ export const useStore = create<Store>()(
                 statusEffects: [],
               },
             },
+            weaponUpgrades: WeaponUpgradeEngine.createInitialState(),
           })),
         
         updatePlayerHealth: (health) =>
@@ -115,6 +125,41 @@ export const useStore = create<Store>()(
                 : null,
             },
           })),
+
+        purchaseWeaponUpgrade: (upgradeId) => {
+          let result = { success: false, message: 'No player found.' };
+          set((state) => {
+            if (!state.game.player) return state;
+            const player = state.game.player;
+            const outcome = WeaponUpgradeEngine.purchaseUpgrade(
+              player.class,
+              player.coins,
+              upgradeId,
+              state.game.currentFloor,
+              state.weaponUpgrades
+            );
+            if (!outcome) {
+              result = { success: false, message: 'Cannot purchase this upgrade.' };
+              return state;
+            }
+            result = { success: true, message: outcome.message };
+            return {
+              game: {
+                ...state.game,
+                player: {
+                  ...player,
+                  coins: outcome.coins,
+                  attack: player.attack + outcome.attackDelta,
+                  defense: player.defense + outcome.defenseDelta,
+                  maxHealth: player.maxHealth + outcome.healthDelta,
+                  health: Math.min(player.health + outcome.healthDelta, player.maxHealth + outcome.healthDelta),
+                },
+              },
+              weaponUpgrades: outcome.upgradeState,
+            };
+          });
+          return result;
+        },
         
         // UI Actions
         openModal: (modalType) =>
@@ -139,7 +184,7 @@ export const useStore = create<Store>()(
       }),
       {
         name: 'knights-gambit-storage',
-        partialize: (state) => ({ game: state.game }), // Only persist game state
+        partialize: (state) => ({ game: state.game, weaponUpgrades: state.weaponUpgrades }),
       }
     )
   )

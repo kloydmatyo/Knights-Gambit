@@ -13,13 +13,16 @@ import {
   EnemyEngine,
   Enemy,
 } from '@/lib/game-engine';
-import { ENEMY_TYPES, ENEMY_SPRITES } from '@/lib/game-engine/constants';
+import { ENEMY_TYPES, ENEMY_SPRITES, WEAPON_UPGRADES } from '@/lib/game-engine/constants';
+import { WeaponUpgradeEngine } from '@/lib/game-engine/WeaponUpgradeEngine';
+import { WeaponUpgradeState } from '@/lib/game-engine/types';
 import CharacterSelection from '@/components/game/CharacterSelection';
 import HUD from '@/components/game/HUD';
 import GameBoard from '@/components/game/GameBoard';
 import CombatUI from '@/components/game/CombatUI';
 import InventoryPanel from '@/components/game/InventoryPanel';
 import ShopPanel from '@/components/game/ShopPanel';
+import WeaponUpgradePanel from '@/components/game/WeaponUpgradePanel';
 import DiceRoller from '@/components/game/DiceRoller';
 import GameOverScreen from '@/components/game/GameOverScreen';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -33,6 +36,8 @@ export default function GamePage() {
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [isSpecialShopOpen, setIsSpecialShopOpen] = useState(false);
+  const [isUpgradePanelOpen, setIsUpgradePanelOpen] = useState(false);
+  const [upgradeState, setUpgradeState] = useState<WeaponUpgradeState>(WeaponUpgradeEngine.createInitialState());
   const [combatLog, setCombatLog] = useState<string[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
@@ -44,6 +49,7 @@ export default function GamePage() {
   const handleCharacterSelect = (characterClass: CharacterClass) => {
     const newGameState = GameEngine.initializeGame(characterClass);
     setGameState(newGameState);
+    setUpgradeState(WeaponUpgradeEngine.createInitialState());
     setPhase('playing');
     showNotification(`Welcome, ${characterClass}! Your adventure begins...`);
   };
@@ -398,6 +404,33 @@ export default function GamePage() {
     window.location.href = '/';
   };
 
+  // Handle weapon upgrade purchase
+  const handleWeaponUpgradePurchase = (upgradeId: string): { success: boolean; message: string } => {
+    if (!gameState) return { success: false, message: 'No game state.' };
+    const outcome = WeaponUpgradeEngine.purchaseUpgrade(
+      gameState.player.class,
+      gameState.player.coins,
+      upgradeId,
+      gameState.currentFloor,
+      upgradeState
+    );
+    if (!outcome) return { success: false, message: 'Cannot purchase this upgrade.' };
+    setUpgradeState(outcome.upgradeState);
+    setGameState({
+      ...gameState,
+      player: {
+        ...gameState.player,
+        coins: outcome.coins,
+        attack: gameState.player.attack + outcome.attackDelta,
+        defense: gameState.player.defense + outcome.defenseDelta,
+        maxHealth: gameState.player.maxHealth + outcome.healthDelta,
+        health: Math.min(gameState.player.health + outcome.healthDelta, gameState.player.maxHealth + outcome.healthDelta),
+      },
+    });
+    showNotification(outcome.message);
+    return { success: true, message: outcome.message };
+  };
+
   // Debug functions
   const debugAddCoins = () => {
     if (!gameState) return;
@@ -455,6 +488,64 @@ export default function GamePage() {
     setPhase('combat');
     setCombatEnemy(enemy);
     setCombatLog([`[DEBUG] A wild ${enemy.name} appears!`]);
+  };
+
+  const debugUnlockAllUpgrades = () => {
+    if (!gameState) return;
+    const classUpgrades = WeaponUpgradeEngine.getClassUpgrades(gameState.player.class);
+    let currentState = upgradeState;
+    let player = gameState.player;
+    // Force-apply all upgrades for this class regardless of cost/floor/prereqs
+    for (const upgrade of classUpgrades) {
+      if (currentState.purchasedUpgradeIds.includes(upgrade.id)) continue;
+      const { effect } = upgrade;
+      currentState = {
+        purchasedUpgradeIds: [...currentState.purchasedUpgradeIds, upgrade.id],
+        totalAttackBonus: currentState.totalAttackBonus + (effect.attackBonus ?? 0),
+        totalDefenseBonus: currentState.totalDefenseBonus + (effect.defenseBonus ?? 0),
+        totalCritChanceBonus: currentState.totalCritChanceBonus + (effect.critChanceBonus ?? 0),
+        totalCritDamageBonus: currentState.totalCritDamageBonus + (effect.critDamageBonus ?? 0),
+        totalHealthBonus: currentState.totalHealthBonus + (effect.healthBonus ?? 0),
+        unlockedAbilities: effect.specialAbility
+          ? [...currentState.unlockedAbilities, effect.specialAbility]
+          : currentState.unlockedAbilities,
+      };
+      player = {
+        ...player,
+        attack: player.attack + (effect.attackBonus ?? 0),
+        defense: player.defense + (effect.defenseBonus ?? 0),
+        maxHealth: player.maxHealth + (effect.healthBonus ?? 0),
+        health: Math.min(player.health + (effect.healthBonus ?? 0), player.maxHealth + (effect.healthBonus ?? 0)),
+      };
+    }
+    setUpgradeState(currentState);
+    setGameState({ ...gameState, player });
+    showNotification(`[DEBUG] All ${gameState.player.class} upgrades unlocked!`);
+  };
+
+  const debugResetUpgrades = () => {
+    if (!gameState) return;
+    const purchased = WeaponUpgradeEngine.getPurchasedUpgrades(upgradeState);
+    let player = gameState.player;
+    for (const upgrade of purchased) {
+      const { effect } = upgrade;
+      player = {
+        ...player,
+        attack: player.attack - (effect.attackBonus ?? 0),
+        defense: player.defense - (effect.defenseBonus ?? 0),
+        maxHealth: player.maxHealth - (effect.healthBonus ?? 0),
+        health: Math.min(player.health, player.maxHealth - (effect.healthBonus ?? 0)),
+      };
+    }
+    setUpgradeState(WeaponUpgradeEngine.createInitialState());
+    setGameState({ ...gameState, player });
+    showNotification('[DEBUG] All weapon upgrades reset.');
+  };
+
+  const debugSetFloor = (floor: number) => {
+    if (!gameState) return;
+    setGameState({ ...gameState, currentFloor: floor });
+    showNotification(`[DEBUG] Floor set to ${floor}`);
   };
 
   if (phase === 'character-selection') {
@@ -533,6 +624,16 @@ export default function GamePage() {
         items={InventoryEngine.getSpecialShopItems()}
         onPurchase={handlePurchase}
         title="✨ Special Shop"
+      />
+
+      {/* Weapon Upgrade Panel */}
+      <WeaponUpgradePanel
+        isOpen={isUpgradePanelOpen}
+        onClose={() => setIsUpgradePanelOpen(false)}
+        player={gameState.player}
+        currentFloor={gameState.currentFloor}
+        upgradeState={upgradeState}
+        onPurchase={handleWeaponUpgradePurchase}
       />
 
       {/* Game Over Screen */}
@@ -639,7 +740,44 @@ export default function GamePage() {
               >
                 ✨ Trigger Event
               </button>
-              <button
+              <div className="border-t border-purple-400 pt-2 mt-1">
+                <p className="text-purple-300 text-xs mb-2 font-bold">⚔️ Weapon Upgrades</p>
+                <button
+                  onClick={() => setIsUpgradePanelOpen(true)}
+                  className="w-full bg-indigo-700 hover:bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-bold mb-1"
+                >
+                  🔧 Open Upgrades
+                </button>
+                <button
+                  onClick={debugUnlockAllUpgrades}
+                  className="w-full bg-yellow-700 hover:bg-yellow-600 text-white px-3 py-1.5 rounded text-xs font-bold mb-1"
+                >
+                  🔓 Unlock All
+                </button>
+                <button
+                  onClick={debugResetUpgrades}
+                  className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded text-xs font-bold mb-1"
+                >
+                  🔄 Reset Upgrades
+                </button>
+                <p className="text-purple-300 text-xs mb-1 mt-2 font-bold">Set Floor</p>
+                <div className="grid grid-cols-3 gap-1">
+                  {[1, 3, 6, 9].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => debugSetFloor(f)}
+                      className="bg-teal-700 hover:bg-teal-600 text-white px-2 py-1 rounded text-xs font-bold"
+                    >
+                      F{f}
+                    </button>
+                  ))}
+                </div>
+                {upgradeState.purchasedUpgradeIds.length > 0 && (
+                  <p className="text-green-400 text-xs mt-2">
+                    ✅ {upgradeState.purchasedUpgradeIds.length} upgrade{upgradeState.purchasedUpgradeIds.length !== 1 ? 's' : ''} owned
+                  </p>
+                )}
+              </div>              <button
                 onClick={() => {
                   if (!gameState) return;
                   const trapTypes = ['fire', 'spike', 'poison_gas'] as const;
