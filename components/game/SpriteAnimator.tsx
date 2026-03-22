@@ -24,21 +24,30 @@ export default function SpriteAnimator({
   className,
 }: SpriteAnimatorProps) {
   const [frame, setFrame] = useState(0);
+  const [visible, setVisible] = useState(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const displayH = (frameH ?? frameW) * scale;
   const displayW = frameW * scale;
 
   useEffect(() => {
+    // Hide for one paint cycle to flush the old sheet position before showing frame 0
+    setVisible(false);
     setFrame(0);
     if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setFrame((f) => {
-        if (!loop && f >= frameCount - 1) return f; // hold last frame
-        return (f + 1) % frameCount;
-      });
-    }, 1000 / fps);
+
+    const showTimer = requestAnimationFrame(() => {
+      setVisible(true);
+      timerRef.current = setInterval(() => {
+        setFrame((f) => {
+          if (!loop && f >= frameCount - 1) return f;
+          return (f + 1) % frameCount;
+        });
+      }, 1000 / fps);
+    });
+
     return () => {
+      cancelAnimationFrame(showTimer);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [sheet, frameCount, fps, loop]);
@@ -66,6 +75,7 @@ export default function SpriteAnimator({
           imageRendering: 'pixelated',
           display: 'block',
           maxWidth: 'none',
+          visibility: visible ? 'visible' : 'hidden',
         }}
       />
     </div>

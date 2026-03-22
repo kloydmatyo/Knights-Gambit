@@ -160,21 +160,21 @@ export const ENEMY_SPRITES: Partial<Record<string, {
 }>> = {
   slime1: {
     sheet: (anim) => `/sprites/slimes/Slime1_${anim}.png`,
-    frameW: { Idle: 58, Hurt: 58, Attack: 58, Run: 128, Walk: 128, Death: 58 },
+    frameW: { Idle: 66, Hurt: 64, Attack: 58, Run: 128, Walk: 128, Death: 58 },
     frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
-    frames: { Idle: 3, Hurt: 3, Attack: 10, Run: 4, Walk: 4, Death: 10 },
+    frames: { Idle: 6, Hurt: 5, Attack: 10, Run: 4, Walk: 4, Death: 10 },
   },
   slime2: {
     sheet: (anim) => `/sprites/slimes/Slime2_${anim}.png`,
-    frameW: { Idle: 58, Hurt: 58, Attack: 64, Run: 128, Walk: 128, Death: 58 },
+    frameW: { Idle: 66, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 58 },
     frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
-    frames: { Idle: 3, Hurt: 3, Attack: 11, Run: 4, Walk: 4, Death: 10 },
+    frames: { Idle: 6, Hurt: 5, Attack: 11, Run: 4, Walk: 4, Death: 10 },
   },
   slime3: {
     sheet: (anim) => `/sprites/slimes/Slime3_${anim}.png`,
-    frameW: { Idle: 58, Hurt: 58, Attack: 60, Run: 128, Walk: 128, Death: 58 },
+    frameW: { Idle: 66, Hurt: 64, Attack: 60, Run: 128, Walk: 128, Death: 58 },
     frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
-    frames: { Idle: 3, Hurt: 3, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+    frames: { Idle: 6, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
   },
 };
 
