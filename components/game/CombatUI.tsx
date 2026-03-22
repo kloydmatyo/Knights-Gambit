@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Player, Enemy } from '@/lib/game-engine';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
@@ -8,37 +7,25 @@ import Card from '@/components/ui/Card';
 import { ENEMY_SPRITES } from '@/lib/game-engine/constants';
 import SpriteAnimator from '@/components/game/SpriteAnimator';
 
-function EnemySprite({ enemy, isHurt }: { enemy: Enemy; isHurt: boolean }) {
+export type EnemyAnimState = 'Idle' | 'Hurt' | 'Attack' | 'Death';
+
+function EnemySprite({ enemy, animState }: { enemy: Enemy; animState: EnemyAnimState }) {
   const sprite = ENEMY_SPRITES[enemy.type];
-  const [playingHurt, setPlayingHurt] = useState(false);
-
-  useEffect(() => {
-    if (!isHurt) return;
-    setPlayingHurt(true);
-    const hurtFrames = sprite?.frames['Hurt'] ?? 2;
-    const hurtFps = 8;
-    const duration = (hurtFrames / hurtFps) * 1000;
-    const timer = setTimeout(() => setPlayingHurt(false), duration);
-    return () => clearTimeout(timer);
-  }, [isHurt, sprite]);
-
   if (!sprite) return <div className="text-6xl mb-3">👹</div>;
 
-  const anim = playingHurt ? 'Hurt' : 'Idle';
-  const frameCount = playingHurt ? (sprite.frames['Hurt'] ?? 2) : (sprite.frames['Idle'] ?? 3);
-  const fps = playingHurt ? 8 : 4;
-
-  // Resolve per-animation or global frameW/frameH
-  const frameW = typeof sprite.frameW === 'object' ? (sprite.frameW[anim] ?? 128) : sprite.frameW;
-  const frameH = typeof sprite.frameH === 'object' ? (sprite.frameH[anim] ?? frameW) : (sprite.frameH ?? frameW);
+  const frameCount = sprite.frames[animState] ?? sprite.frames['Idle'] ?? 3;
+  const fps = animState === 'Idle' ? 4 : 8;
+  const frameW = typeof sprite.frameW === 'object' ? (sprite.frameW[animState] ?? 58) : sprite.frameW;
+  const frameH = typeof sprite.frameH === 'object' ? (sprite.frameH[animState] ?? 60) : (sprite.frameH ?? 60);
 
   return (
     <SpriteAnimator
-      sheet={sprite.sheet(anim)}
+      sheet={sprite.sheet(animState)}
       frameW={frameW}
       frameH={frameH}
       frameCount={frameCount}
       fps={fps}
+      loop={animState !== 'Death'}
       scale={2}
       className="mx-auto mb-3"
     />
@@ -54,7 +41,8 @@ interface CombatUIProps {
   onFlee?: () => void;
   combatLog: string[];
   isPlayerTurn: boolean;
-  enemyHurt?: boolean;
+  enemyAnimState?: EnemyAnimState;
+  playerHurt?: boolean;
 }
 
 export default function CombatUI({
@@ -65,7 +53,8 @@ export default function CombatUI({
   onFlee,
   combatLog,
   isPlayerTurn,
-  enemyHurt = false,
+  enemyAnimState = 'Idle',
+  playerHurt = false,
 }: CombatUIProps) {
   const enemyHealthPercent = (enemy.health / enemy.maxHealth) * 100;
   const playerHealthPercent = (player.health / player.maxHealth) * 100;
@@ -96,7 +85,7 @@ export default function CombatUI({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Player */}
             <div className="text-center">
-              <div className="text-6xl mb-3">🛡️</div>
+              <div className={`text-6xl mb-3 transition-all duration-100 ${playerHurt ? 'brightness-200 hue-rotate-180' : ''}`}>🛡️</div>
               <h3 className="text-xl font-bold text-game-gold mb-2">
                 {player.class.toUpperCase()}
               </h3>
@@ -118,7 +107,7 @@ export default function CombatUI({
 
             {/* Enemy */}
             <div className="text-center">
-              <EnemySprite enemy={enemy} isHurt={enemyHurt} />
+              <EnemySprite enemy={enemy} animState={enemyAnimState} />
               <h3 className="text-xl font-bold text-game-accent mb-2">
                 {enemy.name.toUpperCase()}
               </h3>

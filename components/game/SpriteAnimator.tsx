@@ -8,6 +8,7 @@ interface SpriteAnimatorProps {
   frameH?: number;
   frameCount: number;
   fps?: number;
+  loop?: boolean;
   scale?: number;
   className?: string;
 }
@@ -18,13 +19,13 @@ export default function SpriteAnimator({
   frameH,
   frameCount,
   fps = 8,
+  loop = true,
   scale = 2,
   className,
 }: SpriteAnimatorProps) {
   const [frame, setFrame] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Actual rendered frame dimensions
   const displayH = (frameH ?? frameW) * scale;
   const displayW = frameW * scale;
 
@@ -32,12 +33,15 @@ export default function SpriteAnimator({
     setFrame(0);
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
-      setFrame((f) => (f + 1) % frameCount);
+      setFrame((f) => {
+        if (!loop && f >= frameCount - 1) return f; // hold last frame
+        return (f + 1) % frameCount;
+      });
     }, 1000 / fps);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [sheet, frameCount, fps]);
+  }, [sheet, frameCount, fps, loop]);
 
   return (
     <div

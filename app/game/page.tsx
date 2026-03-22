@@ -13,8 +13,9 @@ import {
   CombatResult,
   BoardTile,
   EnemyEngine,
+  Enemy,
 } from '@/lib/game-engine';
-import { ENEMY_TYPES } from '@/lib/game-engine/constants';
+import { ENEMY_TYPES, ENEMY_SPRITES } from '@/lib/game-engine/constants';
 import CharacterSelection from '@/components/game/CharacterSelection';
 import HUD from '@/components/game/HUD';
 import GameBoard from '@/components/game/GameBoard';
@@ -37,7 +38,9 @@ export default function GamePage() {
   const [combatLog, setCombatLog] = useState<string[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
-  const [enemyHurt, setEnemyHurt] = useState(false);
+  const [enemyAnimState, setEnemyAnimState] = useState<'Idle' | 'Hurt' | 'Attack' | 'Death'>('Idle');
+  const [playerHurt, setPlayerHurt] = useState(false);
+  const [combatEnemy, setCombatEnemy] = useState<Enemy | null>(null);
 
   // Initialize game with selected character
   const handleCharacterSelect = (characterClass: CharacterClass) => {
@@ -111,6 +114,7 @@ export default function GamePage() {
             setPhase('combat');
             const combatState = GameEngine.startCombat(stateForEvent);
             setGameState(combatState);
+            setCombatEnemy(combatState.currentEnemy);
             setCombatLog([`A wild ${tile.enemy?.name} appears!`]);
             break;
           case 'shop':
@@ -131,6 +135,7 @@ export default function GamePage() {
             setPhase('combat');
             const bossState = GameEngine.startCombat(stateForEvent);
             setGameState(bossState);
+            setCombatEnemy(bossState.currentEnemy);
             setCombatLog(['Boss battle begins!']);
             break;
           default:
@@ -145,6 +150,49 @@ export default function GamePage() {
     }, 1200);
   };
 
+  // Single source of truth for all combat animation sequencing
+  const triggerCombatAnimations = (enemyType: string, result: { playerDamage: number; enemyDamage: number; isEnemyDefeated: boolean; coinsEarned: number }) => {
+    const hurtFrames = ENEMY_SPRITES[enemyType]?.frames['Hurt'] ?? 3;
+    const hurtDuration = (hurtFrames / 8) * 1000;
+    const attackFrames = ENEMY_SPRITES[enemyType]?.frames['Attack'] ?? 3;
+    const attackDuration = (attackFrames / 8) * 1000;
+    const reactionGap = 200;
+
+    // Step 1: enemy hurt
+    if (result.playerDamage > 0) {
+      setEnemyAnimState('Hurt');
+    }
+
+    if (result.isEnemyDefeated) {
+      // Hurt → Death
+      setTimeout(() => setEnemyAnimState('Death'), hurtDuration + reactionGap);
+      setTimeout(() => {
+        setEnemyAnimState('Idle');
+        setPhase('playing');
+        setCombatLog([]);
+        setCombatEnemy(null);
+        showNotification(`Victory! Earned ${result.coinsEarned} coins!`);
+      }, hurtDuration + reactionGap + 5000);
+      return;
+    }
+
+    // Step 2: after hurt, enemy attacks
+    const attackStart = (result.playerDamage > 0 ? hurtDuration : 0) + reactionGap;
+    if (result.enemyDamage > 0) {
+      setTimeout(() => setEnemyAnimState('Attack'), attackStart);
+
+      // Step 3: player hurt flash during enemy attack
+      setTimeout(() => setPlayerHurt(true), attackStart + attackDuration * 0.5);
+      setTimeout(() => setPlayerHurt(false), attackStart + attackDuration * 0.5 + 400);
+
+      // Step 4: back to idle
+      setTimeout(() => setEnemyAnimState('Idle'), attackStart + attackDuration);
+    } else {
+      // No counter-attack, just return to idle after hurt
+      setTimeout(() => setEnemyAnimState('Idle'), attackStart);
+    }
+  };
+
   // Handle combat attack
   const handleAttack = () => {
     if (!gameState || !gameState.currentEnemy) return;
@@ -152,19 +200,7 @@ export default function GamePage() {
     const { state: newState, result } = GameEngine.executeCombatTurn(gameState);
     setGameState(newState);
     setCombatLog((prev) => [...prev, ...result.messages]);
-
-    if (result.playerDamage > 0) {
-      setEnemyHurt(true);
-      setTimeout(() => setEnemyHurt(false), 600);
-    }
-
-    if (result.isEnemyDefeated) {
-      setTimeout(() => {
-        setPhase('playing');
-        setCombatLog([]);
-        showNotification(`Victory! Earned ${result.coinsEarned} coins!`);
-      }, 1500);
-    }
+    triggerCombatAnimations(gameState.currentEnemy.type, result);
 
     if (GameEngine.isGameOver(newState)) {
       setTimeout(() => setPhase('game-over'), 1500);
@@ -178,24 +214,10 @@ export default function GamePage() {
     const { state: newState, result } = GameEngine.executeCombatTurn(gameState, skillId);
     setGameState(newState);
     setCombatLog((prev) => [...prev, ...result.messages]);
-
-    if (result.playerDamage > 0) {
-      setEnemyHurt(true);
-      setTimeout(() => setEnemyHurt(false), 600);
-    }
-
-    if (result.isEnemyDefeated) {
-      setTimeout(() => {
-        setPhase('playing');
-        setCombatLog([]);
-        showNotification(`Victory! Earned ${result.coinsEarned} coins!`);
-      }, 1500);
-    }
+    triggerCombatAnimations(gameState.currentEnemy.type, result);
 
     if (GameEngine.isGameOver(newState)) {
-      setTimeout(() => {
-        setPhase('game-over');
-      }, 1500);
+      setTimeout(() => setPhase('game-over'), 1500);
     }
   };
 
@@ -432,6 +454,7 @@ export default function GamePage() {
     };
     setGameState(newState);
     setPhase('combat');
+    setCombatEnemy(enemy);
     setCombatLog([`[DEBUG] A wild ${enemy.name} appears!`]);
   };
 
@@ -472,15 +495,16 @@ export default function GamePage() {
 
       {/* Combat UI */}
       <AnimatePresence>
-        {phase === 'combat' && gameState.currentEnemy && (
+        {phase === 'combat' && combatEnemy && (
           <CombatUI
             player={gameState.player}
-            enemy={gameState.currentEnemy}
+            enemy={combatEnemy}
             onAttack={handleAttack}
             onUseSkill={handleUseSkill}
             combatLog={combatLog}
             isPlayerTurn={true}
-            enemyHurt={enemyHurt}
+            enemyAnimState={enemyAnimState}
+            playerHurt={playerHurt}
           />
         )}
       </AnimatePresence>
