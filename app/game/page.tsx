@@ -58,26 +58,34 @@ export default function GamePage() {
   const handleDiceRoll = () => {
     if (!gameState) return;
 
-    const { state: newState, diceValue } = GameEngine.rollDice(gameState);
+    const { state: newState, diceValue, lapped } = GameEngine.rollDice(gameState);
     setLastDiceRoll(diceValue);
-    setGameState(newState);
+
+    if (lapped) {
+      showNotification('🔀 The board has reshuffled — new dangers await!');
+      // On non-boss floors, completing a lap advances the floor
+      const hasBoss = gameState.board.some((t) => t.type === 'boss');
+      if (!hasBoss) {
+        // Delay so the reshuffle notification shows first
+        setTimeout(() => handleFloorComplete(newState), 1400);
+        setGameState(newState);
+        return;
+      }
+    }
 
     // Delay tile events so the dice result is visible first
     setTimeout(() => {
-      // Apply periodic status effect damage between turns (curse + burn)
+      // --- Status effect tick (curse, burn, poison) ---
       let stateForEvent = newState;
-      let periodicMessages: string[] = [];
+      const periodicMessages: string[] = [];
 
-      const updatedEffects = newState.player.statusEffects
+      const updatedEffects = stateForEvent.player.statusEffects
         .map((e) => {
           if (e.type === 'cursed') {
             const dmg = e.value || 8;
             stateForEvent = {
               ...stateForEvent,
-              player: {
-                ...stateForEvent.player,
-                health: Math.max(0, stateForEvent.player.health - dmg),
-              },
+              player: { ...stateForEvent.player, health: Math.max(0, stateForEvent.player.health - dmg) },
             };
             periodicMessages.push(`💀 Curse drains ${dmg} HP! (${e.duration - 1} turns left)`);
           }
@@ -85,12 +93,17 @@ export default function GamePage() {
             const dmg = e.value || 5;
             stateForEvent = {
               ...stateForEvent,
-              player: {
-                ...stateForEvent.player,
-                health: Math.max(0, stateForEvent.player.health - dmg),
-              },
+              player: { ...stateForEvent.player, health: Math.max(0, stateForEvent.player.health - dmg) },
             };
             periodicMessages.push(`🔥 Burn deals ${dmg} damage! (${e.duration - 1} turns left)`);
+          }
+          if (e.type === 'poison') {
+            const dmg = e.value || 6;
+            stateForEvent = {
+              ...stateForEvent,
+              player: { ...stateForEvent.player, health: Math.max(0, stateForEvent.player.health - dmg) },
+            };
+            periodicMessages.push(`🧪 Poison deals ${dmg} damage! (${e.duration - 1} turns left)`);
           }
           return { ...e, duration: e.duration - 1 };
         })
@@ -100,54 +113,66 @@ export default function GamePage() {
         ...stateForEvent,
         player: { ...stateForEvent.player, statusEffects: updatedEffects },
       };
-      setGameState(stateForEvent);
 
       if (periodicMessages.length > 0) {
         showNotification(periodicMessages.join(' | '));
-        if (stateForEvent.player.health <= 0) {
-          setTimeout(() => setPhase('game-over'), 500);
-          return;
-        }
       }
 
+      // Check death from status effects before processing tile
+      if (stateForEvent.player.health <= 0) {
+        setGameState(stateForEvent);
+        setTimeout(() => setPhase('game-over'), 500);
+        return;
+      }
+
+      // --- Tile event ---
       const tile = stateForEvent.board.find((t) => t.id === stateForEvent.player.position);
 
       if (tile) {
         switch (tile.type) {
-          case 'enemy':
-            setPhase('combat');
+          case 'enemy': {
             const combatState = GameEngine.startCombat(stateForEvent);
             setGameState(combatState);
+            setPhase('combat');
             setCombatEnemy(combatState.currentEnemy);
             setCombatLog([`A wild ${tile.enemy?.name} appears!`]);
-            break;
+            return; // floor-complete check happens after combat ends
+          }
           case 'shop':
+            setGameState(stateForEvent);
             setIsShopOpen(true);
             showNotification('Welcome to the shop!');
             break;
           case 'event':
-            handleRandomEvent();
-            break;
+            // handleRandomEvent reads from gameState so sync first
+            setGameState(stateForEvent);
+            handleRandomEventWith(stateForEvent);
+            return;
           case 'trap':
             if (!tile.trapTriggered) {
               handleTrapTrigger(stateForEvent, tile);
             } else {
+              setGameState(stateForEvent);
               showNotification('An old disarmed trap... you pass safely.');
             }
-            break;
-          case 'boss':
-            setPhase('combat');
+            return;
+          case 'boss': {
             const bossState = GameEngine.startCombat(stateForEvent);
             setGameState(bossState);
+            setPhase('combat');
             setCombatEnemy(bossState.currentEnemy);
-            setCombatLog(['Boss battle begins!']);
-            break;
+            setCombatLog(['⚠️ Boss battle begins!']);
+            return;
+          }
           default:
+            setGameState(stateForEvent);
             showNotification(`Moved ${diceValue} spaces!`);
         }
+      } else {
+        setGameState(stateForEvent);
       }
 
-      // Check if floor is complete
+      // --- Floor completion check (non-combat tiles only) ---
       if (GameEngine.isFloorComplete(stateForEvent)) {
         handleFloorComplete(stateForEvent);
       }
@@ -177,6 +202,14 @@ export default function GamePage() {
         setCombatLog([]);
         setCombatEnemy(null);
         showNotification(`Victory! Earned ${result.coinsEarned} coins!`);
+        // Check floor completion after combat ends
+        setGameState((prev) => {
+          if (!prev) return prev;
+          if (GameEngine.isFloorComplete(prev)) {
+            setTimeout(() => handleFloorComplete(prev), 500);
+          }
+          return prev;
+        });
       }, hurtDuration + reactionGap + 5000);
       return;
     }
@@ -318,44 +351,27 @@ export default function GamePage() {
     }
   };
 
-  // Handle random event
-  const handleRandomEvent = () => {
-    if (!gameState) return;
-
+  // Handle random event (accepts explicit state to avoid stale closure)
+  const handleRandomEventWith = (state: GameState) => {
     const events = [
       { text: 'You found a treasure chest!', coins: 20 },
       { text: 'A mysterious stranger heals you!', heal: 15 },
       { text: 'You feel stronger!', attack: 2 },
       { text: 'A dark spirit curses you!', curse: true },
       { text: 'A fire spirit scorches you!', burn: true },
-      { text: 'Nothing happens...', },
+      { text: 'Nothing happens...' },
     ];
 
     const event = events[Math.floor(Math.random() * events.length)];
-    let newPlayer = gameState.player;
+    let newPlayer = state.player;
 
-    if (event.coins) {
-      newPlayer = { ...newPlayer, coins: newPlayer.coins + event.coins };
-    }
-    if (event.heal) {
-      newPlayer = {
-        ...newPlayer,
-        health: Math.min(newPlayer.maxHealth, newPlayer.health + event.heal),
-      };
-    }
-    if (event.attack) {
-      newPlayer = { ...newPlayer, attack: newPlayer.attack + event.attack };
-    }
+    if (event.coins) newPlayer = { ...newPlayer, coins: newPlayer.coins + event.coins };
+    if (event.heal) newPlayer = { ...newPlayer, health: Math.min(newPlayer.maxHealth, newPlayer.health + event.heal) };
+    if (event.attack) newPlayer = { ...newPlayer, attack: newPlayer.attack + event.attack };
     if (event.curse) {
       const alreadyCursed = newPlayer.statusEffects.some((e) => e.type === 'cursed');
       if (!alreadyCursed) {
-        newPlayer = {
-          ...newPlayer,
-          statusEffects: [
-            ...newPlayer.statusEffects,
-            { type: 'cursed' as const, duration: 5, value: 8 },
-          ],
-        };
+        newPlayer = { ...newPlayer, statusEffects: [...newPlayer.statusEffects, { type: 'cursed' as const, duration: 5, value: 8 }] };
       }
     }
     if ((event as any).burn) {
@@ -363,15 +379,24 @@ export default function GamePage() {
       newPlayer = {
         ...newPlayer,
         statusEffects: alreadyBurning
-          ? newPlayer.statusEffects.map((e) =>
-              e.type === 'burn' ? { ...e, duration: Math.max(e.duration, 3) } : e
-            )
+          ? newPlayer.statusEffects.map((e) => e.type === 'burn' ? { ...e, duration: Math.max(e.duration, 3) } : e)
           : [...newPlayer.statusEffects, { type: 'burn' as const, duration: 3, value: 5 }],
       };
     }
 
-    setGameState({ ...gameState, player: newPlayer });
+    const newState = { ...state, player: newPlayer };
+    setGameState(newState);
     showNotification(event.text);
+
+    if (GameEngine.isFloorComplete(newState)) {
+      handleFloorComplete(newState);
+    }
+  };
+
+  // Handle random event
+  const handleRandomEvent = () => {
+    if (!gameState) return;
+    handleRandomEventWith(gameState);
   };
 
   // Handle floor completion

@@ -4,12 +4,18 @@ import { EnemyEngine } from './EnemyEngine';
 import { randomInt } from '@/lib/utils';
 
 export class BoardEngine {
+  /** Tile index where the boss is placed on boss floors */
+  static readonly BOSS_TILE_ID = 10;
+  /** Floors that have a boss encounter */
+  static readonly BOSS_FLOORS = [5, 10];
+
   /**
    * Generate a new game board
    */
   static generateBoard(floor: number): BoardTile[] {
     const tiles: BoardTile[] = [];
     const boardSize = GAME_CONFIG.BOARD_SIZE;
+    const isBossFloor = this.BOSS_FLOORS.includes(floor);
 
     // Calculate positions in a circle - centered coordinates
     const centerX = 450; // Center of 900
@@ -23,20 +29,16 @@ export class BoardEngine {
 
       let type: BoardTile['type'] = TILE_TYPES.NORMAL;
 
-      // First tile is always start
       if (i === 0) {
+        // Tile 0 is always START
         type = TILE_TYPES.START;
-      }
-      // Last tile is boss
-      else if (i === boardSize - 1) {
+      } else if (isBossFloor && i === this.BOSS_TILE_ID) {
+        // Boss only appears at tile 10 on floors 5 and 10
         type = TILE_TYPES.BOSS;
-      }
-      // Special shop floor every 5 tiles
-      else if (i % 5 === 0) {
+      } else if (i % 5 === 0) {
+        // Shop every 5 tiles (tiles 5, 15 — tile 10 is boss on boss floors)
         type = TILE_TYPES.SHOP;
-      }
-      // Random distribution of other tiles
-      else {
+      } else {
         const rand = Math.random();
         if (rand < 0.45) {
           type = TILE_TYPES.ENEMY;
@@ -94,6 +96,59 @@ export class BoardEngine {
     return board.map((tile) =>
       tile.id === position ? { ...tile, trapTriggered: true } : tile
     );
+  }
+
+  /**
+   * Reshuffle all non-fixed tiles on the board (keeps START at 0 and BOSS at last).
+   * Called when the player completes a lap past tile 0.
+   */
+  static reshuffleBoard(board: BoardTile[], floor: number): BoardTile[] {
+    const isBossFloor = this.BOSS_FLOORS.includes(floor);
+
+    return board.map((tile) => {
+      // START tile always stays
+      if (tile.id === 0) {
+        return { ...tile, visited: true };
+      }
+
+      // Boss tile: present only on boss floors, otherwise becomes a shop
+      if (tile.id === this.BOSS_TILE_ID) {
+        if (isBossFloor) {
+          return { ...tile, type: TILE_TYPES.BOSS, visited: false, enemy: undefined, trapType: undefined, trapTriggered: undefined };
+        }
+        // On non-boss floors tile 10 is a shop (falls through to shop check below)
+      }
+
+      // Fixed shop every 5 tiles
+      if (tile.id % 5 === 0) {
+        return { ...tile, type: TILE_TYPES.SHOP, visited: false, enemy: undefined, trapType: undefined, trapTriggered: undefined };
+      }
+
+      // Re-roll tile type
+      const rand = Math.random();
+      let type: BoardTile['type'];
+      if (rand < 0.45) {
+        type = TILE_TYPES.ENEMY;
+      } else if (rand < 0.6) {
+        type = TILE_TYPES.NORMAL;
+      } else if (rand < 0.75) {
+        type = TILE_TYPES.EVENT;
+      } else {
+        type = TILE_TYPES.TRAP;
+      }
+
+      const trapTypes = Object.values(TRAP_TYPES) as TrapType[];
+      const randomTrap = trapTypes[Math.floor(Math.random() * trapTypes.length)];
+
+      return {
+        ...tile,
+        type,
+        visited: false,
+        enemy: type === TILE_TYPES.ENEMY ? EnemyEngine.generateEnemy(floor) : undefined,
+        trapType: type === TILE_TYPES.TRAP ? randomTrap : undefined,
+        trapTriggered: type === TILE_TYPES.TRAP ? false : undefined,
+      };
+    });
   }
 
   /**

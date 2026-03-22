@@ -30,16 +30,24 @@ export class GameEngine {
   /**
    * Roll dice and move player
    */
-  static rollDice(state: GameState): { state: GameState; diceValue: number } {
+  static rollDice(state: GameState): { state: GameState; diceValue: number; lapped: boolean } {
     const diceValue = randomInt(1, GAME_CONFIG.DICE_SIDES);
+    const currentPosition = state.player.position;
     const newPosition = BoardEngine.getNextPosition(
-      state.player.position,
+      currentPosition,
       diceValue,
       state.board.length
     );
 
-    const updatedBoard = BoardEngine.visitTile(state.board, newPosition);
-    const tile = BoardEngine.getTile(updatedBoard, newPosition);
+    // Detect lap: wrapped past tile 0 (new position is less than current, and we actually moved forward)
+    const lapped = newPosition < currentPosition || (currentPosition + diceValue >= state.board.length);
+
+    // Reshuffle board on lap, then mark the new tile as visited
+    let updatedBoard = lapped
+      ? BoardEngine.reshuffleBoard(state.board, state.currentFloor)
+      : state.board;
+
+    updatedBoard = BoardEngine.visitTile(updatedBoard, newPosition);
 
     const updatedPlayer = {
       ...state.player,
@@ -54,6 +62,7 @@ export class GameEngine {
         turnCount: state.turnCount + 1,
       },
       diceValue,
+      lapped,
     };
   }
 
@@ -149,10 +158,7 @@ export class GameEngine {
       ...state,
       currentFloor: nextFloor,
       board: newBoard,
-      player: {
-        ...state.player,
-        position: 0,
-      },
+      // Keep player at their current position — board is the same circular layout
       turnCount: 0,
     };
   }
@@ -165,11 +171,16 @@ export class GameEngine {
   }
 
   /**
-   * Check if floor is complete
+   * Check if floor is complete.
+   * On boss floors: player must defeat the boss (boss tile visited, not in combat).
+   * On non-boss floors: handled by lap detection in rollDice.
    */
   static isFloorComplete(state: GameState): boolean {
-    const lastTile = state.board[state.board.length - 1];
-    return lastTile.visited && !state.isInCombat;
+    const bossTile = state.board.find((t) => t.type === 'boss');
+    if (bossTile) {
+      return bossTile.visited && !state.isInCombat;
+    }
+    return false;
   }
 
   /**
