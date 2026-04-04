@@ -1,13 +1,18 @@
 import { BoardTile, Enemy, TrapType } from './types';
-import { TILE_TYPES, TRAP_TYPES, GAME_CONFIG } from './constants';
+import { TILE_TYPES, TRAP_TYPES, GAME_CONFIG, getFloorInDungeon, isDungeonBossFloor } from './constants';
 import { EnemyEngine } from './EnemyEngine';
 import { randomInt } from '@/lib/utils';
 
 export class BoardEngine {
   /** Tile index where the boss is placed on boss floors */
   static readonly BOSS_TILE_ID = 10;
-  /** Floors that have a boss encounter */
-  static readonly BOSS_FLOORS = [5, 10];
+  /** Floor-within-dungeon indices that have a boss encounter */
+  static readonly BOSS_FLOOR_INDICES = [5, 10];
+
+  /** Returns true if the given absolute floor has a boss */
+  static isBossFloor(floor: number): boolean {
+    return this.BOSS_FLOOR_INDICES.includes(getFloorInDungeon(floor));
+  }
 
   /**
    * Generate a new game board
@@ -15,7 +20,7 @@ export class BoardEngine {
   static generateBoard(floor: number): BoardTile[] {
     const tiles: BoardTile[] = [];
     const boardSize = GAME_CONFIG.BOARD_SIZE;
-    const isBossFloor = this.BOSS_FLOORS.includes(floor);
+    const isBossFloor = this.isBossFloor(floor);
 
     // Calculate positions in a circle - centered coordinates
     const centerX = 450; // Center of 900
@@ -32,11 +37,11 @@ export class BoardEngine {
       if (i === 0) {
         // Tile 0 is always START
         type = TILE_TYPES.START;
-      } else if (isBossFloor && i === this.BOSS_TILE_ID) {
-        // Boss only appears at tile 10 on floors 5 and 10
+      } else if (isBossFloor) {
+        // On boss floors every non-start tile is a boss tile — player must fight
         type = TILE_TYPES.BOSS;
       } else if (i % 5 === 0) {
-        // Shop every 5 tiles (tiles 5, 15 — tile 10 is boss on boss floors)
+        // Shop every 5 tiles
         type = TILE_TYPES.SHOP;
       } else {
         const rand = Math.random();
@@ -103,7 +108,7 @@ export class BoardEngine {
    * Called when the player completes a lap past tile 0.
    */
   static reshuffleBoard(board: BoardTile[], floor: number): BoardTile[] {
-    const isBossFloor = this.BOSS_FLOORS.includes(floor);
+    const isBossFloor = this.isBossFloor(floor);
 
     return board.map((tile) => {
       // START tile always stays

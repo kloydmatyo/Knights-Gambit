@@ -1,6 +1,7 @@
 'use client';
 
 import { Player } from '@/lib/game-engine';
+import { getDungeonNumber, getFloorInDungeon } from '@/lib/game-engine/constants';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +15,8 @@ interface HUDProps {
 export default function HUD({ player, floor, turnCount, onInventoryClick }: HUDProps) {
   const healthPercent = (player.health / player.maxHealth) * 100;
   const manaPercent = player.mana && player.maxMana ? (player.mana / player.maxMana) * 100 : 0;
+  const dungeonNum = getDungeonNumber(floor);
+  const floorInDungeon = getFloorInDungeon(floor);
 
   return (
     <div className="fixed top-0 left-0 right-0 z-30 bg-game-primary bg-opacity-98 border-b-2 border-game-secondary shadow-2xl backdrop-blur-sm">
@@ -95,7 +98,7 @@ export default function HUD({ player, floor, turnCount, onInventoryClick }: HUDP
 
           {/* Floor & Turn */}
           <div className="flex justify-center gap-4 mt-1.5 text-xs bg-game-bg px-3 py-1 rounded border border-gray-700">
-            <span className="text-game-gold font-bold">Floor {floor}</span>
+            <span className="text-game-gold font-bold">D{dungeonNum} · F{floorInDungeon}</span>
             <span className="text-gray-400">Turn {turnCount}</span>
           </div>
         </div>
@@ -169,7 +172,7 @@ export default function HUD({ player, floor, turnCount, onInventoryClick }: HUDP
           {/* Right: Game Info & Actions */}
           <div className="flex items-center gap-4">
             <div className="text-right bg-game-bg px-4 py-2 rounded-lg border border-gray-700">
-              <div className="text-game-gold font-bold text-lg">Floor {floor}</div>
+              <div className="text-game-gold font-bold text-lg">Dungeon {dungeonNum} · Floor {floorInDungeon}</div>
               <div className="text-gray-400 text-sm">Turn {turnCount}</div>
             </div>
 

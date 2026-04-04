@@ -1,24 +1,26 @@
 import { Enemy, EnemyType } from './types';
-import { ENEMY_STATS, ENEMY_TYPES, BOSS_STATS } from './constants';
+import { ENEMY_STATS, ENEMY_TYPES, BOSS_STATS, DUNGEON_BOSS_NAMES, getDungeonNumber, getFloorInDungeon } from './constants';
 import { randomInt } from '@/lib/utils';
 
 export class EnemyEngine {
   /**
-   * Generate a random enemy scaled to floor
+   * Generate a random enemy scaled to floor (accounts for dungeon number)
    */
   static generateEnemy(floor: number): Enemy {
     const enemyTypes = Object.keys(ENEMY_STATS) as EnemyType[];
     const randomType = enemyTypes[randomInt(0, enemyTypes.length - 1)];
-    
     return this.createEnemy(randomType, floor);
   }
 
   /**
-   * Create an enemy of specific type
+   * Create an enemy of specific type, scaled by absolute floor
    */
   static createEnemy(type: EnemyType, floor: number): Enemy {
     const baseStats = ENEMY_STATS[type];
-    const floorMultiplier = 1 + (floor - 1) * 0.2; // 20% increase per floor
+    // 20% per floor within dungeon + 30% per dungeon beyond the first
+    const dungeonNum = getDungeonNumber(floor);
+    const floorInDungeon = getFloorInDungeon(floor);
+    const floorMultiplier = (1 + (floorInDungeon - 1) * 0.2) * (1 + (dungeonNum - 1) * 0.3);
 
     return {
       id: `enemy-${Date.now()}-${Math.random()}`,
@@ -34,25 +36,33 @@ export class EnemyEngine {
   }
 
   /**
-   * Create a boss enemy for the given floor.
-   * Uses named boss stats for floors 5 and 10, falls back to a scaled troll otherwise.
+   * Create a boss enemy for the given absolute floor.
+   * Uses named boss stats for floor-within-dungeon 5 and 10, scaled by dungeon number.
    */
   static createBoss(floor: number): Enemy {
-    const defined = BOSS_STATS[floor];
+    const dungeonNum = getDungeonNumber(floor);
+    const floorInDungeon = getFloorInDungeon(floor);
+    const dungeonScale = 1 + (dungeonNum - 1) * 0.4; // 40% stronger per dungeon
+
+    const defined = BOSS_STATS[floorInDungeon];
     if (defined) {
+      const isDungeonFinalBoss = floorInDungeon === 10;
+      const name = isDungeonFinalBoss
+        ? (DUNGEON_BOSS_NAMES[dungeonNum] ?? `Dungeon ${dungeonNum} Boss`)
+        : defined.name;
       return {
         id: `boss-${floor}-${Date.now()}`,
         type: ENEMY_TYPES.TROLL,
-        name: defined.name,
-        health: defined.health,
-        maxHealth: defined.health,
-        attack: defined.attack,
-        defense: defined.defense,
-        coinReward: defined.coinReward,
+        name,
+        health: Math.floor(defined.health * dungeonScale),
+        maxHealth: Math.floor(defined.health * dungeonScale),
+        attack: Math.floor(defined.attack * dungeonScale),
+        defense: Math.floor(defined.defense * dungeonScale),
+        coinReward: Math.floor(defined.coinReward * dungeonScale),
         statusEffects: [],
       };
     }
-    // Generic fallback for any other floor
+    // Generic fallback
     const floorMultiplier = 1 + (floor - 1) * 0.3;
     return {
       id: `boss-${floor}-${Date.now()}`,

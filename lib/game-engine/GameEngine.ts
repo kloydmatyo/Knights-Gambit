@@ -184,7 +184,7 @@ export class GameEngine {
       ...state,
       currentFloor: nextFloor,
       board: newBoard,
-      // Keep player at their current position — board is the same circular layout
+      player: { ...state.player, position: 0 },
       turnCount: 0,
     };
   }
@@ -198,13 +198,14 @@ export class GameEngine {
 
   /**
    * Check if floor is complete.
-   * On boss floors: player must defeat the boss (boss tile visited, not in combat).
+   * On boss floors: player must defeat any boss tile (visited + not in combat).
    * On non-boss floors: handled by lap detection in rollDice.
    */
   static isFloorComplete(state: GameState): boolean {
-    const bossTile = state.board.find((t) => t.type === 'boss');
-    if (bossTile) {
-      return bossTile.visited && !state.isInCombat;
+    const hasBossFloor = state.board.some((t) => t.type === 'boss');
+    if (hasBossFloor) {
+      // Floor ends as soon as one boss tile has been visited (boss defeated) and combat is over
+      return state.board.some((t) => t.type === 'boss' && t.visited) && !state.isInCombat;
     }
     return false;
   }

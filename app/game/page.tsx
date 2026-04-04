@@ -27,9 +27,11 @@ import ShopPanel from '@/components/game/ShopPanel';
 import WeaponUpgradePanel from '@/components/game/WeaponUpgradePanel';
 import DiceRoller from '@/components/game/DiceRoller';
 import GameOverScreen from '@/components/game/GameOverScreen';
+import DungeonClearScreen from '@/components/game/DungeonClearScreen';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDungeonNumber, isDungeonBossFloor } from '@/lib/game-engine/constants';
 
-type GamePhase = 'character-selection' | 'playing' | 'combat' | 'shop' | 'game-over';
+type GamePhase = 'character-selection' | 'playing' | 'combat' | 'shop' | 'game-over' | 'dungeon-clear';
 
 export default function GamePage() {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -68,16 +70,17 @@ export default function GamePage() {
     setIsWalking(true);
 
     if (lapped) {
-      showNotification('🔀 The board has reshuffled — new dangers await!');
       // On non-boss floors, completing a lap advances the floor
       const hasBoss = gameState.board.some((t) => t.type === 'boss');
       if (!hasBoss) {
+        showNotification('🔀 The board has reshuffled — new dangers await!');
         setTimeout(() => handleFloorComplete(newState), 1400);
         setGameState(newState);
         setDisplayPosition(newState.player.position);
         setIsWalking(false);
         return;
       }
+      // On boss floors, lapping just continues — no reshuffle, must defeat a boss
     }
 
     // Step the token tile-by-tile before processing the landing tile
@@ -444,12 +447,36 @@ export default function GamePage() {
 
   // Handle floor completion
   const handleFloorComplete = (state: GameState) => {
-    showNotification(`Floor ${state.currentFloor} complete! Advancing...`);
-    setTimeout(() => {
-      const newState = GameEngine.advanceFloor(state);
-      setGameState(newState);
-      showNotification(`Welcome to Floor ${newState.currentFloor}!`);
-    }, 2000);
+    if (isDungeonBossFloor(state.currentFloor)) {
+      // Dungeon cleared — show the clear screen
+      setGameState(state);
+      setPhase('dungeon-clear');
+    } else {
+      showNotification(`Floor ${state.currentFloor} complete! Advancing...`);
+      setTimeout(() => {
+        const newState = GameEngine.advanceFloor(state);
+        setGameState(newState);
+        setDisplayPosition(0);
+        showNotification(`Welcome to Floor ${newState.currentFloor}!`);
+      }, 2000);
+    }
+  };
+
+  // Handle dungeon clear — apply reward and advance to next dungeon
+  const handleDungeonContinue = () => {
+    if (!gameState) return;
+    const advanced = GameEngine.advanceFloor(gameState);
+    // Reward: restore 40% HP and full mana
+    const healAmount = Math.floor(advanced.player.maxHealth * 0.4);
+    const rewardedPlayer = {
+      ...advanced.player,
+      health: Math.min(advanced.player.maxHealth, advanced.player.health + healAmount),
+      ...(advanced.player.maxMana !== undefined ? { mana: advanced.player.maxMana } : {}),
+    };
+    setGameState({ ...advanced, player: rewardedPlayer });
+    setDisplayPosition(0);
+    setPhase('playing');
+    showNotification(`Dungeon ${getDungeonNumber(gameState.currentFloor)} cleared! HP restored. Entering Dungeon ${getDungeonNumber(advanced.currentFloor)}...`);
   };
 
   // Show notification
@@ -504,9 +531,9 @@ export default function GamePage() {
     if (!gameState) return;
     setGameState({
       ...gameState,
-      player: { ...gameState.player, coins: gameState.player.coins + 100 }
+      player: { ...gameState.player, coins: gameState.player.coins + 10000 }
     });
-    showNotification('Added 100 coins!');
+    showNotification('Added 10000 coins!');
   };
 
   const debugHealFull = () => {
@@ -708,6 +735,18 @@ export default function GamePage() {
         onPurchase={handleWeaponUpgradePurchase}
       />
 
+      {/* Dungeon Clear Screen */}
+      <AnimatePresence>
+        {phase === 'dungeon-clear' && gameState && (
+          <DungeonClearScreen
+            dungeonNumber={getDungeonNumber(gameState.currentFloor)}
+            player={gameState.player}
+            turns={gameState.turnCount}
+            onContinue={handleDungeonContinue}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Game Over Screen */}
       <AnimatePresence>
         {phase === 'game-over' && (
@@ -765,7 +804,7 @@ export default function GamePage() {
                 onClick={debugAddCoins}
                 className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-xs font-bold"
               >
-                💰 +100 Coins
+                💰 +10000 Coins
               </button>
               <button
                 onClick={debugHealFull}

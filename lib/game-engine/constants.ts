@@ -4,7 +4,23 @@ export const GAME_CONFIG = {
   STARTING_FLOOR: 1,
   MAX_FLOORS: 10,
   DICE_SIDES: 6,
+  FLOORS_PER_DUNGEON: 10,
 } as const;
+
+/** Returns the 1-based dungeon number for a given floor (floors 1-10 = dungeon 1, 11-20 = dungeon 2, etc.) */
+export function getDungeonNumber(floor: number): number {
+  return Math.ceil(floor / GAME_CONFIG.FLOORS_PER_DUNGEON);
+}
+
+/** Returns the floor number within the current dungeon (1–10) */
+export function getFloorInDungeon(floor: number): number {
+  return ((floor - 1) % GAME_CONFIG.FLOORS_PER_DUNGEON) + 1;
+}
+
+/** Returns true if this floor is the last floor of a dungeon (boss floor) */
+export function isDungeonBossFloor(floor: number): boolean {
+  return floor % GAME_CONFIG.FLOORS_PER_DUNGEON === 0;
+}
 
 // Character Classes
 export const CHARACTER_CLASSES = {
@@ -211,10 +227,19 @@ export const SHOP_PRICES = {
   BLESSING: 40,
 } as const;
 
-// Boss definitions per floor milestone
+// Boss definitions per floor milestone (keyed by floor-within-dungeon: 5 = mid-boss, 10 = dungeon boss)
+// For floors beyond dungeon 1, EnemyEngine scales these stats by dungeon number.
 export const BOSS_STATS: Record<number, { name: string; health: number; attack: number; defense: number; coinReward: number }> = {
   5:  { name: 'The Stone Warden',   health: 280, attack: 38, defense: 18, coinReward: 150 },
   10: { name: 'The Void Tyrant',    health: 520, attack: 65, defense: 30, coinReward: 300 },
+};
+
+// Named dungeon bosses for the final floor of each dungeon (floor 10, 20, 30…)
+export const DUNGEON_BOSS_NAMES: Record<number, string> = {
+  1: 'The Void Tyrant',
+  2: 'The Crimson Colossus',
+  3: 'The Abyssal Warden',
+  4: 'The Eternal Dread',
 };
 export const WEAPON_UPGRADE_TIERS = {
   BASIC: 'basic',
