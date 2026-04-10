@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   GameEngine,
   CharacterClass,
@@ -30,8 +30,10 @@ import GameOverScreen from '@/components/game/GameOverScreen';
 import DungeonClearScreen from '@/components/game/DungeonClearScreen';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getDungeonNumber, isDungeonBossFloor } from '@/lib/game-engine/constants';
+import { SaveEngine, SaveData } from '@/lib/game-engine/SaveEngine';
+import ResumePrompt from '@/components/game/ResumePrompt';
 
-type GamePhase = 'character-selection' | 'playing' | 'combat' | 'shop' | 'game-over' | 'dungeon-clear';
+type GamePhase = 'character-selection' | 'playing' | 'combat' | 'shop' | 'game-over' | 'dungeon-clear' | 'resume-prompt';
 
 export default function GamePage() {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -50,19 +52,36 @@ export default function GamePage() {
   const [combatEnemy, setCombatEnemy] = useState<Enemy | null>(null);
   // Branch choice state â€” set after rolling, cleared after tile selection
   const [pendingChoice, setPendingChoice] = useState<BranchChoice | null>(null);
+  const [playerName, setPlayerName] = useState<string>('');
+  const [savedRun, setSavedRun] = useState<SaveData | null>(null);
+
+  // Detect saved run on mount
+  useEffect(() => {
+    const save = SaveEngine.load();
+    if (save) { setSavedRun(save); setPhase('resume-prompt'); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const showNotification = (message: string) => {
     setNotification(message);
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // -- Auto-save helper (pass name explicitly to avoid stale closure) --
+  const autoSave = (gs: GameState, name: string = playerName, us: WeaponUpgradeState = upgradeState) => {
+    if (name) SaveEngine.save(name, gs, us);
+  };
+
   // â”€â”€ Character selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const handleCharacterSelect = (characterClass: CharacterClass) => {
+  const handleCharacterSelect = (characterClass: CharacterClass, name: string) => {
     const newGameState = GameEngine.initializeGame(characterClass);
+    const newUpgradeState = WeaponUpgradeEngine.createInitialState();
+    setPlayerName(name);
     setGameState(newGameState);
-    setUpgradeState(WeaponUpgradeEngine.createInitialState());
+    setUpgradeState(newUpgradeState);
     setPhase('playing');
-    showNotification(`Welcome, ${characterClass}! Your adventure begins...`);
+    SaveEngine.save(name, newGameState, newUpgradeState);
+    showNotification(`Welcome, ${name}! Your adventure begins...`);
   };
 
   // -- Dice roll -- NEW FLOW: show branch options first, no dice yet ----------
@@ -150,6 +169,7 @@ export default function GamePage() {
 
     if (stateAfterMove.player.health <= 0) {
       setGameState(stateAfterMove);
+    SaveEngine.clear();
       setTimeout(() => setPhase('game-over'), 500);
       return;
     }
@@ -282,6 +302,7 @@ export default function GamePage() {
     setGameState(newState);
     setCombatLog((prev) => [...prev, ...result.messages]);
     triggerCombatAnimations(gameState.currentEnemy.type, result);
+    SaveEngine.clear();
     if (GameEngine.isGameOver(newState)) setTimeout(() => setPhase('game-over'), 1500);
   };
 
@@ -291,6 +312,7 @@ export default function GamePage() {
     setGameState(newState);
     setCombatLog((prev) => [...prev, ...result.messages]);
     triggerCombatAnimations(gameState.currentEnemy.type, result);
+    SaveEngine.clear();
     if (GameEngine.isGameOver(newState)) setTimeout(() => setPhase('game-over'), 1500);
   };
 
@@ -309,6 +331,7 @@ export default function GamePage() {
       setGameState({ ...gameState, player: { ...gameState.player, health: newHealth } });
       setCombatLog((prev) => [...prev, `Failed to flee! Lost ${penalty} HP.`]);
       showNotification(`ðŸƒ Flee failed! Lost ${penalty} HP.`);
+    SaveEngine.clear();
       if (newHealth <= 0) setTimeout(() => setPhase('game-over'), 1000);
     }
   };
@@ -368,6 +391,7 @@ export default function GamePage() {
 
     setGameState({ ...state, player: newPlayer, board: newBoard });
     showNotification(message);
+    SaveEngine.clear();
     if (newPlayer.health <= 0) setTimeout(() => setPhase('game-over'), 500);
   };
 
@@ -429,6 +453,7 @@ export default function GamePage() {
         const newState = GameEngine.advanceFloor(state);
         setGameState(newState);
         showNotification(`Welcome to Floor ${newState.currentFloor}!`);
+        autoSave(newState);
       }, 2000);
     }
   };
@@ -443,6 +468,7 @@ export default function GamePage() {
       ...(advanced.player.maxMana !== undefined ? { mana: advanced.player.maxMana } : {}),
     };
     setGameState({ ...advanced, player: rewardedPlayer });
+    autoSave({ ...advanced, player: rewardedPlayer });
     setPhase('playing');
     showNotification(`Dungeon ${getDungeonNumber(gameState.currentFloor)} cleared! HP restored. Entering Dungeon ${getDungeonNumber(advanced.currentFloor)}...`);
   };
@@ -460,12 +486,30 @@ export default function GamePage() {
 
   // â”€â”€ Restart / Menu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleRestart = () => {
+    SaveEngine.clear();
     setGameState(null);
+    setPlayerName('');
     setPhase('character-selection');
     setLastDiceRoll(undefined);
     setCombatLog([]);
     setNotification(null);
     setPendingChoice(null);
+  };
+
+  const handleResume = () => {
+    if (!savedRun) return;
+    setPlayerName(savedRun.playerName);
+    setGameState(savedRun.gameState);
+    setUpgradeState(savedRun.upgradeState);
+    setPhase('playing');
+    setSavedRun(null);
+    showNotification(`Welcome back, ${savedRun.playerName}!`);
+  };
+
+  const handleNewGameFromResume = () => {
+    SaveEngine.clear();
+    setSavedRun(null);
+    setPhase('character-selection');
   };
 
   const handleMainMenu = () => { window.location.href = '/'; };
@@ -497,7 +541,9 @@ export default function GamePage() {
     setUpgradeState(WeaponUpgradeEngine.createInitialState()); setGameState({ ...gameState, player }); showNotification('[DEBUG] All weapon upgrades reset.');
   };
 
-  // â”€â”€ Early returns â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  // -- Early returns --
+  if (phase === 'resume-prompt' && savedRun) return <ResumePrompt save={savedRun} onResume={handleResume} onNewGame={handleNewGameFromResume} />;
   if (phase === 'character-selection') return <CharacterSelection onSelect={handleCharacterSelect} />;
   if (!gameState) return null;
 

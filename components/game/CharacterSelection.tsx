@@ -8,7 +8,7 @@ import Card from '@/components/ui/Card';
 import { cn } from '@/lib/utils';
 
 interface CharacterSelectionProps {
-  onSelect: (characterClass: CharacterClass) => void;
+  onSelect: (characterClass: CharacterClass, playerName: string) => void;
 }
 
 const classEmojis: Record<CharacterClass, string> = {
@@ -31,6 +31,9 @@ const classColors: Record<CharacterClass, string> = {
 
 export default function CharacterSelection({ onSelect }: CharacterSelectionProps) {
   const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
+  const [playerName, setPlayerName] = useState('');
+
+  const canStart = selectedClass && playerName.trim().length > 0;
 
   const classes = Object.entries(CLASS_STATS) as [CharacterClass, typeof CLASS_STATS[CharacterClass]][];
 
@@ -109,15 +112,23 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="mb-4 sm:mb-6"
+            className="mb-4 sm:mb-6 flex flex-col items-center gap-3 w-full max-w-xs"
           >
+            <input
+              type="text"
+              placeholder="Enter your name..."
+              value={playerName}
+              onChange={e => setPlayerName(e.target.value)}
+              maxLength={20}
+              className="w-full bg-game-primary border-2 border-game-gold rounded-xl px-4 py-3 text-white text-center font-bold placeholder-gray-500 focus:outline-none focus:border-yellow-300 text-sm sm:text-base"
+            />
             <Button
               size="lg"
-              disabled={!selectedClass}
-              onClick={() => selectedClass && onSelect(selectedClass)}
-              className="text-sm sm:text-base px-8 sm:px-12 py-2.5 sm:py-3"
+              disabled={!canStart}
+              onClick={() => selectedClass && canStart && onSelect(selectedClass, playerName.trim())}
+              className="text-sm sm:text-base px-8 sm:px-12 py-2.5 sm:py-3 w-full"
             >
-              {selectedClass ? '🗡️ START ADVENTURE 🗡️' : 'SELECT A CLASS FIRST'}
+              {!selectedClass ? 'SELECT A CLASS FIRST' : !playerName.trim() ? 'ENTER YOUR NAME' : '🗡️ START ADVENTURE 🗡️'}
             </Button>
           </motion.div>
         </div>
