@@ -21,6 +21,7 @@ export class CharacterEngine {
       inventory: [],
       skills: this.getClassSkills(characterClass),
       statusEffects: [],
+      relics: [] as string[],
     };
 
     // Add mana for mage class

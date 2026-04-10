@@ -18,6 +18,9 @@ export class CombatEngine {
     let updatedPlayerMana = player.mana;
     let updatedEnemyStatusEffects = [...enemy.statusEffects];
 
+    const relics = player.relics ?? [];
+    const hasCursedIdol = relics.includes('relic_cursed_idol');
+
     // Apply curse penalty to attack
     const isCursed = player.statusEffects.some((e) => e.type === 'cursed');
     const effectiveAttack = isCursed ? Math.max(1, Math.floor(player.attack * 0.6)) : player.attack;
@@ -90,8 +93,26 @@ export class CombatEngine {
       }
     }
 
-    // Apply damage to enemy
-    const newEnemyHealth = Math.max(0, enemy.health - playerDamage);
+    // Apply damage to enemy (absorb through shield first)
+    let remainingPlayerDamage = playerDamage;
+
+    // Cursed Idol: +20% damage dealt, but enemy hits harder (handled below)
+    if (hasCursedIdol && remainingPlayerDamage > 0) {
+      const bonus = Math.floor(remainingPlayerDamage * 0.2);
+      remainingPlayerDamage += bonus;
+      playerDamage = remainingPlayerDamage;
+    }
+    const shieldEffect = updatedEnemyStatusEffects.find(e => e.type === 'shield');
+    if (shieldEffect && remainingPlayerDamage > 0) {
+      const absorbed = Math.min(shieldEffect.value ?? 0, remainingPlayerDamage);
+      remainingPlayerDamage -= absorbed;
+      const newShieldValue = (shieldEffect.value ?? 0) - absorbed;
+      updatedEnemyStatusEffects = newShieldValue <= 0
+        ? updatedEnemyStatusEffects.filter(e => e.type !== 'shield')
+        : updatedEnemyStatusEffects.map(e => e.type === 'shield' ? { ...e, value: newShieldValue } : e);
+      if (absorbed > 0) messages.push(`🛡️ Enemy shield absorbs ${absorbed} damage! (${newShieldValue} remaining)`);
+    }
+    const newEnemyHealth = Math.max(0, enemy.health - remainingPlayerDamage);
     const isEnemyDefeated = newEnemyHealth <= 0;
 
     // Enemy attacks back if still alive
@@ -109,6 +130,43 @@ export class CombatEngine {
 
       enemyDamage = incomingDamage;
       messages.push(`${enemy.name} attacks for ${enemyDamage} damage!`);
+
+      // Cursed Idol: take 10% more incoming damage
+      if (hasCursedIdol) {
+        const penalty = Math.floor(enemyDamage * 0.1);
+        enemyDamage += penalty;
+      }
+
+      // ── Enemy behavior effects ──────────────────────────────────────────
+      switch (enemy.behavior) {
+        case 'berserker': {
+          // Gains +3 ATK each turn it survives (tracked via a stacking buff on the enemy object)
+          // We signal this via a message; GameEngine.executeCombatTurn applies the stat change
+          messages.push(`🔥 ${enemy.name} grows stronger! (+3 ATK)`);
+          break;
+        }
+        case 'regenerator': {
+          const regenAmt = 8;
+          // Signal regen via message; GameEngine applies the HP change
+          messages.push(`💚 ${enemy.name} regenerates ${regenAmt} HP!`);
+          break;
+        }
+        case 'poisoner': {
+          // Apply poison to player on every attack
+          messages.push(`🧪 ${enemy.name}'s attack is venomous! You are poisoned!`);
+          break;
+        }
+        case 'defender': {
+          if (remainingPlayerDamage > 0) {
+            const reflected = Math.floor(remainingPlayerDamage * 0.3);
+            if (reflected > 0) {
+              enemyDamage += reflected;
+              messages.push(`🪞 ${enemy.name} reflects ${reflected} damage back at you!`);
+            }
+          }
+          break;
+        }
+      }
     }
 
     // Apply damage to player
@@ -131,6 +189,13 @@ export class CombatEngine {
       messages,
       updatedPlayerMana,
       updatedEnemyStatusEffects,
+      // Behavior side-effects for GameEngine to apply
+      behaviorEnemyAtkGain: (!isEnemyDefeated && enemy.behavior === 'berserker') ? 3 : 0,
+      behaviorEnemyRegen:   (!isEnemyDefeated && enemy.behavior === 'regenerator') ? 8 : 0,
+      behaviorPoisonPlayer: (!isEnemyDefeated && enemy.behavior === 'poisoner'),
+      // Relic side-effects
+      relicVampiricHeal: (playerDamage > 0 && relics.includes('vampiric_fang')) ? 3 : 0,
+      relicBonusCoins:   (isEnemyDefeated && relics.includes('philosophers_stone')) ? 5 : 0,
     };
   }
 

@@ -5,6 +5,8 @@ export type LeaderboardEntry = {
   nickname: string;
   floor_reached: number;
   character_class: string;
+  enemies_killed: number;
+  turns: number;
   created_at?: string;
 };
 

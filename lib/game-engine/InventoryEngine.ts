@@ -1,19 +1,23 @@
 import { Player, Item, ItemType } from './types';
-import { ITEM_TYPES, SHOP_PRICES } from './constants';
+import { ITEM_TYPES, SHOP_PRICES, RELICS } from './constants';
 import { CharacterEngine } from './CharacterEngine';
 
 export class InventoryEngine {
   /**
-   * Get all available shop items
+   * Get all available shop items, with prices scaled by floor.
+   * Floor 1 = base prices. Each floor adds ~12% to consumable prices.
    */
-  static getShopItems(): Item[] {
+  static getShopItems(floor = 1): Item[] {
+    const scale = 1 + (floor - 1) * 0.12;
+    const p = (base: number) => Math.round(base * scale);
+
     return [
       {
         id: ITEM_TYPES.HEALING_POTION,
         type: ITEM_TYPES.HEALING_POTION,
         name: 'Healing Potion',
         description: 'Restores 30 HP',
-        price: SHOP_PRICES.HEALING_POTION,
+        price: p(SHOP_PRICES.HEALING_POTION),
         effect: { type: 'heal', value: 30 },
         quantity: 1,
         autoConsume: false,
@@ -23,7 +27,7 @@ export class InventoryEngine {
         type: ITEM_TYPES.ANTIDOTE,
         name: 'Antidote',
         description: 'Cures poison and burn',
-        price: SHOP_PRICES.ANTIDOTE,
+        price: p(SHOP_PRICES.ANTIDOTE),
         effect: { type: 'cure' },
         quantity: 1,
         autoConsume: false,
@@ -33,7 +37,7 @@ export class InventoryEngine {
         type: ITEM_TYPES.HOLY_WATER,
         name: 'Holy Water',
         description: 'Removes the Curse debuff',
-        price: SHOP_PRICES.HOLY_WATER,
+        price: p(SHOP_PRICES.HOLY_WATER),
         effect: { type: 'cure_curse' },
         quantity: 1,
         autoConsume: false,
@@ -43,7 +47,7 @@ export class InventoryEngine {
         type: ITEM_TYPES.BLESSING,
         name: 'Blessing',
         description: 'Removes Curse and restores stats — applied instantly',
-        price: SHOP_PRICES.BLESSING,
+        price: p(SHOP_PRICES.BLESSING),
         effect: { type: 'cure_curse' },
         quantity: 1,
         autoConsume: true,
@@ -53,7 +57,7 @@ export class InventoryEngine {
         type: ITEM_TYPES.STAT_UPGRADE,
         name: 'Stat Upgrade',
         description: 'Permanently increases ATK by 5 — applied instantly',
-        price: SHOP_PRICES.STAT_UPGRADE,
+        price: p(SHOP_PRICES.STAT_UPGRADE),
         effect: { type: 'permanent', stat: 'attack', value: 5 },
         quantity: 1,
         autoConsume: true,
@@ -63,7 +67,7 @@ export class InventoryEngine {
         type: ITEM_TYPES.BLESSING_SCROLL,
         name: 'Blessing Scroll',
         description: 'Grants blessed status for 5 turns — applied instantly',
-        price: SHOP_PRICES.BLESSING_SCROLL,
+        price: p(SHOP_PRICES.BLESSING_SCROLL),
         effect: { type: 'buff', duration: 5 },
         quantity: 1,
         autoConsume: true,
@@ -73,12 +77,36 @@ export class InventoryEngine {
         type: ITEM_TYPES.HEARTSTONE_AMULET,
         name: 'Heartstone Amulet',
         description: 'Increases max HP by 20 — applied instantly',
-        price: SHOP_PRICES.HEARTSTONE_AMULET,
+        price: p(SHOP_PRICES.HEARTSTONE_AMULET),
         effect: { type: 'permanent', stat: 'health', value: 20 },
         quantity: 1,
         autoConsume: true,
       },
     ];
+  }
+
+  /**
+   * Pick one relic to offer in the shop for this floor.
+   * Excludes relics the player already owns and those gated behind a higher floor.
+   * Returns null if no eligible relic exists.
+   */
+  static getRelicForFloor(floor: number, ownedRelics: string[]): Item | null {
+    const eligible = (RELICS as readonly typeof RELICS[number][]).filter(
+      (r) => r.minFloor <= floor && !ownedRelics.includes(r.id)
+    );
+    if (eligible.length === 0) return null;
+    // Deterministic per floor so the relic doesn't change on re-render
+    const relic = eligible[floor % eligible.length];
+    return {
+      id: relic.id,
+      type: ITEM_TYPES.HEARTSTONE_AMULET, // closest existing type for icon fallback
+      name: relic.name,
+      description: relic.description,
+      price: relic.price,
+      effect: relic.effect as Item['effect'],
+      quantity: 1,
+      autoConsume: true,
+    };
   }
 
   /**
@@ -276,6 +304,18 @@ export class InventoryEngine {
           message = `${item.name} permanently increased ${item.effect.stat}!`;
         }
         break;
+
+      case 'relic': {
+        // Register the relic id on the player
+        const relicId = item.effect.relicId ?? item.id;
+        updatedPlayer = { ...player, relics: [...(player.relics ?? []), relicId] };
+        // Apply any immediate stat bonus (iron_heart, war_drum, stone_skin)
+        if (item.effect.stat && item.effect.value) {
+          updatedPlayer = CharacterEngine.upgradeStat(updatedPlayer, item.effect.stat, item.effect.value);
+        }
+        message = `${item.name} equipped! Its power flows through you.`;
+        break;
+      }
     }
 
     return { player: updatedPlayer, message };

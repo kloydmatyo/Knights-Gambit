@@ -22,7 +22,18 @@ export interface Player {
   statusEffects: StatusEffect[];
   mana?: number;
   maxMana?: number;
+  /** Relic ids owned this run — drives passive effects */
+  relics: string[];
 }
+
+export type EnemyBehavior =
+  | 'normal'
+  | 'berserker'      // gains +3 ATK each turn it survives
+  | 'regenerator'    // heals 8 HP per turn
+  | 'defender'       // reflects 30% of incoming damage back to player
+  | 'glass_cannon'   // +50% ATK, -50% DEF
+  | 'poisoner'       // applies poison on every attack
+  | 'enrager';       // boss-only: gains +15 ATK when below 50% HP (one-time)
 
 export interface Enemy {
   id: string;
@@ -34,6 +45,9 @@ export interface Enemy {
   defense: number;
   coinReward: number;
   statusEffects: StatusEffect[];
+  behavior: EnemyBehavior;
+  /** True once a boss has triggered its enrage phase */
+  enraged?: boolean;
 }
 
 export interface BoardTile {
@@ -108,10 +122,12 @@ export interface Item {
 }
 
 export interface ItemEffect {
-  type: 'heal' | 'cure' | 'cure_curse' | 'buff' | 'permanent';
+  type: 'heal' | 'cure' | 'cure_curse' | 'buff' | 'permanent' | 'relic';
   value?: number;
   stat?: 'health' | 'attack' | 'defense';
   duration?: number;
+  /** For relic type: which passive bonus this relic grants */
+  relicId?: string;
 }
 
 export interface Skill {
@@ -148,6 +164,13 @@ export interface CombatResult {
   messages: string[];
   updatedPlayerMana?: number;
   updatedEnemyStatusEffects?: StatusEffect[];
+  /** Behavior side-effects — applied by GameEngine after the turn */
+  behaviorEnemyAtkGain?: number;
+  behaviorEnemyRegen?: number;
+  behaviorPoisonPlayer?: boolean;
+  /** Relic side-effects — applied by GameEngine after the turn */
+  relicVampiricHeal?: number;
+  relicBonusCoins?: number;
 }
 
 export interface GameState {
@@ -158,10 +181,13 @@ export interface GameState {
   isInCombat: boolean;
   currentEnemy: Enemy | null;
   statUpgradeCounts: StatUpgradeCounts;
+  enemiesKilled: number;
   /** Pending branch choice waiting for player to pick a tile */
   pendingBranchChoice?: BranchChoice | null;
   /** Dice manipulation resources */
   diceManipulation: DiceManipulation;
+  /** Destiny state active for the current combat (cleared on combat end) */
+  activeCombatDestiny?: DestinyState | null;
 }
 
 export interface StatUpgradeCounts {

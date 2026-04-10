@@ -179,18 +179,10 @@ export default function GamePage() {
     if (!tile) { setGameState(stateAfterMove); return; }
 
     // Exalted on combat = instant win (enemy HP already set to 0 in chooseTile)
-    const isInstantWin = destiny?.state === 'exalted' && (tile.type === 'enemy' || tile.type === 'elite');
+    const isInstantWin = false; // removed: exalted now doubles damage in combat instead
 
     switch (tile.type) {
       case 'enemy': {
-        if (isInstantWin) {
-          const coins = tile.enemy?.coinReward ?? 10;
-          stateAfterMove = { ...stateAfterMove, player: { ...stateAfterMove.player, coins: stateAfterMove.player.coins + coins } };
-          setGameState(stateAfterMove);
-          showNotification(` Exalted! Instant victory! +${coins} coins`);
-          if (GameEngine.isFloorComplete(stateAfterMove)) handleFloorComplete(stateAfterMove);
-          return;
-        }
         const combatState = GameEngine.startCombat(stateAfterMove);
         setGameState(combatState);
         setPhase('combat');
@@ -200,20 +192,12 @@ export default function GamePage() {
         return;
       }
       case 'elite': {
-        if (isInstantWin) {
-          const coins = tile.enemy?.coinReward ?? 20;
-          stateAfterMove = { ...stateAfterMove, player: { ...stateAfterMove.player, coins: stateAfterMove.player.coins + coins } };
-          setGameState(stateAfterMove);
-          showNotification(` Exalted! Elite defeated instantly! +${coins} coins`);
-          if (GameEngine.isFloorComplete(stateAfterMove)) handleFloorComplete(stateAfterMove);
-          return;
-        }
         const combatState = GameEngine.startCombat(stateAfterMove);
         setGameState(combatState);
         setPhase('combat');
         setCombatEnemy(combatState.currentEnemy);
         const destinyTag = destiny ? ` [${destiny.emoji} ${destiny.label}]` : '';
-        setCombatLog([` Elite ${tile.enemy?.name} blocks your path!${destinyTag}`]);
+        setCombatLog([`⚔️ Elite ${tile.enemy?.name} blocks your path!${destinyTag}`]);
         return;
       }
       case 'boss': {
@@ -590,7 +574,7 @@ export default function GamePage() {
       </AnimatePresence>
 
       <InventoryPanel isOpen={isInventoryOpen} onClose={() => setIsInventoryOpen(false)} player={gameState.player} onUseItem={handleUseItem} />
-      <ShopPanel isOpen={isShopOpen} onClose={() => setIsShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getShopItems().filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts)]} onPurchase={handlePurchase} statUpgradeCounts={gameState.statUpgradeCounts} />
+      <ShopPanel isOpen={isShopOpen} onClose={() => setIsShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getShopItems(gameState.currentFloor).filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts), ...(InventoryEngine.getRelicForFloor(gameState.currentFloor, gameState.player.relics ?? []) ? [InventoryEngine.getRelicForFloor(gameState.currentFloor, gameState.player.relics ?? [])!] : [])]} onPurchase={handlePurchase} statUpgradeCounts={gameState.statUpgradeCounts} />
       <ShopPanel isOpen={isSpecialShopOpen} onClose={() => setIsSpecialShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getSpecialShopItems().filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts)]} onPurchase={handlePurchase} title="âœ¨ Special Shop" statUpgradeCounts={gameState.statUpgradeCounts} />
       <WeaponUpgradePanel isOpen={isUpgradePanelOpen} onClose={() => setIsUpgradePanelOpen(false)} player={gameState.player} currentFloor={gameState.currentFloor} upgradeState={upgradeState} onPurchase={handleWeaponUpgradePurchase} />
 
@@ -602,7 +586,7 @@ export default function GamePage() {
 
       <AnimatePresence>
         {phase === 'game-over' && (
-          <GameOverScreen isVictory={false} floor={gameState.currentFloor} turns={gameState.turnCount} coinsEarned={gameState.player.coins} characterClass={gameState.player.class} onRestart={handleRestart} onMainMenu={handleMainMenu} />
+          <GameOverScreen isVictory={false} floor={gameState.currentFloor} turns={gameState.turnCount} coinsEarned={gameState.player.coins} characterClass={gameState.player.class} playerName={playerName} enemiesKilled={gameState.enemiesKilled ?? 0} onRestart={handleRestart} onMainMenu={handleMainMenu} />
         )}
       </AnimatePresence>
 

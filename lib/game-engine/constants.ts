@@ -14,7 +14,7 @@ import type { DestinyState, DestinyResult } from './types';
  * 7 is most common (~16.7%), extremes (2 & 12) are rarest (~2.8% each).
  */
 export const DESTINY_TABLE: Record<number, Omit<DestinyResult, 'total' | 'die1' | 'die2'>> = {
-  2:  { state: 'cursed',   emoji: '💀', label: 'Cursed',   description: 'Critical Debuff: Enemy 2× HP / Prices 3× / Severe penalties' },
+  2:  { state: 'cursed',   emoji: '💀', label: 'Cursed',   description: 'Critical Debuff: Enemy gains a damage shield / Prices 3× / Severe penalties' },
   3:  { state: 'unlucky',  emoji: '📉', label: 'Unlucky',  description: 'Minor Debuff: Status ailment / +25% prices' },
   4:  { state: 'unlucky',  emoji: '📉', label: 'Unlucky',  description: 'Minor Debuff: Status ailment / +25% prices' },
   5:  { state: 'unlucky',  emoji: '📉', label: 'Unlucky',  description: 'Minor Debuff: Status ailment / +25% prices' },
@@ -24,7 +24,7 @@ export const DESTINY_TABLE: Record<number, Omit<DestinyResult, 'total' | 'die1' 
   9:  { state: 'favored',  emoji: '📈', label: 'Favored',  description: 'Minor Buff: Bonus HP/Energy / −25% prices' },
   10: { state: 'favored',  emoji: '📈', label: 'Favored',  description: 'Minor Buff: Bonus HP/Energy / −25% prices' },
   11: { state: 'favored',  emoji: '📈', label: 'Favored',  description: 'Minor Buff: Bonus HP/Energy / −25% prices' },
-  12: { state: 'exalted',  emoji: '✨', label: 'Exalted',  description: 'Critical Buff: Instant win (combat) / Legendary items / Free shop' },
+  12: { state: 'exalted',  emoji: '✨', label: 'Exalted',  description: 'Critical Buff: Deal double damage this combat + heal 20 HP after / Legendary items / Free shop' },
 };
 
 /** Roll 2d6 and return a full DestinyResult */
@@ -256,6 +256,85 @@ export const SHOP_PRICES = {
   HOLY_WATER: 30,
   BLESSING: 40,
 } as const;
+
+/**
+ * Relics — one appears per shop, floor-gated, 150–250 coins.
+ * Each grants a unique passive for the rest of the run.
+ */
+export const RELICS = [
+  {
+    id: 'relic_vampiric_fang',
+    name: "Vampiric Fang",
+    description: 'Heal 3 HP on every attack you land.',
+    emoji: '🦷',
+    price: 160,
+    minFloor: 1,
+    effect: { type: 'relic' as const, relicId: 'vampiric_fang' },
+  },
+  {
+    id: 'relic_iron_heart',
+    name: "Iron Heart",
+    description: 'Permanently gain +25 max HP.',
+    emoji: '🫀',
+    price: 150,
+    minFloor: 1,
+    effect: { type: 'relic' as const, relicId: 'iron_heart', stat: 'health' as const, value: 25 },
+  },
+  {
+    id: 'relic_war_drum',
+    name: "War Drum",
+    description: 'Permanently gain +8 ATK.',
+    emoji: '🥁',
+    price: 175,
+    minFloor: 2,
+    effect: { type: 'relic' as const, relicId: 'war_drum', stat: 'attack' as const, value: 8 },
+  },
+  {
+    id: 'relic_stone_skin',
+    name: "Stone Skin",
+    description: 'Permanently gain +6 DEF.',
+    emoji: '🪨',
+    price: 175,
+    minFloor: 2,
+    effect: { type: 'relic' as const, relicId: 'stone_skin', stat: 'defense' as const, value: 6 },
+  },
+  {
+    id: 'relic_cursed_idol',
+    name: "Cursed Idol",
+    description: 'Deal +20% damage but take +10% more damage.',
+    emoji: '🗿',
+    price: 200,
+    minFloor: 3,
+    effect: { type: 'relic' as const, relicId: 'cursed_idol' },
+  },
+  {
+    id: 'relic_philosophers_stone',
+    name: "Philosopher's Stone",
+    description: 'Gain +5 coins after every combat victory.',
+    emoji: '💠',
+    price: 180,
+    minFloor: 3,
+    effect: { type: 'relic' as const, relicId: 'philosophers_stone' },
+  },
+  {
+    id: 'relic_death_mask',
+    name: "Death Mask",
+    description: 'Survive one killing blow at 1 HP. Once per run.',
+    emoji: '💀',
+    price: 250,
+    minFloor: 5,
+    effect: { type: 'relic' as const, relicId: 'death_mask' },
+  },
+  {
+    id: 'relic_golden_chalice',
+    name: "Golden Chalice",
+    description: 'Heal 15 HP at the start of every new floor.',
+    emoji: '🏆',
+    price: 220,
+    minFloor: 4,
+    effect: { type: 'relic' as const, relicId: 'golden_chalice' },
+  },
+] as const;
 
 // Boss definitions per floor milestone (keyed by floor-within-dungeon: 5 = mid-boss, 10 = dungeon boss)
 // For floors beyond dungeon 1, EnemyEngine scales these stats by dungeon number.

@@ -29,6 +29,18 @@ const itemEmojis: Record<string, string> = {
   blessing: '🙏',
 };
 
+// Relic emoji lookup by item id
+const RELIC_EMOJIS: Record<string, string> = {
+  relic_vampiric_fang:       '🦷',
+  relic_iron_heart:          '🫀',
+  relic_war_drum:            '🥁',
+  relic_stone_skin:          '🪨',
+  relic_cursed_idol:         '🗿',
+  relic_philosophers_stone:  '💠',
+  relic_death_mask:          '💀',
+  relic_golden_chalice:      '🏆',
+};
+
 /** Returns the next-purchase price for a stat upgrade item, if applicable. */
 function getNextPrice(item: Item, counts?: StatUpgradeCounts): number | null {
   if (!counts || item.effect.type !== 'permanent' || !item.effect.stat) return null;
@@ -78,16 +90,34 @@ export default function ShopPanel({
                 variant="bordered"
                 className={cn(
                   'transition-all',
-                  affordable ? 'hover:border-game-gold cursor-pointer' : 'opacity-50'
+                  item.effect.type === 'relic'
+                    ? affordable
+                      ? 'border-yellow-500 hover:border-yellow-300 bg-yellow-950/20 cursor-pointer'
+                      : 'border-yellow-800 opacity-60'
+                    : affordable
+                      ? 'hover:border-game-gold cursor-pointer'
+                      : 'opacity-50'
                 )}
               >
                 <div className="flex items-start gap-3">
-                  <div className="text-4xl">{itemEmojis[item.type] || '📦'}</div>
+                  <div className="text-4xl">
+                    {item.effect.type === 'relic'
+                      ? (RELIC_EMOJIS[item.id] ?? '✨')
+                      : (itemEmojis[item.type] || '📦')}
+                  </div>
                   <div className="flex-1">
                     {/* Name row */}
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h3 className="text-lg font-bold text-game-gold">{item.name}</h3>
-                      {item.autoConsume && (
+                      <h3 className={cn(
+                        'text-lg font-bold',
+                        item.effect.type === 'relic' ? 'text-yellow-400' : 'text-game-gold'
+                      )}>{item.name}</h3>
+                      {item.effect.type === 'relic' && (
+                        <span className="text-xs bg-yellow-900/60 border border-yellow-500 text-yellow-300 px-1.5 py-0.5 rounded">
+                          ✨ Relic
+                        </span>
+                      )}
+                      {item.autoConsume && item.effect.type !== 'relic' && (
                         <span className="text-xs bg-green-900/50 border border-green-600 text-green-400 px-1.5 py-0.5 rounded">
                           ⚡ Instant
                         </span>

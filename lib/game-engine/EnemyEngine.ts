@@ -1,6 +1,33 @@
-import { Enemy, EnemyType } from './types';
+import { Enemy, EnemyType, EnemyBehavior } from './types';
 import { ENEMY_STATS, ENEMY_TYPES, BOSS_STATS, DUNGEON_BOSS_NAMES, getDungeonNumber, getFloorInDungeon } from './constants';
 import { randomInt } from '@/lib/utils';
+
+// Behavior pools per enemy type — weighted toward thematic fits
+const BEHAVIOR_POOLS: Record<string, EnemyBehavior[]> = {
+  goblin:   ['berserker', 'berserker', 'glass_cannon', 'normal'],
+  orc:      ['defender', 'defender', 'berserker', 'normal'],
+  skeleton: ['regenerator', 'regenerator', 'poisoner', 'normal'],
+  troll:    ['defender', 'regenerator', 'defender', 'normal'],
+  slime1:   ['poisoner', 'normal', 'normal'],
+  slime2:   ['regenerator', 'poisoner', 'normal'],
+  slime3:   ['glass_cannon', 'berserker', 'normal'],
+};
+
+function pickBehavior(type: string): EnemyBehavior {
+  const pool = BEHAVIOR_POOLS[type] ?? ['normal'];
+  return pool[randomInt(0, pool.length - 1)];
+}
+
+function behaviorName(behavior: EnemyBehavior): string {
+  switch (behavior) {
+    case 'berserker':   return 'Berserker';
+    case 'regenerator': return 'Regenerator';
+    case 'defender':    return 'Defender';
+    case 'glass_cannon':return 'Savage';
+    case 'poisoner':    return 'Venomous';
+    default:            return '';
+  }
+}
 
 export class EnemyEngine {
   /**
@@ -28,6 +55,7 @@ export class EnemyEngine {
       attack: Math.floor(base.attack * 1.4),
       defense: Math.floor(base.defense * 1.3),
       coinReward: Math.floor(base.coinReward * 2.5),
+      // behavior inherited from base
     };
   }
 
@@ -36,21 +64,32 @@ export class EnemyEngine {
    */
   static createEnemy(type: EnemyType, floor: number): Enemy {
     const baseStats = ENEMY_STATS[type];
-    // 20% per floor within dungeon + 30% per dungeon beyond the first
     const dungeonNum = getDungeonNumber(floor);
     const floorInDungeon = getFloorInDungeon(floor);
     const floorMultiplier = (1 + (floorInDungeon - 1) * 0.2) * (1 + (dungeonNum - 1) * 0.3);
 
+    const behavior = pickBehavior(type);
+    const label = behaviorName(behavior);
+    const name = label ? `${label} ${baseStats.name}` : baseStats.name;
+
+    let attack = Math.floor(baseStats.baseAttack * floorMultiplier);
+    let defense = Math.floor(baseStats.baseDefense * floorMultiplier);
+    if (behavior === 'glass_cannon') {
+      attack = Math.floor(attack * 1.5);
+      defense = Math.floor(defense * 0.5);
+    }
+
     return {
       id: `enemy-${Date.now()}-${Math.random()}`,
       type,
-      name: baseStats.name,
+      name,
       health: Math.floor(baseStats.baseHealth * floorMultiplier),
       maxHealth: Math.floor(baseStats.baseHealth * floorMultiplier),
-      attack: Math.floor(baseStats.baseAttack * floorMultiplier),
-      defense: Math.floor(baseStats.baseDefense * floorMultiplier),
+      attack,
+      defense,
       coinReward: Math.floor(baseStats.coinReward * floorMultiplier),
       statusEffects: [],
+      behavior,
     };
   }
 
@@ -79,6 +118,8 @@ export class EnemyEngine {
         defense: Math.floor(defined.defense * dungeonScale),
         coinReward: Math.floor(defined.coinReward * dungeonScale),
         statusEffects: [],
+        behavior: 'enrager',
+        enraged: false,
       };
     }
     // Generic fallback
@@ -93,6 +134,8 @@ export class EnemyEngine {
       defense: Math.floor(15 * floorMultiplier),
       coinReward: Math.floor(120 * floorMultiplier),
       statusEffects: [],
+      behavior: 'enrager',
+      enraged: false,
     };
   }
 
