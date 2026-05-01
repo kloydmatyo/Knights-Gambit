@@ -127,6 +127,40 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
 
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [previewAnim, setPreviewAnim] = useState('walk');
+  const [search, setSearch] = useState('');
+
+  // Randomize: pick one random item+variant per category
+  function randomizeAppearance() {
+    const allowedWeapons = characterClass ? CLASS_WEAPONS[characterClass] : null;
+    const newSelections: LPCSelections = { ...selections };
+
+    for (const cat of CATEGORIES.map(c => c.id)) {
+      const items = Object.entries(metadata).filter(([id, meta]) => {
+        if ((meta.path?.[0] ?? '') !== cat) return false;
+        if (EXCLUDED_ITEMS.has(id)) return false;
+        if (!meta.required?.includes(bodyType)) return false;
+        if (cat === 'weapons' && allowedWeapons && !allowedWeapons.has(id)) return false;
+        return true;
+      });
+      if (items.length === 0) continue;
+      // 60% chance to equip something in each category (keeps it varied)
+      if (Math.random() > 0.6 && cat !== 'body' && cat !== 'head') continue;
+      const [itemId, meta] = items[Math.floor(Math.random() * items.length)];
+      const variants = meta.variants ?? [];
+      const variant = variants.length > 0 ? variants[Math.floor(Math.random() * variants.length)] : '';
+      newSelections[meta.type_name] = { itemId, variant, name: `${meta.name} (${variant})` };
+    }
+    // Force body + head to always be set
+    if (metadata['body'] && !newSelections[metadata['body'].type_name]) {
+      const meta = metadata['body'];
+      const v = meta.variants?.[Math.floor(Math.random() * (meta.variants?.length ?? 1))] ?? 'light';
+      newSelections[meta.type_name] = { itemId: 'body', variant: v, name: `Body color (${v})` };
+    }
+    // Use selectItem to trigger auto-match body color
+    Object.entries(newSelections).forEach(([, sel]) => {
+      selectItem(sel.itemId, sel.variant);
+    });
+  }
 
   const metadata: Record<string, ItemMeta> = useMemo(
     () => (typeof window !== 'undefined' ? (window as any).itemMetadata : null) ?? {},
@@ -137,17 +171,18 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
   const panelItems = useMemo(() => {
     if (!activeCategory) return [];
     const allowedWeapons = characterClass ? CLASS_WEAPONS[characterClass] : null;
+    const q = search.trim().toLowerCase();
     return Object.entries(metadata)
       .filter(([id, meta]) => {
         if ((meta.path?.[0] ?? '') !== activeCategory) return false;
         if (EXCLUDED_ITEMS.has(id)) return false;
         if (!meta.required?.includes(bodyType)) return false;
-        // Filter weapons by class
         if (activeCategory === 'weapons' && allowedWeapons && !allowedWeapons.has(id)) return false;
+        if (q && !meta.name.toLowerCase().includes(q)) return false;
         return true;
       })
       .map(([id]) => id);
-  }, [metadata, activeCategory, bodyType, characterClass]);
+  }, [metadata, activeCategory, bodyType, characterClass, search]);
 
   function handleConfirm() {
     if (!canvasRef.current) return;
@@ -182,7 +217,7 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
           const isActive = activeCategory === cat.id;
           return (
             <button key={cat.id}
-              onClick={() => setActiveCategory(isActive ? null : cat.id)}
+              onClick={() => { setActiveCategory(isActive ? null : cat.id); setSearch(''); }}
               title={cat.label}
               className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all hover:scale-110 ${
                 isActive
@@ -212,7 +247,18 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
               <span className="text-white font-bold text-sm capitalize">
                 {CATEGORIES.find(c => c.id === activeCategory)?.label}
               </span>
-              <button onClick={() => setActiveCategory(null)} className="text-gray-400 hover:text-white text-lg leading-none">×</button>
+              <button onClick={() => { setActiveCategory(null); setSearch(''); }} className="text-gray-400 hover:text-white text-lg leading-none">×</button>
+            </div>
+
+            {/* Search */}
+            <div className="px-2 pt-2 shrink-0">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-2 py-1 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-cyan-400/60"
+              />
             </div>
 
             {/* Scrollable grid */}
@@ -300,9 +346,12 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
           </div>
         </div>
 
-        {/* Center: equipped count + reset */}
+        {/* Center: equipped count + reset + randomize */}
         <div className="flex items-center gap-3 text-xs text-gray-400">
           <span>{Object.keys(selections).length} equipped</span>
+          <button onClick={randomizeAppearance} className="text-purple-400 hover:text-purple-300 font-bold transition-colors">
+            🎲 Random
+          </button>
           <button onClick={resetSelections} className="text-red-400 hover:text-red-300 underline">Reset</button>
         </div>
 
