@@ -122,19 +122,48 @@ function VariantThumb({ sheetUrl, idleSheetUrl, label, selected, onClick }: {
 export default function LPCCharacterCreator({ onConfirm, characterClass }: Props) {
   const {
     metadataReady, selections, bodyType, setBodyType,
-    selectItem, deselectItem, resetSelections, isRendering, canvasRef,
+    selectItem, deselectItem, resetSelections, setAllSelections, isRendering, canvasRef,
   } = useLPCState(characterClass);
 
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [previewAnim, setPreviewAnim] = useState('walk');
   const [search, setSearch] = useState('');
 
-  // Randomize: pick one random item+variant per category
+  // Randomize: build a complete new selections object and set it in one shot
   function randomizeAppearance() {
     const allowedWeapons = characterClass ? CLASS_WEAPONS[characterClass] : null;
-    const newSelections: LPCSelections = { ...selections };
+    const newSelections: LPCSelections = {};
+
+    // Always set body
+    if (metadata['body']) {
+      const meta = metadata['body'];
+      const variants = meta.variants ?? ['light'];
+      const variant = variants[Math.floor(Math.random() * variants.length)];
+      newSelections[meta.type_name] = { itemId: 'body', variant, name: `Body color (${variant})` };
+    }
+
+    // Always set head (human male/female based on bodyType)
+    const headId = bodyType === 'female' ? 'heads_human_female' : 'heads_human_male';
+    const headFallback = 'heads_human_male';
+    const headMeta = metadata[headId] ?? metadata[headFallback];
+    if (headMeta) {
+      const variants = headMeta.variants ?? ['light'];
+      const variant = variants[Math.floor(Math.random() * variants.length)];
+      newSelections[headMeta.type_name] = { itemId: headId in metadata ? headId : headFallback, variant, name: `${headMeta.name} (${variant})` };
+    }
+
+    // Always set face expression
+    if (metadata['face_neutral']) {
+      const meta = metadata['face_neutral'];
+      const variants = meta.variants ?? ['light'];
+      const variant = variants[Math.floor(Math.random() * variants.length)];
+      newSelections[meta.type_name] = { itemId: 'face_neutral', variant, name: `Neutral (${variant})` };
+    }
 
     for (const cat of CATEGORIES.map(c => c.id)) {
+      // Already handled above
+      if (cat === 'body' || cat === 'head') continue;
+
       const items = Object.entries(metadata).filter(([id, meta]) => {
         if ((meta.path?.[0] ?? '') !== cat) return false;
         if (EXCLUDED_ITEMS.has(id)) return false;
@@ -143,23 +172,17 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
         return true;
       });
       if (items.length === 0) continue;
-      // 60% chance to equip something in each category (keeps it varied)
-      if (Math.random() > 0.6 && cat !== 'body' && cat !== 'head') continue;
+
+      // 65% chance to equip something per category
+      if (Math.random() > 0.65) continue;
+
       const [itemId, meta] = items[Math.floor(Math.random() * items.length)];
       const variants = meta.variants ?? [];
       const variant = variants.length > 0 ? variants[Math.floor(Math.random() * variants.length)] : '';
       newSelections[meta.type_name] = { itemId, variant, name: `${meta.name} (${variant})` };
     }
-    // Force body + head to always be set
-    if (metadata['body'] && !newSelections[metadata['body'].type_name]) {
-      const meta = metadata['body'];
-      const v = meta.variants?.[Math.floor(Math.random() * (meta.variants?.length ?? 1))] ?? 'light';
-      newSelections[meta.type_name] = { itemId: 'body', variant: v, name: `Body color (${v})` };
-    }
-    // Use selectItem to trigger auto-match body color
-    Object.entries(newSelections).forEach(([, sel]) => {
-      selectItem(sel.itemId, sel.variant);
-    });
+
+    setAllSelections(newSelections);
   }
 
   const metadata: Record<string, ItemMeta> = useMemo(

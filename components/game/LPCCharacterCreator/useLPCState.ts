@@ -117,6 +117,10 @@ export function useLPCState(characterClass?: string) {
     setSelections({});
   }, []);
 
+  const setAllSelections = useCallback((newSelections: LPCSelections) => {
+    setSelections(newSelections);
+  }, []);
+
   return {
     metadataReady,
     selections,
@@ -125,6 +129,7 @@ export function useLPCState(characterClass?: string) {
     selectItem,
     deselectItem,
     resetSelections,
+    setAllSelections,
     isRendering,
     canvasRef,
   };
