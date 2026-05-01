@@ -179,9 +179,19 @@ export class GameEngine {
         if (tile.id !== tileId || !tile.enemy) return tile;
         let newEnemy = { ...tile.enemy };
         if (destiny.state === 'cursed') {
-          // Cursed: enemy gains a one-time damage shield (30% of max HP)
+          // Cursed: enemy gains a shield (30% of max HP) AND +20% ATK
           const shield = Math.floor(newEnemy.maxHealth * 0.3);
-          newEnemy = { ...newEnemy, statusEffects: [...newEnemy.statusEffects, { type: 'shield' as const, duration: 999, value: shield }] };
+          newEnemy = {
+            ...newEnemy,
+            attack: Math.floor(newEnemy.attack * 1.2),
+            statusEffects: [...newEnemy.statusEffects, { type: 'shield' as const, duration: 999, value: shield }],
+          };
+        } else if (destiny.state === 'unlucky') {
+          // Unlucky: enemy gets +15% ATK
+          newEnemy = { ...newEnemy, attack: Math.floor(newEnemy.attack * 1.15) };
+        } else if (destiny.state === 'favored') {
+          // Favored: enemy gets -15% ATK
+          newEnemy = { ...newEnemy, attack: Math.max(1, Math.floor(newEnemy.attack * 0.85)) };
         }
         // exalted: no pre-combat modification — double damage handled during combat turns
         return { ...tile, enemy: newEnemy };

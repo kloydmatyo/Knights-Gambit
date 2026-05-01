@@ -66,8 +66,17 @@ export default function ShopPanel({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <div className="mb-4 p-3 bg-game-bg rounded flex justify-between items-center">
-        <span className="text-gray-400">Your Coins:</span>
-        <span className="text-game-gold font-bold text-2xl">💰 {player.coins}</span>
+        <div className="flex items-center gap-4">
+          <span className="text-gray-400">Your Coins:</span>
+          <span className="text-game-gold font-bold text-2xl">💰 {player.coins}</span>
+        </div>
+        <div className="flex items-center gap-1.5 bg-game-secondary px-3 py-1.5 rounded-lg border border-gray-600">
+          <span className="text-lg">📦</span>
+          <span className="text-white font-bold text-sm">
+            {player.inventory.reduce((sum, i) => sum + i.quantity, 0)}
+          </span>
+          <span className="text-gray-400 text-xs">items</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -141,13 +150,25 @@ export default function ShopPanel({
                           </span>
                         )}
                       </div>
-                      <Button
-                        size="sm"
-                        disabled={!affordable}
-                        onClick={() => onPurchase(item)}
-                      >
-                        {affordable ? 'Buy' : 'Too Expensive'}
-                      </Button>
+                      <div className="flex flex-col items-end gap-1">
+                        {(() => {
+                          const owned = player.inventory
+                            .filter(i => i.type === item.type && i.name === item.name)
+                            .reduce((sum, i) => sum + i.quantity, 0);
+                          return owned > 0 ? (
+                            <span className="text-xs text-gray-400 font-medium">
+                              Owned: <span className="text-white font-bold">{owned}</span>
+                            </span>
+                          ) : null;
+                        })()}
+                        <Button
+                          size="sm"
+                          disabled={!affordable}
+                          onClick={() => onPurchase(item)}
+                        >
+                          {affordable ? 'Buy' : 'Too Expensive'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

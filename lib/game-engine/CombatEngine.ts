@@ -217,11 +217,13 @@ export class CombatEngine {
   }
 
   /**
-   * Calculate damage with defense reduction
+   * Calculate damage with defense reduction.
+   * Defense subtracts directly from attack (not halved), making it meaningfully impactful.
+   * Minimum 1 damage always gets through.
    */
   static calculateDamage(attack: number, defense: number): number {
-    const baseDamage = attack - Math.floor(defense / 2);
-    const variance = randomInt(-2, 2);
+    const baseDamage = Math.max(1, attack - defense);
+    const variance = randomInt(-1, 2); // slight upward bias to keep combat feeling active
     return Math.max(1, baseDamage + variance);
   }
 

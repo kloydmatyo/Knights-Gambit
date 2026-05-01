@@ -58,6 +58,8 @@ export default function GamePage() {
   const [playerName, setPlayerName] = useState<string>('');
   const [activeSlot, setActiveSlot] = useState<number>(0);
   const [savedRuns, setSavedRuns] = useState<SaveData[]>([]);
+  const [pendingFloorAdvance, setPendingFloorAdvance] = useState<GameState | null>(null);
+  const [floorCompleteState, setFloorCompleteState] = useState<GameState | null>(null);
 
   // Detect saved runs on mount
   useEffect(() => {
@@ -136,14 +138,44 @@ export default function GamePage() {
       const tile = stateAfterMove.board.find((t) => t.id === tileId);
       if (tile && tile.type !== 'enemy' && tile.type !== 'elite' && tile.type !== 'boss') {
         if (destiny.state === 'favored') {
-          const bonus = Math.floor(stateAfterMove.player.maxHealth * 0.1);
-          stateAfterMove = { ...stateAfterMove, player: { ...stateAfterMove.player, health: Math.min(stateAfterMove.player.maxHealth, stateAfterMove.player.health + bonus) } };
+          // +15% max HP heal + +2 ATK for this floor
+          const bonus = Math.floor(stateAfterMove.player.maxHealth * 0.15);
+          stateAfterMove = { ...stateAfterMove, player: {
+            ...stateAfterMove.player,
+            health: Math.min(stateAfterMove.player.maxHealth, stateAfterMove.player.health + bonus),
+            attack: stateAfterMove.player.attack + 2,
+          }};
+          showNotification(`📈 Favored! +${bonus} HP, +2 ATK this floor`);
         } else if (destiny.state === 'exalted') {
-          const bonus = Math.floor(stateAfterMove.player.maxHealth * 0.2);
-          stateAfterMove = { ...stateAfterMove, player: { ...stateAfterMove.player, health: Math.min(stateAfterMove.player.maxHealth, stateAfterMove.player.health + bonus) } };
+          // +25% max HP heal + +5 ATK + +10 coins
+          const bonus = Math.floor(stateAfterMove.player.maxHealth * 0.25);
+          stateAfterMove = { ...stateAfterMove, player: {
+            ...stateAfterMove.player,
+            health: Math.min(stateAfterMove.player.maxHealth, stateAfterMove.player.health + bonus),
+            attack: stateAfterMove.player.attack + 5,
+            coins: stateAfterMove.player.coins + 10,
+          }};
+          showNotification(`✨ Exalted! +${bonus} HP, +5 ATK, +10 coins`);
         } else if (destiny.state === 'cursed') {
+          // -20% max HP + apply cursed status effect
+          const dmg = Math.floor(stateAfterMove.player.maxHealth * 0.2);
+          const alreadyCursed = stateAfterMove.player.statusEffects.some(e => e.type === 'cursed');
+          stateAfterMove = { ...stateAfterMove, player: {
+            ...stateAfterMove.player,
+            health: Math.max(1, stateAfterMove.player.health - dmg),
+            statusEffects: alreadyCursed
+              ? stateAfterMove.player.statusEffects
+              : [...stateAfterMove.player.statusEffects, { type: 'cursed' as const, duration: 3, value: 10 }],
+          }};
+          showNotification(`💀 Cursed! -${dmg} HP + Cursed for 3 turns`);
+        } else if (destiny.state === 'unlucky') {
+          // -10% max HP + -2 ATK temporarily (apply as a small debuff via notification)
           const dmg = Math.floor(stateAfterMove.player.maxHealth * 0.1);
-          stateAfterMove = { ...stateAfterMove, player: { ...stateAfterMove.player, health: Math.max(1, stateAfterMove.player.health - dmg) } };
+          stateAfterMove = { ...stateAfterMove, player: {
+            ...stateAfterMove.player,
+            health: Math.max(1, stateAfterMove.player.health - dmg),
+          }};
+          showNotification(`📉 Unlucky! -${dmg} HP`);
         }
       }
     }
@@ -222,12 +254,15 @@ export default function GamePage() {
       case 'shop': {
         // Exalted = free shop, Cursed = 3x prices (handled in ShopPanel via destinyState prop)
         setGameState(stateAfterMove);
-        setIsShopOpen(true);
         const shopMsg = destiny?.state === 'exalted' ? ' Exalted! Everything is FREE!'
           : destiny?.state === 'cursed' ? ' Cursed! Prices are tripled!'
           : destiny?.state === 'favored' ? ' Favored! 25% discount!'
           : ' Welcome to the shop!';
         showNotification(shopMsg);
+        // Only auto-open shop if this isn't the final tile — otherwise let the buttons handle it
+        if (!GameEngine.isFloorComplete(stateAfterMove)) {
+          setIsShopOpen(true);
+        }
         break;
       }
       case 'event':
@@ -498,14 +533,21 @@ export default function GamePage() {
       setGameState(state);
       setPhase('dungeon-clear');
     } else {
-      showNotification(`Floor ${state.currentFloor} complete! Advancing...`);
-      setTimeout(() => {
-        const newState = GameEngine.advanceFloor(state);
-        setGameState(newState);
-        showNotification(`Welcome to Floor ${newState.currentFloor}!`);
-        autoSave(newState);
-      }, 2000);
+      setGameState(state);
+      setFloorCompleteState(state);
+      setPendingFloorAdvance(state);
     }
+  };
+
+  const confirmFloorAdvance = () => {
+    const src = pendingFloorAdvance ?? floorCompleteState;
+    if (!src) return;
+    const newState = GameEngine.advanceFloor(src);
+    setGameState(newState);
+    setPendingFloorAdvance(null);
+    setFloorCompleteState(null);
+    showNotification(`Welcome to Floor ${newState.currentFloor}!`);
+    autoSave(newState);
   };
 
   const handleDungeonContinue = () => {
@@ -622,23 +664,35 @@ export default function GamePage() {
         <DiceRoller onRoll={handleDiceRoll} lastRoll={lastDiceRoll} disabled={false} />
       )}
 
-            {/* Shop re-entry  visible while player is on a shop tile */}
+      {/* Contextual action buttons — shop and/or next floor */}
       {phase === 'playing' && !pendingChoice && (() => {
         const currentTile = gameState.board.find(t => t.id === gameState.player.position);
-        if (currentTile?.type !== 'shop') return null;
+        const onShop = currentTile?.type === 'shop';
+        const onNextFloor = !!(floorCompleteState && !pendingFloorAdvance);
+        if (!onShop && !onNextFloor) return null;
         return (
-          <div className="fixed bottom-36 sm:bottom-40 left-1/2 -translate-x-1/2 z-30">
-            <button
-              onClick={() => setIsShopOpen(true)}
-              className="px-6 py-2.5 rounded-xl font-bold text-sm bg-yellow-500 hover:bg-yellow-400 text-black shadow-lg border-b-4 border-yellow-700 transition-all active:scale-95"
-            >
-              Visit Shop
-            </button>
+          <div className="fixed bottom-36 sm:bottom-40 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+            {onShop && (
+              <button
+                onClick={() => setIsShopOpen(true)}
+                className="px-6 py-2.5 rounded-xl font-bold text-sm bg-yellow-500 hover:bg-yellow-400 text-black shadow-lg border-b-4 border-yellow-700 transition-all active:scale-95"
+              >
+                Visit Shop
+              </button>
+            )}
+            {onNextFloor && (
+              <button
+                onClick={() => setPendingFloorAdvance(floorCompleteState)}
+                className="px-6 py-2.5 rounded-xl font-bold text-sm bg-game-gold hover:brightness-110 text-black shadow-lg border-b-4 border-yellow-700 transition-all active:scale-95"
+              >
+                Next Floor
+              </button>
+            )}
           </div>
         );
       })()}
 
-      {/* Dice Manipulator â€” shown after rolling, waiting for tile choice */}
+            {/* Dice Manipulator â€” shown after rolling, waiting for tile choice */}
       <AnimatePresence>
         {phase === 'playing' && !gameState.isInCombat && pendingChoice && (
           <DiceManipulator
@@ -680,6 +734,51 @@ export default function GamePage() {
       <AnimatePresence>
         {phase === 'dungeon-clear' && (
           <DungeonClearScreen dungeonNumber={getDungeonNumber(gameState.currentFloor)} player={gameState.player} turns={gameState.turnCount} onContinue={handleDungeonContinue} />
+        )}
+      </AnimatePresence>
+
+      {/* Floor advance confirmation prompt */}
+      <AnimatePresence>
+        {pendingFloorAdvance && !isShopOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            style={{ background: 'rgba(0,0,0,0.7)' }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-game-primary border-2 border-game-gold rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center"
+            >
+              <div className="text-4xl mb-3">🏁</div>
+              <h2 className="text-white font-black text-xl mb-1">Floor Complete!</h2>
+              <p className="text-gray-400 text-sm mb-1">
+                Floor {pendingFloorAdvance.currentFloor} cleared.
+              </p>
+              <p className="text-gray-500 text-xs mb-5">
+                {pendingFloorAdvance.player.health}/{pendingFloorAdvance.player.maxHealth} HP · {pendingFloorAdvance.player.coins} coins
+              </p>
+              <div className="flex gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                  onClick={confirmFloorAdvance}
+                  className="flex-1 bg-game-gold text-black font-black py-3 rounded-xl text-sm shadow-lg"
+                >
+                  ▶ Advance to Floor {pendingFloorAdvance.currentFloor + 1}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                  onClick={() => setPendingFloorAdvance(null)}
+                  className="px-4 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl text-sm"
+                >
+                  Stay
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
