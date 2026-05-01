@@ -92,7 +92,7 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
 
   return (
     <div className="min-h-screen w-full bg-game-bg overflow-y-auto flex flex-col items-center justify-center py-8 px-3 sm:px-6">
-      <div className="w-full max-w-2xl flex flex-col items-center gap-6">
+      <div className="w-full max-w-4xl flex flex-col items-center gap-6">
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center w-full">
