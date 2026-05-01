@@ -57,7 +57,7 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
 }
 
 export default function CharacterSelection({ onSelect }: CharacterSelectionProps) {
-  const [step, setStep] = useState<Step>('appearance');
+  const [step, setStep] = useState<Step>('class');
   const [spriteDataUrl, setSpriteDataUrl] = useState<string | undefined>();
   const [classIndex, setClassIndex] = useState(0);
   const [playerName, setPlayerName] = useState('');
@@ -74,12 +74,14 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
 
   function handleAppearanceConfirm(dataUrl: string) {
     setSpriteDataUrl(dataUrl);
-    setStep('class');
+    // Appearance is done — trigger start
+    onSelect(currentClass, playerName.trim(), dataUrl);
   }
 
   function handleStart() {
     if (!canStart) return;
-    onSelect(currentClass, playerName.trim(), spriteDataUrl);
+    // Move to appearance step with class already chosen
+    setStep('appearance');
   }
 
   const variants = {
@@ -96,74 +98,41 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center w-full">
           <h1 className="text-2xl sm:text-3xl font-bold text-game-accent mb-3">⚔️ CHARACTER CREATION ⚔️</h1>
           <div className="flex items-center justify-center gap-3">
-            <StepBadge num={1} label="Appearance" active={step === 'appearance'} done={step === 'class'} />
+            <StepBadge num={1} label="Class" active={step === 'class'} done={step === 'appearance'} />
             <div className="w-8 h-px bg-game-secondary" />
-            <StepBadge num={2} label="Class" active={step === 'class'} done={false} />
+            <StepBadge num={2} label="Appearance" active={step === 'appearance'} done={false} />
           </div>
         </motion.div>
 
         <AnimatePresence mode="wait">
-          {step === 'appearance' && (
-            <motion.div key="appearance" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="w-full">
-              <LPCCharacterCreator onConfirm={handleAppearanceConfirm} />
-            </motion.div>
-          )}
-
           {step === 'class' && (
-            <motion.div key="class" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full flex flex-col items-center gap-5">
-
-              {/* Back + sprite preview */}
-              <div className="flex items-center gap-4 w-full">
-                <button onClick={() => setStep('appearance')} className="text-xs text-gray-400 hover:text-white underline">
-                  ← Back to appearance
-                </button>
-                {spriteDataUrl && (
-                  <div className="flex items-center gap-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={spriteDataUrl} alt="Your character"
-                      style={{ imageRendering: 'pixelated', height: 48, width: 48 }} className="rounded" />
-                    <span className="text-xs text-gray-400">Your character</span>
-                  </div>
-                )}
-              </div>
+            <motion.div key="class" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="w-full flex flex-col items-center gap-5">
 
               {/* ── Carousel card ── */}
               <div className="relative w-full flex items-center gap-3">
-                {/* Left arrow */}
                 <button onClick={() => navigate(-1)}
                   className="shrink-0 w-12 h-12 rounded-full bg-black/60 border border-white/20 hover:border-white/50 text-white text-xl font-bold flex items-center justify-center transition-all hover:scale-110 active:scale-95">
                   ‹
                 </button>
 
-                {/* Card */}
                 <div className={cn('flex-1 relative overflow-hidden rounded-2xl border-2 bg-black/60 backdrop-blur-sm shadow-2xl', accent.border, accent.glow, 'shadow-xl')}
                   style={{ minHeight: 260 }}>
                   <AnimatePresence mode="wait" custom={direction}>
-                    <motion.div
-                      key={currentClass}
-                      custom={direction}
-                      variants={variants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
+                    <motion.div key={currentClass} custom={direction} variants={variants}
+                      initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.22, ease: 'easeInOut' }}
-                      className="flex gap-6 p-6"
-                    >
-                      {/* Left: big emoji */}
+                      className="flex gap-6 p-6">
                       <div className="flex flex-col items-center justify-center shrink-0 w-28">
                         <div className="text-7xl mb-2 drop-shadow-lg">{classEmojis[currentClass]}</div>
                         <span className={cn('text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border', accent.border, 'text-white/80')}>
                           {currentData.name}
                         </span>
                       </div>
-
-                      {/* Right: name, description, stats */}
                       <div className="flex-1 flex flex-col gap-3">
                         <div>
                           <h2 className="text-2xl font-black text-white tracking-wide">{currentData.name.toUpperCase()}</h2>
                           <p className="text-gray-400 text-sm mt-1 leading-relaxed">{currentData.description}</p>
                         </div>
-
                         <div className="flex flex-col gap-2 mt-1">
                           <StatBar label="Health" value={currentData.baseHealth} max={150} color={accent.bar} />
                           <StatBar label="Attack" value={currentData.baseAttack} max={25} color={accent.bar} />
@@ -177,44 +146,43 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
                   </AnimatePresence>
                 </div>
 
-                {/* Right arrow */}
                 <button onClick={() => navigate(1)}
                   className="shrink-0 w-12 h-12 rounded-full bg-black/60 border border-white/20 hover:border-white/50 text-white text-xl font-bold flex items-center justify-center transition-all hover:scale-110 active:scale-95">
                   ›
                 </button>
               </div>
 
-              {/* ── Thumbnail row ── */}
+              {/* Thumbnail row */}
               <div className="flex gap-2 justify-center">
                 {CLASS_LIST.map(([cls], i) => (
                   <button key={cls} onClick={() => { setDirection(i > classIndex ? 1 : -1); setClassIndex(i); }}
-                    className={cn(
-                      'w-12 h-12 rounded-xl border-2 flex items-center justify-center text-2xl transition-all hover:scale-110',
-                      i === classIndex
-                        ? cn('border-white shadow-lg scale-110', classAccent[cls].glow)
-                        : 'border-white/20 bg-black/40 opacity-60 hover:opacity-100'
-                    )}>
+                    className={cn('w-12 h-12 rounded-xl border-2 flex items-center justify-center text-2xl transition-all hover:scale-110',
+                      i === classIndex ? cn('border-white shadow-lg scale-110', classAccent[cls].glow) : 'border-white/20 bg-black/40 opacity-60 hover:opacity-100')}>
                     {classEmojis[cls]}
                   </button>
                 ))}
               </div>
 
-              {/* Name + start */}
+              {/* Name + next */}
               <div className="flex flex-col items-center gap-3 w-full max-w-xs">
-                <input
-                  type="text"
-                  placeholder="Enter your name..."
-                  value={playerName}
-                  onChange={e => setPlayerName(e.target.value)}
-                  maxLength={20}
+                <input type="text" placeholder="Enter your name..." value={playerName}
+                  onChange={e => setPlayerName(e.target.value)} maxLength={20}
                   className="w-full bg-game-primary border-2 border-game-gold rounded-xl px-4 py-3 text-white text-center font-bold placeholder-gray-500 focus:outline-none focus:border-yellow-300 text-sm sm:text-base"
                 />
                 <Button size="lg" disabled={!canStart} onClick={handleStart}
                   className="text-sm sm:text-base px-8 sm:px-12 py-2.5 sm:py-3 w-full">
-                  {!playerName.trim() ? 'ENTER YOUR NAME' : `🗡️ START AS ${currentData.name.toUpperCase()} 🗡️`}
+                  {!playerName.trim() ? 'ENTER YOUR NAME' : `✨ CUSTOMIZE ${currentData.name.toUpperCase()} →`}
                 </Button>
               </div>
+            </motion.div>
+          )}
 
+          {step === 'appearance' && (
+            <motion.div key="appearance" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full flex flex-col gap-3">
+              <button onClick={() => setStep('class')} className="text-xs text-gray-400 hover:text-white underline self-start">
+                ← Back to class selection
+              </button>
+              <LPCCharacterCreator onConfirm={handleAppearanceConfirm} characterClass={currentClass} />
             </motion.div>
           )}
         </AnimatePresence>

@@ -9,7 +9,18 @@ import { LPCSelections, BodyType, ItemMeta } from './types';
 
 interface Props {
   onConfirm: (spriteDataUrl: string, fullSheetDataUrl?: string) => void;
+  characterClass?: string;
 }
+
+// Weapons allowed per class — item IDs from the weapons category
+const CLASS_WEAPONS: Record<string, Set<string>> = {
+  knight:    new Set(['weapon_sword_arming','weapon_sword_longsword','weapon_sword_longsword_alt','weapon_sword_glowsword','weapon_blunt_mace','weapon_blunt_waraxe','shield_kite','shield_round','shield_spartan','shield_heater_wood','shield_heater_revised_wood','shield_scutum']),
+  archer:    new Set(['weapon_ranged_bow_normal','weapon_ranged_bow_recurve','weapon_ranged_bow_great','weapon_ranged_crossbow','weapon_ranged_boomerang','weapon_ranged_slingshot','weapon_ranged_bow_arrow']),
+  mage:      new Set(['weapon_magic_crystal','weapon_magic_diamond','weapon_magic_gnarled','weapon_magic_loop','weapon_magic_s','weapon_magic_simple','weapon_magic_wand']),
+  barbarian: new Set(['weapon_blunt_waraxe','weapon_blunt_flail','weapon_blunt_club','weapon_blunt_mace','weapon_polearm_halberd','weapon_polearm_scythe','weapon_polearm_spear','weapon_polearm_trident','weapon_polearm_dragonspear']),
+  assassin:  new Set(['weapon_sword_dagger','weapon_sword_rapier','weapon_sword_katana','weapon_sword_scimitar','weapon_sword_saber']),
+  cleric:    new Set(['weapon_blunt_mace','weapon_blunt_flail','weapon_blunt_club','weapon_polearm_cane','shield_plus','shield_crusader','shield_kite','shield_round']),
+};
 
 const EXCLUDED_ITEMS = new Set([
   'wheelchair',
@@ -108,7 +119,7 @@ function VariantThumb({ sheetUrl, idleSheetUrl, label, selected, onClick }: {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────
-export default function LPCCharacterCreator({ onConfirm }: Props) {
+export default function LPCCharacterCreator({ onConfirm, characterClass }: Props) {
   const {
     metadataReady, selections, bodyType, setBodyType,
     selectItem, deselectItem, resetSelections, isRendering, canvasRef,
@@ -125,14 +136,18 @@ export default function LPCCharacterCreator({ onConfirm }: Props) {
 
   const panelItems = useMemo(() => {
     if (!activeCategory) return [];
+    const allowedWeapons = characterClass ? CLASS_WEAPONS[characterClass] : null;
     return Object.entries(metadata)
-      .filter(([id, meta]) =>
-        (meta.path?.[0] ?? '') === activeCategory &&
-        !EXCLUDED_ITEMS.has(id) &&
-        meta.required?.includes(bodyType)
-      )
+      .filter(([id, meta]) => {
+        if ((meta.path?.[0] ?? '') !== activeCategory) return false;
+        if (EXCLUDED_ITEMS.has(id)) return false;
+        if (!meta.required?.includes(bodyType)) return false;
+        // Filter weapons by class
+        if (activeCategory === 'weapons' && allowedWeapons && !allowedWeapons.has(id)) return false;
+        return true;
+      })
       .map(([id]) => id);
-  }, [metadata, activeCategory, bodyType]);
+  }, [metadata, activeCategory, bodyType, characterClass]);
 
   function handleConfirm() {
     if (!canvasRef.current) return;

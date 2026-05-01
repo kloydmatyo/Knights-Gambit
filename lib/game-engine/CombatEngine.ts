@@ -15,7 +15,7 @@ export class CombatEngine {
     const messages: string[] = [];
     let playerDamage = 0;
     let enemyDamage = 0;
-    let updatedPlayerMana = player.mana;
+    let updatedPlayerMana = player.mana ?? 0;
     let updatedEnemyStatusEffects = [...enemy.statusEffects];
 
     const relics = player.relics ?? [];
@@ -119,15 +119,6 @@ export class CombatEngine {
     // Enemy attacks back if still alive
     if (!isEnemyDefeated) {
       let incomingDamage = this.calculateDamage(enemy.attack, effectiveDefense);
-
-      // Mage passive: Mana Shield — absorb damage with mana at 2:1 ratio
-      if (player.class === 'mage' && updatedPlayerMana && updatedPlayerMana > 0) {
-        const manaAbsorb = Math.min(updatedPlayerMana, incomingDamage * 2);
-        const absorbed = Math.floor(manaAbsorb / 2);
-        incomingDamage = Math.max(0, incomingDamage - absorbed);
-        updatedPlayerMana = Math.max(0, updatedPlayerMana - manaAbsorb);
-        if (absorbed > 0) messages.push(`🔮 Mana Shield absorbs ${absorbed} damage! (${updatedPlayerMana} mana left)`);
-      }
 
       // Player shield status effect — absorb incoming damage
       const playerShield = player.statusEffects.find(e => e.type === 'shield');
@@ -238,19 +229,20 @@ export class CombatEngine {
   ): { damage: number; messages: string[]; updatedMana?: number; appliedPoison?: boolean } {
     const messages: string[] = [];
     let damage = 0;
-    let updatedMana = player.mana;
+    let updatedMana = player.mana ?? 0;
     let appliedPoison = false;
 
-    // Mana cost for mage skills (20 mana per active skill use)
+    // Mana cost for skills — mage only, 20 mana per active skill use
     const MANA_COST = 20;
     if (player.class === 'mage') {
-      if ((updatedMana ?? 0) < MANA_COST) {
-        // Not enough mana — fall back to basic attack
+      if (updatedMana < MANA_COST) {
+        // Not enough mana — skill cannot be cast, fall back to basic attack
         const baseDmg = this.calculateDamage(player.attack, enemy.defense);
-        messages.push(`🔮 Not enough mana! Basic attack for ${baseDmg} damage.`);
+        messages.push(`🔮 Not enough mana to cast ${skill.name}! Basic attack for ${baseDmg} damage.`);
         return { damage: baseDmg, messages, updatedMana };
       }
-      updatedMana = (updatedMana ?? 0) - MANA_COST;
+      updatedMana = updatedMana - MANA_COST;
+      messages.push(`🔮 ${MANA_COST} mana consumed. (${updatedMana} remaining)`);
     }
 
     messages.push(`You use ${skill.name}!`);

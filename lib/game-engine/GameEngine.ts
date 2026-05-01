@@ -267,7 +267,14 @@ export class GameEngine {
     if (skill && skill.effect.type === 'heal') {
       const healAmt = skill.effect.value || 0;
       updatedPlayer = { ...updatedPlayer, health: Math.min(updatedPlayer.maxHealth, updatedPlayer.health + healAmt) };
-      if (skill.id === 'divine_healing') updatedPlayer = { ...updatedPlayer, statusEffects: [] };
+      if (skill.id === 'divine_healing') {
+        // Remove debuffs but preserve beneficial effects (shield, regen, blessed)
+        const KEEP_EFFECTS = new Set(['shield', 'regen', 'blessed']);
+        updatedPlayer = {
+          ...updatedPlayer,
+          statusEffects: updatedPlayer.statusEffects.filter(e => KEEP_EFFECTS.has(e.type)),
+        };
+      }
     }
 
     // Update player shield value after absorbing damage
@@ -345,6 +352,11 @@ export class GameEngine {
     if (result.isEnemyDefeated && state.activeCombatDestiny === 'exalted') {
       updatedPlayer = { ...updatedPlayer, health: Math.min(updatedPlayer.maxHealth, updatedPlayer.health + 20) };
       result.messages.push('✨ Exalted blessing! You recover 20 HP!');
+    }
+
+    // Mage: reset mana to max on combat victory
+    if (result.isEnemyDefeated && updatedPlayer.class === 'mage' && updatedPlayer.maxMana !== undefined) {
+      updatedPlayer = { ...updatedPlayer, mana: updatedPlayer.maxMana };
     }
 
     return {
