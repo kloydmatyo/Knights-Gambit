@@ -65,6 +65,8 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
   statUpgradeCounts?: StatUpgradeCounts;
 }) {
   const affordable = player.coins >= item.price;
+  const alreadyOwned = item.effect.type === 'relic' && (player.relics ?? []).includes(item.effect.relicId ?? item.id);
+  const canBuy = affordable && !alreadyOwned;
   const nextPrice = getNextPrice(item, statUpgradeCounts);
   const upgradeLevel = statUpgradeCounts && item.effect.stat
     ? (statUpgradeCounts[item.effect.stat as keyof StatUpgradeCounts] ?? 0) : 0;
@@ -80,16 +82,16 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         'flex flex-col rounded-xl p-3 transition-all',
-        affordable ? 'cursor-pointer hover:brightness-110' : 'opacity-60'
+        canBuy ? 'cursor-pointer hover:brightness-110' : 'opacity-60'
       )}
       style={{
-        background: affordable
+        background: canBuy
           ? (isRelic ? 'rgba(80,50,10,0.6)' : 'rgba(30,18,6,0.8)')
           : 'rgba(20,12,4,0.6)',
-        border: affordable
+        border: canBuy
           ? (isRelic ? '1px solid #8a6010' : '1px solid #5a3e28')
           : '1px solid #2a1a0a',
-        boxShadow: affordable && isRelic ? '0 0 12px rgba(200,160,20,0.15)' : undefined,
+        boxShadow: canBuy && isRelic ? '0 0 12px rgba(200,160,20,0.15)' : undefined,
       }}
     >
       {/* Icon + badges */}
@@ -153,10 +155,10 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
           )}
         </div>
         <button
-          onClick={() => affordable && onPurchase(item)}
-          disabled={!affordable}
+          onClick={() => canBuy && onPurchase(item)}
+          disabled={!canBuy}
           className="px-3 py-1.5 rounded-lg font-black text-xs transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={affordable ? {
+          style={canBuy ? {
             background: 'linear-gradient(180deg,#c8621a,#8a3e0a)',
             border: '1px solid #e8821a',
             borderBottom: '3px solid #4a1e04',
@@ -168,7 +170,7 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
             color: '#6a4a2a',
           }}
         >
-          {affordable ? 'Buy' : 'Too Expensive'}
+          {alreadyOwned ? '✓ Owned' : affordable ? 'Buy' : 'Too Expensive'}
         </button>
       </div>
     </motion.div>
