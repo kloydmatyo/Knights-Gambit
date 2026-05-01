@@ -95,6 +95,21 @@ export default function GameBoard({
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Draw faint ghost lines for ALL connections (full map visibility)
+    for (const tile of tiles) {
+      if (!tile.nextIds) continue;
+      for (const nextId of tile.nextIds) {
+        const next = tiles.find(t => t.id === nextId);
+        if (!next) continue;
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 1.5 * scale;
+        ctx.setLineDash([4 * scale, 6 * scale]);
+        ctx.lineCap = 'square';
+        drawBracketLine(ctx, tile.x * scale, tile.y * scale, next.x * scale, next.y * scale);
+      }
+    }
+    ctx.setLineDash([]);
+
     // Draw visited trail first (behind everything)
     const visitedSet = new Set(tiles.filter(t => t.visited).map(t => t.id));
     for (const tile of tiles) {
@@ -153,25 +168,27 @@ export default function GameBoard({
           const isChoosable = choosableTileIds.includes(tile.id);
           const isVisited = visitedIds.has(tile.id);
           const isImmediateNext = immediateNextIds.has(tile.id);
-          if (!isCurrent && !isVisited && !isImmediateNext) return null;
-          const tileOpacity = isChoosable ? 1 : isCurrent ? 1 : isVisited ? 0.85 : 0.5;
+          const isVisible = isCurrent || isVisited || isImmediateNext;
+          const tileOpacity = isChoosable ? 1 : isCurrent ? 1 : isVisited ? 0.85 : isImmediateNext ? 0.6 : 0.2;
+          const isInteractive = isChoosable;
 
           return (
             <motion.div
               key={tile.id}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: tileOpacity }}
-              transition={{ delay: idx * 0.02 }}
+              transition={{ delay: idx * 0.01 }}
               className="absolute"
               style={{ left: tile.x * scale - half, top: tile.y * scale - half, width: tileSize, height: tileSize }}
             >
               <div
-                onClick={() => isChoosable && onTileClick?.(tile.id)}
+                onClick={() => isInteractive && onTileClick?.(tile.id)}
                 className={[
                   'w-full h-full rounded-full flex items-center justify-center border-4 transition-all relative',
                   TILE_COLOR[tile.type] ?? 'bg-gray-500',
                   isCurrent ? 'border-game-gold shadow-2xl z-10' : '',
                   isChoosable ? 'border-yellow-300 shadow-yellow-400/60 shadow-lg z-20 cursor-pointer scale-110' : 'border-gray-700',
+                  !isVisible ? 'grayscale brightness-50' : '',
                   tile.trapTriggered ? 'grayscale' : '',
                 ].filter(Boolean).join(' ')}
               >
@@ -186,10 +203,10 @@ export default function GameBoard({
                 )}
               </div>
               <div
-                className="absolute left-1/2 -translate-x-1/2 text-gray-400 font-bold bg-game-bg px-1.5 py-0.5 rounded whitespace-nowrap"
+                className="absolute left-1/2 -translate-x-1/2 text-gray-400 font-bold bg-game-bg px-1.5 py-0.5 rounded whitespace-nowrap capitalize"
                 style={{ bottom: -(tileSize * 0.35), fontSize: Math.max(9, 11 * scale) }}
               >
-                {tile.type === 'elite' ? 'Elite' : tile.id + 1}
+                {tile.type === 'elite' ? '⚠ Elite' : tile.type === 'boss' ? '☠ Boss' : tile.type}
               </div>
             </motion.div>
           );

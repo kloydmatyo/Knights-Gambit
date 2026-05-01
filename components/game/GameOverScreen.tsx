@@ -45,6 +45,8 @@ export default function GameOverScreen({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [thisRunId, setThisRunId] = useState<string | null>(null);
+  const [restarting, setRestarting] = useState(false);
 
   useEffect(() => {
     submitAndFetch();
@@ -56,14 +58,15 @@ export default function GameOverScreen({
     try {
       const db = getSupabase();
 
-      // Submit this run
-      await db.from('leaderboard').insert({
+      // Submit this run and capture the inserted row id
+      const { data: insertedRows } = await db.from('leaderboard').insert({
         nickname: playerName || 'Anonymous',
         floor_reached: floor,
         character_class: characterClass,
         enemies_killed: enemiesKilled,
         turns,
-      });
+      }).select('id');
+      setThisRunId(insertedRows?.[0]?.id ?? null);
 
       // Fetch top 10 by floor, then enemies_killed as tiebreaker
       const { data, error } = await db
@@ -174,10 +177,7 @@ export default function GameOverScreen({
           ) : (
             <div className="divide-y divide-gray-800">
               {leaderboard.map((entry, i) => {
-                const isThisRun =
-                  entry.nickname === (playerName || 'Anonymous') &&
-                  entry.floor_reached === floor &&
-                  entry.enemies_killed === enemiesKilled;
+                const isThisRun = entry.id === thisRunId;
                 return (
                   <motion.div
                     key={entry.id ?? i}
@@ -207,8 +207,18 @@ export default function GameOverScreen({
 
         {/* Actions */}
         <div className="flex gap-3">
-          <Button size="lg" onClick={onRestart} className="flex-1">
-            🔄 Play Again
+          <Button size="lg" onClick={restarting ? undefined : () => { setRestarting(true); setTimeout(() => onRestart(), 1500); }} className="flex-1 relative overflow-hidden">
+            {restarting ? (
+              <>
+                <motion.div
+                  className="absolute inset-0 bg-green-600 origin-left"
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: 1.5 }}
+                />
+                <span className="relative z-10">Starting...</span>
+              </>
+            ) : '🔄 Play Again'}
           </Button>
           <Button size="lg" variant="secondary" onClick={onMainMenu} className="flex-1">
             🏠 Main Menu

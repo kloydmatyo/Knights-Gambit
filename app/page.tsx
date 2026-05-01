@@ -29,8 +29,8 @@ export default function Home() {
         {/* Title */}
         <motion.h1
           className="text-6xl md:text-8xl font-bold text-game-accent mb-4 text-shadow"
-          animate={{ scale: [1, 1.05, 1] }}
-          transition={{ repeat: Infinity, duration: 2 }}
+          animate={{ scale: [1, 1.04, 1, 1.04, 1] }}
+          transition={{ duration: 2, ease: 'easeInOut' }}
         >
           🎲 DICEBOUND 🎲
         </motion.h1>
@@ -139,7 +139,14 @@ export default function Home() {
               onClick={(e) => e.stopPropagation()}
               className="bg-[#0f1220] border border-game-gold/40 rounded-2xl p-6 max-w-lg w-full shadow-2xl max-h-[80vh] overflow-y-auto"
             >
-              <h2 className="text-2xl font-extrabold text-game-gold mb-4 text-center tracking-widest">📖 HOW TO PLAY</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-extrabold text-game-gold tracking-widest">📖 HOW TO PLAY</h2>
+                <button
+                  onClick={() => setShowHowToPlay(false)}
+                  className="text-gray-400 hover:text-white text-2xl leading-none transition-colors"
+                  aria-label="Close"
+                >×</button>
+              </div>
               <div className="flex flex-col gap-4">
                 {HOW_TO_PLAY.map((item) => (
                   <div key={item.title} className="flex gap-3 items-start">

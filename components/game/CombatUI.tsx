@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Player, Enemy } from '@/lib/game-engine';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ENEMY_SPRITES } from '@/lib/game-engine/constants';
 import SpriteAnimator from '@/components/game/SpriteAnimator';
+import { cn } from '@/lib/utils';
 
 // ── Skill button with tooltip ──────────────────────────────────────────────
 function SkillButton({ skill, disabled, onClick }: {
@@ -133,6 +134,11 @@ export default function CombatUI({
   const actionsDisabled = !isPlayerTurn || isAnimating;
   const activeSkills = player.skills.filter(s => s.type === 'active');
   const promptText = combatLog.length > 0 ? combatLog[combatLog.length - 1] : `What will ${player.class} do?`;
+  const logRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
+  }, [combatLog]);
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-2" style={{ background: 'rgba(0,0,0,0.75)' }}>
@@ -226,16 +232,14 @@ export default function CombatUI({
         <div className="bg-[#0f1220] border-t-4 border-white/20 grid grid-cols-2" style={{ minHeight: '180px' }}>
 
           {/* Left: prompt box */}
-          <div className="border-r-2 border-white/10 px-5 py-4 flex flex-col justify-between">
-            <AnimatePresence mode="wait">
-              <motion.p key={promptText} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="text-white font-bold text-base leading-relaxed">
-                {promptText}
-              </motion.p>
-            </AnimatePresence>
-            <div className="mt-2 space-y-1">
-              {combatLog.slice(-3, -1).map((msg, i) => (
-                <p key={i} className="text-white/50 text-sm truncate">› {msg}</p>
+          <div className="border-r-2 border-white/10 px-5 py-4 flex flex-col gap-2" style={{ minHeight: 180 }}>
+            <div ref={logRef} className="flex-1 overflow-y-auto space-y-1 max-h-28" style={{ scrollbarWidth: 'thin' }}>
+              {combatLog.map((msg, i) => (
+                <p key={i} className={cn('text-sm leading-snug',
+                  i === combatLog.length - 1 ? 'text-white font-bold' : 'text-white/50'
+                )}>
+                  {i !== combatLog.length - 1 && <span className="mr-1">›</span>}{msg}
+                </p>
               ))}
             </div>
           </div>
@@ -248,8 +252,13 @@ export default function CombatUI({
                   className="grid grid-cols-2 gap-2 w-full">
                   <button onClick={() => activeSkills.length > 0 ? setMenu('fight') : onAttack()}
                     disabled={actionsDisabled}
-                    className="py-4 rounded-xl font-black text-base bg-red-500 hover:bg-red-400 disabled:opacity-40 text-white border-b-4 border-red-700 transition-all active:scale-95">
+                    className="py-4 rounded-xl font-black text-base bg-red-500 hover:bg-red-400 disabled:opacity-40 text-white border-b-4 border-red-700 transition-all active:scale-95 relative">
                     ⚔️ FIGHT
+                    {activeSkills.length > 0 && (
+                      <span className="absolute top-1.5 right-2 text-[10px] bg-red-800 rounded-full px-1.5 py-0.5 font-bold opacity-80">
+                        {activeSkills.length} skills ▾
+                      </span>
+                    )}
                   </button>
                   <button onClick={onOpenInventory} disabled={!onOpenInventory}
                     className="py-4 rounded-xl font-black text-base bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-white border-b-4 border-amber-700 transition-all active:scale-95">

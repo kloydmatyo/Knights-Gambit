@@ -52,6 +52,17 @@ function getNextPrice(item: Item, counts?: StatUpgradeCounts): number | null {
   return calcUpgradePrice(stat, currentCount + 1);
 }
 
+const RELIC_CATEGORIES: Record<string, string> = {
+  relic_vampiric_fang:      'Combat',
+  relic_iron_heart:         'Defense',
+  relic_war_drum:           'Offense',
+  relic_stone_skin:         'Defense',
+  relic_cursed_idol:        'Risk/Reward',
+  relic_philosophers_stone: 'Economy',
+  relic_death_mask:         'Combat',
+  relic_golden_chalice:     'Economy',
+};
+
 export default function ShopPanel({
   isOpen,
   onClose,
@@ -62,6 +73,13 @@ export default function ShopPanel({
   statUpgradeCounts,
 }: ShopPanelProps) {
   const canAfford = (price: number) => player.coins >= price;
+
+  const sortedItems = [...items].sort((a, b) => {
+    const aAfford = canAfford(a.price) ? 0 : 1;
+    const bAfford = canAfford(b.price) ? 0 : 1;
+    if (aAfford !== bAfford) return aAfford - bAfford;
+    return a.price - b.price;
+  });
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
@@ -80,7 +98,7 @@ export default function ShopPanel({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {items.map((item, index) => {
+        {sortedItems.map((item, index) => {
           const affordable = canAfford(item.price);
           const nextPrice = getNextPrice(item, statUpgradeCounts);
           // How many times this stat has been bought (for the "Lv." badge)
@@ -126,6 +144,11 @@ export default function ShopPanel({
                           ✨ Relic
                         </span>
                       )}
+                      {item.effect.type === 'relic' && RELIC_CATEGORIES[item.id] && (
+                        <span className="text-xs bg-purple-900/50 border border-purple-500 text-purple-300 px-1.5 py-0.5 rounded">
+                          {RELIC_CATEGORIES[item.id]}
+                        </span>
+                      )}
                       {item.autoConsume && item.effect.type !== 'relic' && (
                         <span className="text-xs bg-green-900/50 border border-green-600 text-green-400 px-1.5 py-0.5 rounded">
                           ⚡ Instant
@@ -145,9 +168,10 @@ export default function ShopPanel({
                       <div className="flex flex-col">
                         <span className="text-game-gold font-bold text-xl">💰 {item.price}</span>
                         {nextPrice !== null && (
-                          <span className="text-xs text-gray-500 mt-0.5">
-                            Next: 💰 {nextPrice}
-                          </span>
+                          <div className="flex items-center gap-1.5 mt-1 bg-blue-900/30 border border-blue-500/30 rounded px-2 py-1">
+                            <span className="text-blue-300 text-xs font-bold">📈 Next upgrade:</span>
+                            <span className="text-yellow-300 text-xs font-bold">💰 {nextPrice}</span>
+                          </div>
                         )}
                       </div>
                       <div className="flex flex-col items-end gap-1">
