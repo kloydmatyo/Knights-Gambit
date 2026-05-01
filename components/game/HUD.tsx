@@ -19,23 +19,29 @@ const STATUS_ICON: Record<string, string> = {
 };
 
 function HpRing({ percent, health, maxHealth }: { percent: number; health: number; maxHealth: number }) {
-  const r = 28;
+  const r = 30;
   const circ = 2 * Math.PI * r;
   const dash = (percent / 100) * circ;
-  const color = percent > 50 ? '#22c55e' : percent > 25 ? '#f59e0b' : '#ef4444';
+  const color = percent > 50 ? '#4ade80' : percent > 25 ? '#fb923c' : '#ef4444';
   return (
-    <div className="relative w-[72px] h-[72px] shrink-0">
-      <svg width="72" height="72" className="absolute inset-0">
-        <circle cx="36" cy="36" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="5" />
-        <motion.circle cx="36" cy="36" r={r} fill="none" stroke={color}
+    <div className="relative shrink-0" style={{ width: 76, height: 76 }}>
+      {/* Outer stone ring */}
+      <div className="absolute inset-0 rounded-full"
+        style={{ background: 'radial-gradient(circle, #1a1410 60%, #2a1f14 100%)', border: '2px solid #3d2e1e' }} />
+      <svg width="76" height="76" className="absolute inset-0">
+        {/* Track */}
+        <circle cx="38" cy="38" r={r} fill="none" stroke="rgba(80,50,20,0.5)" strokeWidth="5" />
+        {/* Fill */}
+        <motion.circle cx="38" cy="38" r={r} fill="none" stroke={color}
           strokeWidth="5" strokeLinecap="round" strokeDasharray={circ}
           animate={{ strokeDashoffset: circ - dash }} transition={{ duration: 0.4 }}
-          transform="rotate(-90 36 36)" />
+          transform="rotate(-90 38 38)"
+          style={{ filter: `drop-shadow(0 0 4px ${color}80)` }} />
       </svg>
-      {/* HP number inside ring */}
+      {/* HP number */}
       <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-        <span className="text-white font-black text-[11px]">{health}</span>
-        <span className="text-white/40 text-[9px]">/{maxHealth}</span>
+        <span className="text-white font-black text-[12px]" style={{ fontFamily: 'monospace' }}>{health}</span>
+        <span className="text-[9px]" style={{ color: '#8a6a4a' }}>/{maxHealth}</span>
       </div>
     </div>
   );
@@ -51,43 +57,60 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
   const shieldEffect = player.statusEffects.find(e => e.type === 'shield');
   const totalItems = player.inventory.reduce((s, i) => s + i.quantity, 0);
 
+  // Dungeon palette
+  const cardBg = 'rgba(14, 10, 6, 0.92)';
+  const cardBorder = '#5a3e28';
+  const cardBorderHighlight = '#8a5c30';
+
   return (
     <>
       {/* ── TOP-LEFT: Player card ── */}
-      <div className="fixed top-3 left-3 z-30 flex flex-col gap-1.5" style={{ minWidth: 190 }}>
-        <div className="bg-black/70 border border-cyan-500/40 rounded-xl p-2.5 backdrop-blur-sm shadow-xl">
+      <div className="fixed top-3 left-3 z-30" style={{ minWidth: 200 }}>
+        <div className="rounded-xl p-3 backdrop-blur-sm shadow-2xl flex flex-col gap-2"
+          style={{
+            background: cardBg,
+            border: `2px solid ${cardBorder}`,
+            boxShadow: `0 0 0 1px rgba(255,180,80,0.08), 0 8px 32px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,180,80,0.06)`,
+          }}>
 
-          {/* Avatar row */}
-          <div className="flex items-center gap-2.5">
+          {/* Avatar + class + bars */}
+          <div className="flex items-center gap-3">
             <HpRing percent={healthPercent} health={player.health} maxHealth={player.maxHealth} />
 
-            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-              {/* Class name */}
-              <span className="text-white font-black text-xs uppercase tracking-wider truncate">
+            <div className="flex flex-col gap-1 min-w-0 flex-1">
+              {/* Class name — engraved look */}
+              <span className="font-black text-xs uppercase tracking-[0.15em] truncate"
+                style={{ color: '#d4a855', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
                 {player.class}
               </span>
 
               {/* Mana */}
               {player.mana !== undefined && player.maxMana && (
                 <>
-                  <span className="text-blue-400 text-xs font-bold">
-                    ✨ {player.mana}/{player.maxMana}
-                  </span>
-                  <div className="h-1.5 bg-black/50 rounded-full overflow-hidden w-full">
-                    <motion.div className="h-full bg-blue-500 rounded-full"
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold" style={{ color: '#7ba7d4' }}>✨ MP</span>
+                    <span className="text-[10px] font-mono" style={{ color: '#7ba7d4' }}>{player.mana}/{player.maxMana}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(30,20,10,0.8)', border: '1px solid rgba(80,60,30,0.5)' }}>
+                    <motion.div className="h-full rounded-full"
+                      style={{ background: 'linear-gradient(90deg, #3b6fa0, #5b9fd4)' }}
                       animate={{ width: `${manaPercent}%` }} transition={{ duration: 0.3 }} />
                   </div>
                 </>
               )}
 
-              {/* Shield bar */}
+              {/* Shield */}
               {shieldEffect?.value && (() => {
                 const maxShield = shieldEffect.value <= 30 ? 30 : 60;
                 return (
                   <>
-                    <span className="text-cyan-300 text-xs font-bold">🛡 {shieldEffect.value}</span>
-                    <div className="h-1.5 bg-black/50 rounded-full overflow-hidden w-full">
-                      <motion.div className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full"
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold" style={{ color: '#7dd4d4' }}>🛡 Shield</span>
+                      <span className="text-[10px] font-mono" style={{ color: '#7dd4d4' }}>{shieldEffect.value}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(30,20,10,0.8)', border: '1px solid rgba(80,60,30,0.5)' }}>
+                      <motion.div className="h-full rounded-full"
+                        style={{ background: 'linear-gradient(90deg, #2a8a8a, #4dd4d4)' }}
                         animate={{ width: `${Math.min(100, (shieldEffect.value / maxShield) * 100)}%` }}
                         transition={{ duration: 0.3 }} />
                     </div>
@@ -97,49 +120,61 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
             </div>
           </div>
 
-          {/* Stat pills */}
-          <div className="flex gap-1.5 mt-2 items-center">
-            <span className="bg-black/50 border border-white/10 rounded-lg px-2 py-0.5 text-xs font-bold text-orange-300">⚔️ {player.attack}</span>
-            <span className="bg-black/50 border border-white/10 rounded-lg px-2 py-0.5 text-xs font-bold text-blue-300">🛡️ {player.defense}</span>
+          {/* Stat pills — stone badge style */}
+          <div className="flex gap-1.5">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold"
+              style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#e8a050' }}>
+              ⚔️ {player.attack}
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold"
+              style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#7ab4d4' }}>
+              🛡️ {player.defense}
+            </div>
           </div>
 
-          {/* Inventory button — own row */}
-          <button
-            onClick={onInventoryClick}
-            className="mt-1.5 w-full bg-yellow-500/20 border border-yellow-500/50 rounded-lg px-2 py-1 text-xs font-bold text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-400 transition-colors flex items-center justify-center gap-1.5"
-          >
+          {/* Inventory button — torch gold */}
+          <button onClick={onInventoryClick}
+            className="w-full flex items-center justify-center gap-2 py-1.5 rounded-lg font-black text-xs transition-all active:scale-95"
+            style={{
+              background: 'linear-gradient(180deg, #c8860a 0%, #9a6008 100%)',
+              border: '1px solid #e8a030',
+              color: '#fff8e8',
+              boxShadow: '0 2px 8px rgba(200,130,10,0.3), inset 0 1px 0 rgba(255,220,100,0.2)',
+              textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+            }}>
             📦 Inventory
             {totalItems > 0 && (
-              <span className="bg-yellow-500 text-black rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-black leading-none">
+              <span className="rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-black leading-none"
+                style={{ background: '#1a0e04', color: '#e8a030', border: '1px solid #6a4010' }}>
                 {totalItems}
               </span>
             )}
           </button>
 
-          {/* Status effects — collapsed behind count badge, expand on click */}
+          {/* Status effects */}
           {activeEffects.length > 0 && (
-            <div className="mt-1.5">
+            <div className="mt-0.5">
               {!statusExpanded ? (
-                <button
-                  onClick={() => setStatusExpanded(true)}
-                  className="flex items-center gap-1 text-xs text-white/60 hover:text-white/90 transition-colors"
-                >
+                <button onClick={() => setStatusExpanded(true)}
+                  className="flex items-center gap-1 text-xs transition-colors"
+                  style={{ color: '#8a6a4a' }}>
                   {activeEffects.slice(0, 3).map((e, i) => (
                     <span key={i}>{STATUS_ICON[e.type] ?? '⚡'}</span>
                   ))}
                   {activeEffects.length > 3 && <span className="text-[10px]">+{activeEffects.length - 3}</span>}
-                  <span className="text-[10px] text-white/40 ml-0.5">▾</span>
+                  <span className="text-[10px] ml-0.5" style={{ color: '#6a4a2a' }}>▾</span>
                 </button>
               ) : (
                 <button onClick={() => setStatusExpanded(false)} className="w-full text-left">
                   <div className="flex flex-wrap gap-1">
                     {activeEffects.map((e, i) => (
-                      <span key={i} className="text-xs bg-black/50 border border-white/10 rounded px-1.5 py-0.5 text-white/70">
+                      <span key={i} className="text-xs rounded px-1.5 py-0.5"
+                        style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#c8a070' }}>
                         {STATUS_ICON[e.type] ?? '⚡'} {e.type} {e.duration}t
                       </span>
                     ))}
                   </div>
-                  <span className="text-[10px] text-white/40 mt-0.5 block">▴ collapse</span>
+                  <span className="text-[10px] mt-0.5 block" style={{ color: '#6a4a2a' }}>▴ collapse</span>
                 </button>
               )}
             </div>
@@ -149,10 +184,20 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
 
       {/* ── TOP-RIGHT: Game info card ── */}
       <div className="fixed top-3 right-3 z-30">
-        <div className="bg-black/70 border border-cyan-500/40 rounded-xl px-4 py-3 backdrop-blur-sm shadow-xl text-right min-w-[130px]">
-          <div className="text-game-gold font-black text-sm">D{dungeonNum} · F{floorInDungeon}</div>
-          <div className="text-gray-400 text-xs mt-0.5">Turn {turnCount}</div>
-          <div className="text-yellow-300 font-bold text-sm mt-1.5">💰 {player.coins}</div>
+        <div className="rounded-xl px-4 py-3 backdrop-blur-sm shadow-2xl text-right"
+          style={{
+            background: cardBg,
+            border: `2px solid ${cardBorder}`,
+            boxShadow: `0 0 0 1px rgba(255,180,80,0.08), 0 8px 32px rgba(0,0,0,0.8)`,
+            minWidth: 130,
+          }}>
+          <div className="font-black text-sm" style={{ color: '#d4a855', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+            D{dungeonNum} · F{floorInDungeon}
+          </div>
+          <div className="text-xs mt-0.5" style={{ color: '#6a5040' }}>Turn {turnCount}</div>
+          <div className="font-bold text-sm mt-1.5" style={{ color: '#e8c060' }}>
+            💰 {player.coins}
+          </div>
         </div>
       </div>
     </>

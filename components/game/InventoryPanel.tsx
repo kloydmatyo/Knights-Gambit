@@ -42,7 +42,7 @@ export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isI
           <p className="text-gray-500 text-sm mt-2">Visit shops to purchase items!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {sortedInventory.map((item, index) => (
             <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
               <Card variant="bordered" className="hover:border-game-gold transition-colors">

@@ -540,9 +540,10 @@ export default function GamePage() {
   };
 
   const confirmFloorAdvance = () => {
-    const src = pendingFloorAdvance ?? floorCompleteState;
-    if (!src) return;
-    const newState = GameEngine.advanceFloor(src);
+    if (!gameState) return;
+    // Always advance from the current gameState — not the stale snapshot —
+    // so any purchases made while on the final tile are preserved.
+    const newState = GameEngine.advanceFloor(gameState);
     setGameState(newState);
     setPendingFloorAdvance(null);
     setFloorCompleteState(null);
@@ -643,7 +644,8 @@ export default function GamePage() {
   const choosableTileIds = (pendingChoice && !pendingChoice.destinyResult) ? pendingChoice.tileOptions : [];
 
   return (
-    <div className="relative w-full h-screen bg-game-bg overflow-hidden flex flex-col">
+    <div className="relative w-full h-screen overflow-hidden flex flex-col"
+      style={{ background: '#0e0804' }}>
       <HUD player={gameState.player} floor={gameState.currentFloor} turnCount={gameState.turnCount} onInventoryClick={() => setIsInventoryOpen(true)} playerSpriteUrl={(gameState.player as any).spriteDataUrl} />
 
       {/* Board — no spacer needed, HUD floats over the board */}
@@ -660,7 +662,7 @@ export default function GamePage() {
       </div>
 
       {/* Dice Roller â€” shown only when no pending choice */}
-      {phase === 'playing' && !gameState.isInCombat && !pendingChoice && (
+      {phase === 'playing' && !gameState.isInCombat && !pendingChoice && !floorCompleteState && (
         <DiceRoller onRoll={handleDiceRoll} lastRoll={lastDiceRoll} disabled={false} />
       )}
 
@@ -751,7 +753,8 @@ export default function GamePage() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-game-primary border-2 border-game-gold rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center"
+              className="rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center"
+              style={{ background: 'rgba(14,10,6,0.97)', border: '2px solid #5a3e28' }}
             >
               <div className="text-4xl mb-3">🏁</div>
               <h2 className="text-white font-black text-xl mb-1">Floor Complete!</h2>
@@ -792,7 +795,8 @@ export default function GamePage() {
       <AnimatePresence>
         {notification && (
           <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }} className="fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-50 px-4 max-w-[90vw]">
-            <div className="bg-game-primary border-2 border-game-gold rounded-lg px-4 sm:px-6 py-2 sm:py-3 shadow-2xl">
+            <div className="rounded-lg px-4 sm:px-6 py-2 sm:py-3 shadow-2xl"
+              style={{ background: 'rgba(14,10,6,0.97)', border: '2px solid #5a3e28' }}>
               <p className="text-white font-bold text-sm sm:text-base text-center">{notification}</p>
             </div>
           </motion.div>

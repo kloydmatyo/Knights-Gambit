@@ -97,7 +97,8 @@ export default function GameOverScreen({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      style={{ background: 'radial-gradient(ellipse at center, #1a0e04 0%, #080402 100%)' }}>
       <motion.div
         initial={{ opacity: 0, scale: 0.85, y: 40 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -131,10 +132,11 @@ export default function GameOverScreen({
             { icon: '🎲', label: 'Total Turns', value: turns },
             { icon: '💰', label: 'Coins', value: coinsEarned },
           ].map(({ icon, label, value }) => (
-            <div key={label} className="bg-gray-900 border border-gray-700 rounded-lg p-3 text-center">
+            <div key={label} className="rounded-lg p-3 text-center"
+              style={{ background: 'rgba(10,6,2,0.9)', border: '1px solid #3d2a14' }}>
               <div className="text-2xl mb-1">{icon}</div>
-              <div className="text-gray-400 text-xs mb-1">{label}</div>
-              <div className="text-yellow-400 font-bold text-xl">{value}</div>
+              <div className="text-xs mb-1" style={{ color: '#6a4a2a' }}>{label}</div>
+              <div className="font-bold text-xl" style={{ color: '#d4a030' }}>{value}</div>
             </div>
           ))}
         </div>
@@ -165,9 +167,9 @@ export default function GameOverScreen({
         </AnimatePresence>
 
         {/* Leaderboard */}
-        <div className="bg-gray-900 border border-gray-700 rounded-lg mb-6 overflow-hidden">
-          <div className="px-4 py-2 border-b border-gray-700 flex items-center gap-2">
-            <span className="text-yellow-400 font-bold">🏆 Leaderboard</span>
+        <div className="rounded-lg mb-6 overflow-hidden" style={{ border: '1px solid #3d2a14', background: 'rgba(10,6,2,0.9)' }}>
+          <div className="px-4 py-2 flex items-center gap-2" style={{ borderBottom: '1px solid #3d2a14' }}>
+            <span className="font-bold" style={{ color: '#d4a030' }}>🏆 Leaderboard</span>
             {loading && <span className="text-gray-500 text-sm ml-auto">Loading...</span>}
             {submitError && <span className="text-red-400 text-sm ml-auto">{submitError}</span>}
           </div>
@@ -175,7 +177,7 @@ export default function GameOverScreen({
           {leaderboard.length === 0 && !loading ? (
             <div className="px-4 py-6 text-center text-gray-500 text-sm">No scores yet — you&apos;re the first!</div>
           ) : (
-            <div className="divide-y divide-gray-800">
+            <div className="divide-y" style={{ borderColor: '#2a1a0a' }}>
               {leaderboard.map((entry, i) => {
                 const isThisRun = entry.id === thisRunId;
                 return (

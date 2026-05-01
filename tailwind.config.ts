@@ -11,11 +11,11 @@ const config: Config = {
     extend: {
       colors: {
         game: {
-          bg: '#1a1a2e',
-          primary: '#16213e',
-          secondary: '#0f3460',
-          accent: '#e94560',
-          gold: '#ffe66d',
+          bg: '#1a1208',
+          primary: '#231608',
+          secondary: '#3d2a14',
+          accent: '#c8621a',
+          gold: '#d4a030',
           health: '#ff6b6b',
           mana: '#4ecdc4',
           attack: '#ff9f43',

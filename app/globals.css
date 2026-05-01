@@ -9,25 +9,37 @@
 
   html,
   body {
-    @apply w-full h-full m-0 p-0 bg-game-bg font-game overflow-hidden;
+    @apply w-full h-full m-0 p-0 font-game;
+    background: #0e0804;
+    overflow-x: hidden;
   }
 
   body {
-    @apply flex justify-center items-center;
+    min-height: 100vh;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply px-6 py-3 bg-game-accent text-white font-bold rounded-lg transition-all hover:bg-opacity-90 hover:scale-105 active:scale-95;
+    @apply px-6 py-3 font-bold rounded-lg transition-all hover:brightness-110 hover:scale-105 active:scale-95;
+    background: linear-gradient(180deg, #c8621a 0%, #8a3e0a 100%);
+    border: 1px solid #e8821a;
+    border-bottom: 3px solid #4a1e04;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
   }
 
   .btn-secondary {
-    @apply px-6 py-3 bg-game-primary text-game-gold font-bold rounded-lg border-2 border-game-gold transition-all hover:bg-game-secondary;
+    @apply px-6 py-3 font-bold rounded-lg transition-all hover:brightness-110;
+    background: rgba(20,12,4,0.9);
+    border: 2px solid #5a3e28;
+    color: #d4a030;
   }
 
   .card {
-    @apply bg-game-primary border-2 border-game-secondary rounded-lg p-6 shadow-lg;
+    @apply rounded-lg p-6 shadow-lg;
+    background: rgba(20,12,4,0.95);
+    border: 2px solid #3d2a14;
   }
 
   .stat-display {

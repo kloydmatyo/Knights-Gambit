@@ -216,8 +216,8 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
   }
 
   return (
-    <div className="flex flex-col bg-game-primary border border-game-secondary rounded-2xl overflow-hidden w-full"
-      style={{ height: '78vh', minHeight: 540, maxWidth: 900 }}>
+    <div className="flex flex-col rounded-2xl overflow-hidden w-full"
+      style={{ height: '78vh', minHeight: 540, maxWidth: 900, background: 'rgba(14,10,6,0.97)', border: '2px solid #3d2a14' }}>
 
       {/* Hidden render canvas */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
@@ -226,17 +226,18 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
       <div className="flex flex-1 min-h-0">
 
         {/* ── LEFT: Category tabs + item grid ── */}
-        <div className="flex flex-col border-r border-game-secondary" style={{ width: '42%', minWidth: 0 }}>
+        <div className="flex flex-col" style={{ width: '42%', minWidth: 0, borderRight: '1px solid #3d2a14' }}>
 
           {/* Category tab row */}
-          <div className="flex flex-wrap gap-1 p-2 border-b border-game-secondary bg-game-bg/50 shrink-0">
+          <div className="flex flex-wrap gap-1 p-2 shrink-0" style={{ borderBottom: '1px solid #3d2a14', background: 'rgba(10,6,2,0.6)' }}>
             {CATEGORIES.map(cat => (
               <button key={cat.id} onClick={() => { setActiveCategory(cat.id); setSearch(''); }}
                 className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold transition-all ${
                   activeCategory === cat.id
                     ? 'bg-game-accent text-black'
-                    : 'bg-game-secondary text-gray-300 hover:bg-game-primary'
-                }`}>
+                    : 'text-gray-300 hover:text-white'
+                }`}
+                style={activeCategory === cat.id ? {} : { background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14' }}>
                 <span>{cat.icon}</span>
                 <span>{cat.label}</span>
               </button>
@@ -244,10 +245,11 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
           </div>
 
           {/* Panel header: search + equipped count */}
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-game-secondary shrink-0">
+          <div className="flex items-center gap-2 px-3 py-2 shrink-0" style={{ borderBottom: '1px solid #3d2a14' }}>
             <input type="text" placeholder="Search..." value={search}
               onChange={e => setSearch(e.target.value)}
-              className="flex-1 bg-game-bg border border-game-secondary rounded-lg px-2 py-1 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-game-gold" />
+              className="flex-1 rounded-lg px-2 py-1 text-white text-xs placeholder-gray-600 focus:outline-none"
+              style={{ background: 'rgba(10,6,2,0.8)', border: '1px solid #3d2a14' }} />
             <span className="text-xs text-gray-400 shrink-0">{equippedCount}/{totalCategories}</span>
           </div>
 
@@ -319,7 +321,7 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
         </div>
 
         {/* ── RIGHT: Character preview ── */}
-        <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-[#0a0e1a]">
+        <div className="flex-1 relative flex items-center justify-center overflow-hidden" style={{ background: '#0a0804' }}>
           {/* Dungeon background */}
           <div className="absolute inset-0"
             style={{ backgroundImage: 'url(/background/Arena_BG.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
@@ -335,21 +337,22 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
       </div>
 
       {/* ── FOOTER BAR ── */}
-      <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-t border-game-secondary bg-game-bg/80">
+      <div className="shrink-0 flex items-center gap-3 px-4 py-3" style={{ borderTop: '1px solid #3d2a14', background: 'rgba(10,6,2,0.9)' }}>
         {/* Gender */}
         <div className="flex gap-1 shrink-0">
           {BODY_TYPES.map(bt => (
             <button key={bt} onClick={() => setBodyType(bt)}
               className={`px-3 py-1.5 text-xs rounded-lg capitalize font-bold transition-colors ${
-                bodyType === bt ? 'bg-game-gold text-black' : 'bg-game-secondary text-gray-300 hover:bg-game-primary'
-              }`}>{bt}</button>
+                bodyType === bt ? 'bg-game-gold text-black' : 'text-gray-300 hover:text-white'
+              }`}
+              style={bodyType === bt ? {} : { background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14' }}>{bt}</button>
           ))}
         </div>
 
         <div className="w-px h-5 bg-white/20 shrink-0" />
 
         {/* Animation pill toggle */}
-        <div className="flex gap-0.5 bg-game-secondary rounded-lg p-0.5 shrink-0">
+        <div className="flex gap-0.5 rounded-lg p-0.5 shrink-0" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14' }}>
           {PREVIEW_ANIMS.map(anim => (
             <button key={anim} onClick={() => setPreviewAnim(anim)}
               className={`px-2.5 py-1 text-[10px] rounded-md capitalize font-bold transition-colors ${

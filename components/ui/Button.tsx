@@ -11,9 +11,26 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles = 'font-bold rounded-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed';
     
     const variants = {
-      primary: 'bg-game-accent text-white hover:bg-opacity-90 hover:scale-105',
-      secondary: 'bg-game-primary text-game-gold border-2 border-game-gold hover:bg-game-secondary',
+      primary: 'text-white hover:brightness-110 hover:scale-105',
+      secondary: 'text-white border-2 hover:brightness-110',
       ghost: 'bg-transparent text-white hover:bg-white hover:bg-opacity-10',
+    };
+
+    const variantStyles: Record<string, React.CSSProperties> = {
+      primary: {
+        background: 'linear-gradient(180deg, #c8621a 0%, #8a3e0a 100%)',
+        border: '1px solid #e8821a',
+        borderBottom: '3px solid #4a1e04',
+        boxShadow: '0 2px 8px rgba(200,98,26,0.3), inset 0 1px 0 rgba(255,180,80,0.15)',
+        textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+      },
+      secondary: {
+        background: 'rgba(20,12,4,0.9)',
+        border: '2px solid #5a3e28',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+        color: '#d4a030',
+      },
+      ghost: {},
     };
     
     const sizes = {
@@ -26,6 +43,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
+        style={variantStyles[variant]}
         {...props}
       >
         {children}

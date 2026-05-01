@@ -66,13 +66,13 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
       initial={{ opacity: 0, y: 60 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 60 }}
-      className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center pb-6 pt-4 px-3 bg-gradient-to-t from-black/90 via-black/70 to-transparent"
+      className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center pb-6 pt-4 px-3 bg-gradient-to-t from-black/95 via-black/80 to-transparent"
     >
       <AnimatePresence mode="wait">
         {!showingDestiny ? (
           /* ── Phase 1: Choose your path ── */
           <motion.div key="choose" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-3 w-full">
-            <div className="text-gray-300 text-sm font-semibold tracking-wide uppercase mb-1">
+            <div className="text-sm font-semibold tracking-wide uppercase mb-1" style={{ color: '#8a6a4a' }}>
               Choose your path
             </div>
             <div className="flex gap-3 flex-wrap justify-center">

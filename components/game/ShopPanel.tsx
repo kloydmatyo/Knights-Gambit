@@ -83,21 +83,22 @@ export default function ShopPanel({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
-      <div className="mb-4 p-3 bg-game-bg rounded flex justify-between items-center">
+      <div className="mb-4 p-3 rounded-lg flex justify-between items-center"
+        style={{ background: 'rgba(10,6,2,0.8)', border: '1px solid #3d2a14' }}>
         <div className="flex items-center gap-4">
-          <span className="text-gray-400">Your Coins:</span>
-          <span className="text-game-gold font-bold text-2xl">💰 {player.coins}</span>
+          <span className="text-sm" style={{ color: '#8a6a4a' }}>Your Coins:</span>
+          <span className="font-bold text-2xl" style={{ color: '#d4a030' }}>💰 {player.coins}</span>
         </div>
-        <div className="flex items-center gap-1.5 bg-game-secondary px-3 py-1.5 rounded-lg border border-gray-600">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(10,6,2,0.9)', border: '1px solid #3d2a14' }}>
           <span className="text-lg">📦</span>
-          <span className="text-white font-bold text-sm">
+          <span className="font-bold text-sm text-white">
             {player.inventory.reduce((sum, i) => sum + i.quantity, 0)}
           </span>
-          <span className="text-gray-400 text-xs">items</span>
+          <span className="text-xs" style={{ color: '#6a4a2a' }}>items</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {sortedItems.map((item, index) => {
           const affordable = canAfford(item.price);
           const nextPrice = getNextPrice(item, statUpgradeCounts);
@@ -116,7 +117,7 @@ export default function ShopPanel({
               <Card
                 variant="bordered"
                 className={cn(
-                  'transition-all',
+                  'transition-all overflow-hidden flex flex-col',
                   item.effect.type === 'relic'
                     ? affordable
                       ? 'border-yellow-500 hover:border-yellow-300 bg-yellow-950/20 cursor-pointer'
@@ -164,35 +165,29 @@ export default function ShopPanel({
                     <p className="text-gray-400 text-sm mb-3">{item.description}</p>
 
                     {/* Price row */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex flex-col">
-                        <span className="text-game-gold font-bold text-xl">💰 {item.price}</span>
-                        {nextPrice !== null && (
-                          <div className="flex items-center gap-1.5 mt-1 bg-blue-900/30 border border-blue-500/30 rounded px-2 py-1">
-                            <span className="text-blue-300 text-xs font-bold">📈 Next upgrade:</span>
-                            <span className="text-yellow-300 text-xs font-bold">💰 {nextPrice}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
+                    <div className="flex flex-col gap-1.5 mt-auto">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="font-bold text-xl" style={{ color: '#d4a030' }}>💰 {item.price}</span>
                         {(() => {
                           const owned = player.inventory
                             .filter(i => i.type === item.type && i.name === item.name)
                             .reduce((sum, i) => sum + i.quantity, 0);
                           return owned > 0 ? (
-                            <span className="text-xs text-gray-400 font-medium">
+                            <span className="text-xs font-medium" style={{ color: '#8a6a4a' }}>
                               Owned: <span className="text-white font-bold">{owned}</span>
                             </span>
                           ) : null;
                         })()}
-                        <Button
-                          size="sm"
-                          disabled={!affordable}
-                          onClick={() => onPurchase(item)}
-                        >
+                        <Button size="sm" disabled={!affordable} onClick={() => onPurchase(item)} className="shrink-0">
                           {affordable ? 'Buy' : 'Too Expensive'}
                         </Button>
                       </div>
+                      {nextPrice !== null && (
+                        <div className="flex items-center gap-1.5 bg-blue-900/30 border border-blue-500/30 rounded px-2 py-1">
+                          <span className="text-blue-300 text-xs font-bold">📈 Next upgrade:</span>
+                          <span className="text-yellow-300 text-xs font-bold">💰 {nextPrice}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

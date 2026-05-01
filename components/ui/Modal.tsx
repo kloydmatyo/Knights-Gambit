@@ -44,28 +44,33 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
 
           {/* Modal Container - Fixed Centering */}
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden"
             style={{ pointerEvents: 'none' }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              style={{ pointerEvents: 'auto' }}
               className={cn(
-                'bg-game-primary border-2 border-game-secondary rounded-lg shadow-2xl',
+                'rounded-xl shadow-2xl',
                 'w-full max-w-2xl max-h-[90vh] overflow-y-auto',
                 'p-4 sm:p-6',
                 className
               )}
+              style={{
+                pointerEvents: 'auto',
+                background: 'rgba(20,12,4,0.97)',
+                border: '2px solid #5a3e28',
+                boxShadow: '0 0 0 1px rgba(255,180,80,0.06), 0 24px 64px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,180,80,0.05)',
+                overflowX: 'hidden',
+              }}
             >
               {title && (
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-game-secondary">
-                  <h2 className="text-2xl font-bold text-game-gold">{title}</h2>
-                  <button
-                    onClick={onClose}
-                    className="text-white hover:text-game-accent transition-colors text-2xl"
-                  >
+                <div className="flex items-center justify-between mb-4 pb-4" style={{ borderBottom: '1px solid #3d2a14' }}>
+                  <h2 className="text-2xl font-bold" style={{ color: '#d4a030' }}>{title}</h2>
+                  <button onClick={onClose} className="transition-colors text-2xl" style={{ color: '#8a6a4a' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#d4a030')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#8a6a4a')}>
                     ×
                   </button>
                 </div>

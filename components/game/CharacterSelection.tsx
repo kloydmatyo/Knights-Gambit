@@ -91,7 +91,8 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
   };
 
   return (
-    <div className="min-h-screen w-full bg-game-bg overflow-y-auto flex flex-col items-center justify-center py-8 px-3 sm:px-6">
+    <div className="min-h-screen w-full overflow-y-auto flex flex-col items-center justify-center py-8 px-3 sm:px-6"
+      style={{ background: 'radial-gradient(ellipse at center, #2a1808 0%, #0e0804 100%)' }}>
       <div className="w-full max-w-4xl flex flex-col items-center gap-6">
 
         {/* Header */}
@@ -115,8 +116,8 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
                   ‹
                 </button>
 
-                <div className={cn('flex-1 relative overflow-hidden rounded-2xl border-2 bg-black/60 backdrop-blur-sm shadow-2xl', accent.border, accent.glow, 'shadow-xl')}
-                  style={{ minHeight: 260 }}>
+                <div className={cn('flex-1 relative overflow-hidden rounded-2xl border-2 backdrop-blur-sm shadow-2xl', accent.border, accent.glow, 'shadow-xl')}
+                  style={{ minHeight: 260, background: 'rgba(14,10,6,0.92)' }}>
                   <AnimatePresence mode="wait" custom={direction}>
                     <motion.div key={currentClass} custom={direction} variants={variants}
                       initial="enter" animate="center" exit="exit"

@@ -19,7 +19,8 @@ export default function Home() {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-game-bg">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4"
+      style={{ background: 'radial-gradient(ellipse at center, #2a1808 0%, #0e0804 100%)' }}>
       <motion.div
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -137,7 +138,8 @@ export default function Home() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#0f1220] border border-game-gold/40 rounded-2xl p-6 max-w-lg w-full shadow-2xl max-h-[80vh] overflow-y-auto"
+              className="rounded-2xl p-6 max-w-lg w-full shadow-2xl max-h-[80vh] overflow-y-auto"
+              style={{ background: 'rgba(14,10,6,0.97)', border: '1px solid #5a3e28' }}
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-extrabold text-game-gold tracking-widest">📖 HOW TO PLAY</h2>
@@ -160,7 +162,8 @@ export default function Home() {
               </div>
               <button
                 onClick={() => setShowHowToPlay(false)}
-                className="mt-6 w-full py-2 rounded-xl bg-game-gold/20 hover:bg-game-gold/30 text-game-gold font-bold text-sm border border-game-gold/40 transition-all"
+              className="mt-6 w-full py-2 rounded-xl font-bold text-sm transition-all"
+              style={{ background: 'rgba(212,160,48,0.15)', border: '1px solid #5a3e28', color: '#d4a030' }}
               >
                 Got it!
               </button>

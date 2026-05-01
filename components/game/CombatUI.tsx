@@ -45,7 +45,8 @@ function SkillTooltip({ skill }: { skill: import('@/lib/game-engine').Skill }) {
 
   return (
     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none w-48">
-      <div className="bg-[#0a0e1a] border border-yellow-400/40 rounded-xl px-3 py-2.5 shadow-2xl text-left">
+      <div className="bg-[#0a0e1a] border border-yellow-400/40 rounded-xl px-3 py-2.5 shadow-2xl text-left"
+        style={{ background: 'rgba(14,10,6,0.97)', border: '1px solid #5a3e28' }}>
         <p className="text-yellow-300 font-black text-sm mb-1">{skill.name}</p>
         <p className="text-gray-300 text-xs leading-relaxed mb-2">{skill.description}</p>
         <div className="space-y-0.5 border-t border-white/10 pt-1.5">
@@ -229,10 +230,10 @@ export default function CombatUI({
         </div>
 
         {/* ── BOTTOM PANEL: Pokémon-style ── */}
-        <div className="bg-[#0f1220] border-t-4 border-white/20 grid grid-cols-2" style={{ minHeight: '180px' }}>
+        <div className="grid grid-cols-2" style={{ minHeight: '180px', background: '#140e06', borderTop: '3px solid #5a3e28' }}>
 
           {/* Left: prompt box */}
-          <div className="border-r-2 border-white/10 px-5 py-4 flex flex-col gap-2" style={{ minHeight: 180 }}>
+          <div className="px-5 py-4 flex flex-col gap-2" style={{ minHeight: 180, borderRight: '1px solid #3d2a14' }}>
             <div ref={logRef} className="flex-1 overflow-y-auto space-y-1 max-h-28" style={{ scrollbarWidth: 'thin' }}>
               {combatLog.map((msg, i) => (
                 <p key={i} className={cn('text-sm leading-snug',
@@ -252,26 +253,31 @@ export default function CombatUI({
                   className="grid grid-cols-2 gap-2 w-full">
                   <button onClick={() => activeSkills.length > 0 ? setMenu('fight') : onAttack()}
                     disabled={actionsDisabled}
-                    className="py-4 rounded-xl font-black text-base bg-red-500 hover:bg-red-400 disabled:opacity-40 text-white border-b-4 border-red-700 transition-all active:scale-95 relative">
+                    className="py-4 rounded-xl font-black text-base disabled:opacity-40 text-white transition-all active:scale-95 relative"
+                    style={{ background: 'linear-gradient(180deg,#8b2020,#5a1010)', border: '1px solid #c04040', borderBottom: '4px solid #3a0808' }}>
                     ⚔️ FIGHT
                     {activeSkills.length > 0 && (
-                      <span className="absolute top-1.5 right-2 text-[10px] bg-red-800 rounded-full px-1.5 py-0.5 font-bold opacity-80">
+                      <span className="absolute top-1.5 right-2 text-[10px] rounded-full px-1.5 py-0.5 font-bold opacity-80"
+                        style={{ background: '#3a0808', color: '#e08080' }}>
                         {activeSkills.length} skills ▾
                       </span>
                     )}
                   </button>
                   <button onClick={onOpenInventory} disabled={!onOpenInventory}
-                    className="py-4 rounded-xl font-black text-base bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-white border-b-4 border-amber-700 transition-all active:scale-95">
+                    className="py-4 rounded-xl font-black text-base disabled:opacity-40 text-white transition-all active:scale-95"
+                    style={{ background: 'linear-gradient(180deg,#c8860a,#9a6008)', border: '1px solid #e8a030', borderBottom: '4px solid #5a3a00', color: '#fff8e8' }}>
                     🎒 BAG{player.inventory.length > 0 ? ` (${player.inventory.length})` : ''}
                   </button>
                   <button
                     onClick={() => { if (onBribe) onBribe(); else if (onTruce) onTruce(); }}
                     disabled={actionsDisabled || (!onBribe && !onTruce)}
-                    className="py-4 rounded-xl font-black text-base bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 text-white border-b-4 border-emerald-800 transition-all active:scale-95">
+                    className="py-4 rounded-xl font-black text-base disabled:opacity-30 text-white transition-all active:scale-95"
+                    style={{ background: 'linear-gradient(180deg,#2a6a30,#1a4a20)', border: '1px solid #4a9a50', borderBottom: '4px solid #0a2a10' }}>
                     {onBribe ? `💰 BRIBE${bribeCost ? ` (${bribeCost}g)` : ''}` : onTruce ? '🤝 TRUCE' : '💬 TALK'}
                   </button>
                   <button onClick={onFlee} disabled={actionsDisabled || !onFlee}
-                    className="py-4 rounded-xl font-black text-base bg-slate-500 hover:bg-slate-400 disabled:opacity-30 text-white border-b-4 border-slate-700 transition-all active:scale-95">
+                    className="py-4 rounded-xl font-black text-base disabled:opacity-30 text-white transition-all active:scale-95"
+                    style={{ background: 'linear-gradient(180deg,#4a3a2a,#2a2018)', border: '1px solid #6a5a4a', borderBottom: '4px solid #1a1008' }}>
                     🏃 RUN
                   </button>
                 </motion.div>

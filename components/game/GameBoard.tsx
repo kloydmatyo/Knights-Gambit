@@ -185,14 +185,16 @@ export default function GameBoard({
                 onClick={() => isInteractive && onTileClick?.(tile.id)}
                 className={[
                   'w-full h-full rounded-full flex items-center justify-center border-4 transition-all relative',
-                  TILE_COLOR[tile.type] ?? 'bg-gray-500',
+                  isVisible ? (TILE_COLOR[tile.type] ?? 'bg-gray-500') : 'bg-gray-800',
                   isCurrent ? 'border-game-gold shadow-2xl z-10' : '',
                   isChoosable ? 'border-yellow-300 shadow-yellow-400/60 shadow-lg z-20 cursor-pointer scale-110' : 'border-gray-700',
-                  !isVisible ? 'grayscale brightness-50' : '',
                   tile.trapTriggered ? 'grayscale' : '',
                 ].filter(Boolean).join(' ')}
               >
-                <span style={{ fontSize: Math.max(24, 32 * scale) }}>{getTileEmoji(tile)}</span>
+                {/* Only show actual emoji for visited/current/choosable — undiscovered shows ? */}
+                <span style={{ fontSize: Math.max(24, 32 * scale) }}>
+                  {isVisible ? getTileEmoji(tile) : '❓'}
+                </span>
                 {isCurrent && <div className="absolute inset-0 rounded-full bg-game-gold opacity-20 animate-pulse" />}
                 {isChoosable && (
                   <motion.div
@@ -202,12 +204,15 @@ export default function GameBoard({
                   />
                 )}
               </div>
-              <div
-                className="absolute left-1/2 -translate-x-1/2 text-gray-400 font-bold bg-game-bg px-1.5 py-0.5 rounded whitespace-nowrap capitalize"
-                style={{ bottom: -(tileSize * 0.35), fontSize: Math.max(9, 11 * scale) }}
-              >
-                {tile.type === 'elite' ? '⚠ Elite' : tile.type === 'boss' ? '☠ Boss' : tile.type}
-              </div>
+              {/* Only show type label for visible tiles */}
+              {isVisible && (
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 text-gray-400 font-bold bg-game-bg px-1.5 py-0.5 rounded whitespace-nowrap capitalize"
+                  style={{ bottom: -(tileSize * 0.35), fontSize: Math.max(9, 11 * scale) }}
+                >
+                  {tile.type === 'elite' ? '⚠ Elite' : tile.type === 'boss' ? '☠ Boss' : tile.type}
+                </div>
+              )}
             </motion.div>
           );
         })}
