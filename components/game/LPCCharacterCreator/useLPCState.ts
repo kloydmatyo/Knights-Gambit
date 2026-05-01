@@ -4,14 +4,28 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { LPCSelections, BodyType, ItemMeta } from './types';
 import { renderCharacterToCanvas } from './LPCRenderer';
 
-export function useLPCState() {
+// Default outfit per class: [itemId, variant]
+const CLASS_DEFAULTS: Record<string, Array<[string, string]>> = {
+  knight:    [['torso_armour_plate',   'steel'],   ['legs_armour_plate',  'steel']],
+  archer:    [['torso_armour_leather', 'forest'],  ['legs_armour_leather','forest']],
+  mage:      [['torso_robe',           'blue'],    ['legs_robe',          'blue']],
+  barbarian: [['torso_bandages',       'bandages'],['legs_pants',         'brown']],
+  assassin:  [['torso_armour_leather', 'black'],   ['legs_armour_leather','black']],
+  cleric:    [['torso_robe',           'white'],   ['legs_robe',          'white']],
+};
+
+// Fallback outfit if class-specific items don't exist in metadata
+const FALLBACK_OUTFIT: Array<[string, string]> = [
+  ['torso_armour_leather', 'leather'],
+];
+
+export function useLPCState(characterClass?: string) {
   const [metadataReady, setMetadataReady] = useState(false);
   const [selections, setSelections] = useState<LPCSelections>({});
   const [bodyType, setBodyType] = useState<BodyType>('male');
   const [isRendering, setIsRendering] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Load item-metadata.js as a script tag (sets window.itemMetadata)
   useEffect(() => {
     if ((window as any).itemMetadata) {
       setMetadataReady(true);
@@ -30,6 +44,7 @@ export function useLPCState() {
     const metadata: Record<string, ItemMeta> = (window as any).itemMetadata;
     const defaults: LPCSelections = {};
 
+    // Body, head, face
     if (metadata['body']) {
       const meta = metadata['body'];
       defaults[meta.type_name] = { itemId: 'body', variant: 'light', name: 'Body color (light)' };
@@ -42,8 +57,22 @@ export function useLPCState() {
       const meta = metadata['face_neutral'];
       defaults[meta.type_name] = { itemId: 'face_neutral', variant: 'light', name: 'Neutral (light)' };
     }
+
+    // Class-appropriate clothing
+    const outfitItems = (characterClass && CLASS_DEFAULTS[characterClass])
+      ? CLASS_DEFAULTS[characterClass]
+      : FALLBACK_OUTFIT;
+
+    for (const [itemId, variant] of outfitItems) {
+      const meta = metadata[itemId];
+      if (!meta) continue;
+      // Use first available variant if the specified one doesn't exist
+      const actualVariant = meta.variants?.includes(variant) ? variant : (meta.variants?.[0] ?? variant);
+      defaults[meta.type_name] = { itemId, variant: actualVariant, name: `${meta.name} (${actualVariant})` };
+    }
+
     setSelections(defaults);
-  }, [metadataReady]);
+  }, [metadataReady, characterClass]);
 
   // Re-render whenever selections or bodyType change
   useEffect(() => {

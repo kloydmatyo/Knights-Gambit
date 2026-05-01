@@ -123,7 +123,7 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
   const {
     metadataReady, selections, bodyType, setBodyType,
     selectItem, deselectItem, resetSelections, isRendering, canvasRef,
-  } = useLPCState();
+  } = useLPCState(characterClass);
 
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [previewAnim, setPreviewAnim] = useState('walk');
