@@ -645,11 +645,18 @@ export default function GamePage() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col"
-      style={{ background: '#0e0804' }}>
+      style={{
+        background: '#0e0804',
+        backgroundImage: 'url(/background/Dicebound_background5.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}>
       <HUD player={gameState.player} floor={gameState.currentFloor} turnCount={gameState.turnCount} onInventoryClick={() => setIsInventoryOpen(true)} playerSpriteUrl={(gameState.player as any).spriteDataUrl} />
 
       {/* Board — no spacer needed, HUD floats over the board */}
-      <div className="flex-1 flex items-center justify-center px-1 sm:px-4 pb-44 sm:pb-48 min-h-0">
+      <div className="flex-1 flex items-center justify-center px-1 sm:px-4 pb-44 sm:pb-48 min-h-0 relative">
+        {/* Dark overlay so board tiles stay readable over the background */}
+        <div className="absolute inset-0 bg-black/50 pointer-events-none" />
         <div className="w-full h-full max-w-7xl relative">
           <GameBoard
             tiles={gameState.board}
