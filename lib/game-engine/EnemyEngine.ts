@@ -79,10 +79,10 @@ export class EnemyEngine {
    */
   static createEnemy(type: EnemyType, floor: number): Enemy {
     const baseStats = ENEMY_STATS[type];
+    const dungeonNum = getDungeonNumber(floor);
+    const floorInDungeon = getFloorInDungeon(floor);
+    const floorMultiplier = (1 + (floorInDungeon - 1) * 0.2) * (1 + (dungeonNum - 1) * 0.3);
 
-    // Smooth exponential scaling — no dungeon-boundary resets.
-    // Floor 1 = 1.0×, Floor 10 = ~3.5×, Floor 20 = ~7×, Floor 30 = ~12×
-    const floorMultiplier = Math.pow(1.135, floor - 1);
 
     const behavior = pickBehavior(type);
     const label = behaviorName(behavior);
@@ -120,8 +120,8 @@ export class EnemyEngine {
   static createBoss(floor: number): Enemy {
     const dungeonNum = getDungeonNumber(floor);
     const floorInDungeon = getFloorInDungeon(floor);
-    // Use same exponential curve as regular enemies, but bosses get an extra 1.5× multiplier
-    const floorMultiplier = Math.pow(1.135, floor - 1) * 1.5;
+    const dungeonScale = 1 + (dungeonNum - 1) * 0.4; // 40% stronger per dungeon
+
 
     const defined = BOSS_STATS[floorInDungeon];
     if (defined) {
@@ -133,12 +133,12 @@ export class EnemyEngine {
         id: `boss-${floor}-${Date.now()}`,
         type: ENEMY_TYPES.TROLL,
         name,
-        health: Math.floor(defined.health * floorMultiplier),
-        maxHealth: Math.floor(defined.health * floorMultiplier),
-        attack: Math.floor(defined.attack * floorMultiplier),
-        baseAttack: Math.floor(defined.attack * floorMultiplier),
-        defense: Math.floor(defined.defense * floorMultiplier),
-        coinReward: Math.floor(defined.coinReward * floorMultiplier),
+        health: Math.floor(defined.health * dungeonScale),
+        maxHealth: Math.floor(defined.health * dungeonScale),
+        attack: Math.floor(defined.attack * dungeonScale),
+        baseAttack: Math.floor(defined.attack * dungeonScale),
+        defense: Math.floor(defined.defense * dungeonScale),
+        coinReward: Math.floor(defined.coinReward * dungeonScale),
         statusEffects: [],
         behavior: 'enrager',
         enraged: false,
@@ -146,6 +146,7 @@ export class EnemyEngine {
       };
     }
     // Generic fallback
+    const floorMultiplier = 1 + (floor - 1) * 0.3;
     return {
       id: `boss-${floor}-${Date.now()}`,
       type: ENEMY_TYPES.TROLL,
