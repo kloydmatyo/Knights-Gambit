@@ -271,7 +271,10 @@ export class CombatEngine {
       }
 
       case 'heal': {
-        const healAmount = skill.effect.value || 0;
+        // For divine_healing, heal based on max HP percentage
+        const healAmount = skill.id === 'divine_healing' 
+          ? Math.floor(player.maxHealth * (skill.effect.value || 0.4))
+          : (skill.effect.value || 0);
         messages.push(`You heal for ${healAmount} HP!`);
         // Cleric: also remove debuffs on divine_healing
         if (skill.id === 'divine_healing') {

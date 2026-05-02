@@ -191,11 +191,11 @@ export class CharacterEngine {
         {
           id: 'divine_healing',
           name: 'Divine Healing',
-          description: 'Heal based on missing HP, removes debuffs',
+          description: 'Heal 40% of max HP, removes debuffs',
           type: 'active',
           cooldown: 3,
           currentCooldown: 0,
-          effect: { type: 'heal', value: 40, target: 'self' },
+          effect: { type: 'heal', value: 0.2, target: 'self' }, // 20% of max HP
         },
         {
           id: 'blessed_aura',
