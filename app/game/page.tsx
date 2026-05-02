@@ -435,25 +435,28 @@ export default function GamePage() {
 
     switch (tile.trapType) {
       case 'fire': {
+        const burnDmg = Math.floor(5 + (state.currentFloor - 1) * 0.8); // 5 → 12 by floor 10
         const already = newPlayer.statusEffects.some((e) => e.type === 'burn');
         newPlayer = { ...newPlayer, statusEffects: already
-          ? newPlayer.statusEffects.map((e) => e.type === 'burn' ? { ...e, duration: Math.max(e.duration, 4) } : e)
-          : [...newPlayer.statusEffects, { type: 'burn' as const, duration: 4, value: 5 }] };
-        message = 'Fire Trap! You are set ablaze! Burn for 4 turns.';
+          ? newPlayer.statusEffects.map((e) => e.type === 'burn' ? { ...e, duration: Math.max(e.duration, 4), value: Math.max(e.value ?? 0, burnDmg) } : e)
+          : [...newPlayer.statusEffects, { type: 'burn' as const, duration: 4, value: burnDmg }] };
+        message = `Fire Trap! You are set ablaze! Burn ${burnDmg}/turn for 4 turns.`;
         break;
       }
       case 'spike': {
-        const dmg = 15;
+        // Scales from 15 at floor 1 to ~60 at floor 10, ~120 at floor 20
+        const dmg = Math.floor(15 * (1 + (state.currentFloor - 1) * 0.35));
         newPlayer = { ...newPlayer, health: Math.max(0, newPlayer.health - dmg) };
         message = `Spike Trap! You take ${dmg} direct damage!`;
         break;
       }
       case 'poison_gas': {
+        const poisonDmg = Math.floor(6 + (state.currentFloor - 1) * 1.0); // 6 → 15 by floor 10
         const already = newPlayer.statusEffects.some((e) => e.type === 'poison');
         newPlayer = { ...newPlayer, statusEffects: already
-          ? newPlayer.statusEffects.map((e) => e.type === 'poison' ? { ...e, duration: Math.max(e.duration, 3) } : e)
-          : [...newPlayer.statusEffects, { type: 'poison' as const, duration: 3, value: 6 }] };
-        message = 'Poison Gas Trap! Poisoned for 3 turns.';
+          ? newPlayer.statusEffects.map((e) => e.type === 'poison' ? { ...e, duration: Math.max(e.duration, 3), value: Math.max(e.value ?? 0, poisonDmg) } : e)
+          : [...newPlayer.statusEffects, { type: 'poison' as const, duration: 3, value: poisonDmg }] };
+        message = `Poison Gas Trap! Poisoned ${poisonDmg}/turn for 3 turns.`;
         break;
       }
       default:
