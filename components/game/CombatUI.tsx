@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { Player, Enemy } from '@/lib/game-engine';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ENEMY_SPRITES } from '@/lib/game-engine/constants';
 import SpriteAnimator from '@/components/game/SpriteAnimator';
 import { cn } from '@/lib/utils';
+import { extractAnimationStrip, FRAME_SIZE } from '@/components/game/LPCCharacterCreator/LPCRenderer';
 
 // ── Skill button with tooltip ──────────────────────────────────────────────
 function SkillButton({ skill, disabled, onClick }: {
@@ -30,6 +31,53 @@ function SkillButton({ skill, disabled, onClick }: {
 }
 
 export type EnemyAnimState = 'Idle' | 'Hurt' | 'Attack' | 'Death';
+
+// Player attack animations per class
+function getPlayerAttackAnimation(characterClass: string) {
+  switch (characterClass) {
+    case 'knight':
+    case 'barbarian':
+      // Melee: lunge forward
+      return {
+        x: [0, 80, 80, 0],
+        y: [0, -10, -10, 0],
+        scale: [1, 1.1, 1.1, 1],
+      };
+    case 'archer':
+      // Ranged: slight recoil
+      return {
+        x: [0, -15, 0],
+        scale: [1, 0.95, 1],
+      };
+    case 'mage':
+      // Magic: float and glow
+      return {
+        y: [0, -20, -20, 0],
+        scale: [1, 1.05, 1.05, 1],
+        filter: ['brightness(1)', 'brightness(1.5) saturate(1.3)', 'brightness(1.5) saturate(1.3)', 'brightness(1)'],
+      };
+    case 'assassin':
+      // Quick dash
+      return {
+        x: [0, 100, 100, 0],
+        y: [0, -5, -5, 0],
+        opacity: [1, 0.7, 0.7, 1],
+      };
+    case 'cleric':
+      // Holy strike: rise and shine
+      return {
+        y: [0, -15, -15, 0],
+        scale: [1, 1.08, 1.08, 1],
+        filter: ['brightness(1)', 'brightness(1.8) saturate(0.8)', 'brightness(1.8) saturate(0.8)', 'brightness(1)'],
+      };
+    default:
+      // Default: simple forward motion
+      return {
+        x: [0, 60, 60, 0],
+      };
+  }
+}
+
 type ActionMenu = 'main' | 'fight';
 function SkillTooltip({ skill }: { skill: import('@/lib/game-engine').Skill }) {
   const effectLabel = () => {
@@ -122,6 +170,7 @@ interface CombatUIProps {
   isPlayerTurn: boolean;
   enemyAnimState?: EnemyAnimState;
   playerHurt?: boolean;
+  playerAttacking?: boolean;
   playerSpriteUrl?: string;
   activeCombatDestiny?: string | null;
   combatAtkMultiplier?: number | null;
@@ -130,7 +179,7 @@ interface CombatUIProps {
 export default function CombatUI({
   player, enemy, onAttack, onUseSkill, onFlee, onBribe, onTruce,
   onOpenInventory, bribeCost, combatLog, isPlayerTurn,
-  enemyAnimState = 'Idle', playerHurt = false, playerSpriteUrl, activeCombatDestiny, combatAtkMultiplier,
+  enemyAnimState = 'Idle', playerHurt = false, playerAttacking = false, playerSpriteUrl, activeCombatDestiny, combatAtkMultiplier,
 }: CombatUIProps) {
   const [menu, setMenu] = useState<ActionMenu>('main');
   const isAnimating = enemyAnimState !== 'Idle';
@@ -151,9 +200,45 @@ export default function CombatUI({
     initialShieldRef.current = shieldEffect.value;
   }
 
+  // Extract animations for combat
+  const [slashStripUrl, setSlashStripUrl] = useState<string | null>(null);
+  const [attackStripUrl, setAttackStripUrl] = useState<string | null>(null);
+  const isMeleeClass = player.class === 'knight' || player.class === 'barbarian' || player.class === 'assassin';
+  const fullSheetUrl = (player as any).fullSheetUrl;
+
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [combatLog]);
+
+  // Memoize animation config to prevent unnecessary re-renders
+  const playerAnimation = useMemo(() => {
+    if (playerHurt) {
+      return { x: [-8, 8, -5, 5, 0], filter: ['brightness(3) saturate(0)', 'brightness(1) saturate(1)'] };
+    }
+    if (playerAttacking) {
+      return getPlayerAttackAnimation(player.class);
+    }
+    return {};
+  }, [playerHurt, playerAttacking, player.class]);
+
+  useEffect(() => {
+    if (fullSheetUrl) {
+      // Extract class-specific attack animations
+      if (isMeleeClass) {
+        // Melee: slash animation (6 frames)
+        extractAnimationStrip(fullSheetUrl, 'slash', 2, 6).then(setSlashStripUrl);
+      } else if (player.class === 'archer') {
+        // Archer: shoot animation (13 frames)
+        extractAnimationStrip(fullSheetUrl, 'shoot', 2, 13).then(setAttackStripUrl);
+      } else if (player.class === 'mage') {
+        // Mage: spellcast animation (7 frames)
+        extractAnimationStrip(fullSheetUrl, 'spellcast', 2, 7).then(setAttackStripUrl);
+      } else if (player.class === 'cleric') {
+        // Cleric: thrust animation (8 frames)
+        extractAnimationStrip(fullSheetUrl, 'thrust', 2, 8).then(setAttackStripUrl);
+      }
+    }
+  }, [isMeleeClass, player.class, fullSheetUrl]);
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-2" style={{ background: 'rgba(0,0,0,0.75)' }}>
@@ -280,16 +365,78 @@ export default function CombatUI({
           {/* Player sprite — bottom left */}
           <div className="absolute z-10 flex flex-col items-center" style={{ left: '29%', bottom: '24%', transform: 'translateX(-50%)' }}>
             <motion.div
-              animate={playerHurt ? { x: [-8, 8, -5, 5, 0], filter: ['brightness(3) saturate(0)', 'brightness(1) saturate(1)'] } : {}}
-              transition={{ duration: 0.35 }}
+              animate={playerAnimation}
+              transition={{ duration: playerHurt ? 0.35 : 0.5 }}
               className="drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] select-none"
             >
-              {playerSpriteUrl
+              {playerSpriteUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={playerSpriteUrl} alt="player" style={{ width: 160, height: 160, imageRendering: 'pixelated', objectFit: 'contain' }} />
-                : <span className="text-9xl">🛡️</span>}
+                <img src={playerSpriteUrl} alt="player" style={{ width: 160, height: 160, imageRendering: 'pixelated', objectFit: 'contain' }} />
+              ) : (
+                <span className="text-9xl">🛡️</span>
+              )}
             </motion.div>
           </div>
+
+          {/* Attack animation sprite - melee slash */}
+          <AnimatePresence>
+            {playerAttacking && isMeleeClass && slashStripUrl && (
+              <motion.div
+                key="slash-sprite"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1 }}
+                className="absolute pointer-events-none z-20"
+                style={{ 
+                  left: '29%', 
+                  bottom: '24%',
+                  transform: 'translateX(-50%)',
+                }}
+              >
+                <SpriteAnimator
+                  sheet={slashStripUrl}
+                  frameW={FRAME_SIZE}
+                  frameH={FRAME_SIZE}
+                  frameCount={6}
+                  fps={12}
+                  loop={false}
+                  scale={2.5}
+                  className="drop-shadow-[0_0_16px_rgba(255,255,255,0.6)]"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Attack animation sprite - ranged/magic */}
+          <AnimatePresence>
+            {playerAttacking && !isMeleeClass && attackStripUrl && (
+              <motion.div
+                key="attack-sprite"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1 }}
+                className="absolute pointer-events-none z-20"
+                style={{ 
+                  left: '29%', 
+                  bottom: '24%',
+                  transform: 'translateX(-50%)',
+                }}
+              >
+                <SpriteAnimator
+                  sheet={attackStripUrl}
+                  frameW={FRAME_SIZE}
+                  frameH={FRAME_SIZE}
+                  frameCount={player.class === 'archer' ? 13 : player.class === 'mage' ? 7 : 8}
+                  fps={12}
+                  loop={false}
+                  scale={2.5}
+                  className="drop-shadow-[0_0_16px_rgba(255,255,255,0.6)]"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Enemy sprite — top right */}
           <div className="absolute z-10 flex flex-col items-center" style={{ left: '72%', bottom: '9%', transform: 'translateX(-50%)' }}>

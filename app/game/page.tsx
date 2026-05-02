@@ -53,6 +53,7 @@ export default function GamePage() {
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [enemyAnimState, setEnemyAnimState] = useState<'Idle' | 'Hurt' | 'Attack' | 'Death'>('Idle');
   const [playerHurt, setPlayerHurt] = useState(false);
+  const [playerAttacking, setPlayerAttacking] = useState(false);
   const [combatEnemy, setCombatEnemy] = useState<Enemy | null>(null);
   const [fleeUsed, setFleeUsed] = useState(false);
   // Branch choice state â€” set after rolling, cleared after tile selection
@@ -83,11 +84,14 @@ export default function GamePage() {
   };
 
   // â”€â”€ Character selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const handleCharacterSelect = (characterClass: CharacterClass, name: string, spriteDataUrl?: string) => {
+  const handleCharacterSelect = (characterClass: CharacterClass, name: string, spriteDataUrl?: string, fullSheetUrl?: string) => {
     const newGameState = GameEngine.initializeGame(characterClass);
     const newUpgradeState = WeaponUpgradeEngine.createInitialState();
     if (spriteDataUrl) {
       (newGameState.player as any).spriteDataUrl = spriteDataUrl;
+    }
+    if (fullSheetUrl) {
+      (newGameState.player as any).fullSheetUrl = fullSheetUrl;
     }
     setPlayerName(name);
     setGameState(newGameState);
@@ -321,6 +325,13 @@ export default function GamePage() {
     }
 
     const attackStart = (result.playerDamage > 0 ? hurtDuration : 0) + reactionGap;
+    
+    // Player attack animation
+    if (result.playerDamage > 0) {
+      setPlayerAttacking(true);
+      setTimeout(() => setPlayerAttacking(false), 500);
+    }
+    
     if (result.enemyDamage > 0) {
       setTimeout(() => setEnemyAnimState('Attack'), attackStart);
       setTimeout(() => setPlayerHurt(true), attackStart + attackDuration * 0.5);
@@ -925,6 +936,7 @@ export default function GamePage() {
             isPlayerTurn={true}
             enemyAnimState={enemyAnimState}
             playerHurt={playerHurt}
+            playerAttacking={playerAttacking}
             playerSpriteUrl={(gameState.player as any).spriteDataUrl}
             activeCombatDestiny={gameState.activeCombatDestiny}
             combatAtkMultiplier={gameState.combatAtkMultiplier}

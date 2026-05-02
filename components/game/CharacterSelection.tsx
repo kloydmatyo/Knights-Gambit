@@ -13,7 +13,7 @@ const LPCCharacterCreator = dynamic(
 );
 
 interface CharacterSelectionProps {
-  onSelect: (characterClass: CharacterClass, playerName: string, spriteDataUrl?: string) => void;
+  onSelect: (characterClass: CharacterClass, playerName: string, spriteDataUrl?: string, fullSheetUrl?: string) => void;
 }
 
 const classEmojis: Record<CharacterClass, string> = {
@@ -59,6 +59,7 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
 export default function CharacterSelection({ onSelect }: CharacterSelectionProps) {
   const [step, setStep] = useState<Step>('class');
   const [spriteDataUrl, setSpriteDataUrl] = useState<string | undefined>();
+  const [fullSheetUrl, setFullSheetUrl] = useState<string | undefined>();
   const [classIndex, setClassIndex] = useState(0);
   const [playerName, setPlayerName] = useState('');
   const [direction, setDirection] = useState(0);
@@ -72,10 +73,11 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
     setClassIndex(i => (i + dir + CLASS_LIST.length) % CLASS_LIST.length);
   }
 
-  function handleAppearanceConfirm(dataUrl: string) {
+  function handleAppearanceConfirm(dataUrl: string, fullSheet?: string) {
     setSpriteDataUrl(dataUrl);
+    setFullSheetUrl(fullSheet);
     // Appearance is done — trigger start
-    onSelect(currentClass, playerName.trim(), dataUrl);
+    onSelect(currentClass, playerName.trim(), dataUrl, fullSheet);
   }
 
   function handleStart() {
