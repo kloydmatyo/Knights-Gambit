@@ -275,7 +275,7 @@ export default function GamePage() {
         return;
       case 'trap':
         if (!tile.trapTriggered) {
-          handleTrapTrigger(stateAfterMove, tile);
+          handleTrapTrigger(stateAfterMove, tile, destiny);
         } else {
           setGameState(stateAfterMove);
           showNotification('An old disarmed trap... you pass safely.');
@@ -459,39 +459,79 @@ export default function GamePage() {
   };
 
   // Traps 
-  const handleTrapTrigger = (state: GameState, tile: BoardTile) => {
+  const handleTrapTrigger = (state: GameState, tile: BoardTile, destiny?: { state: string; emoji: string; label: string } | null) => {
     let newPlayer = state.player;
     let message = '';
     const newBoard = state.board.map((t) => t.id === tile.id ? { ...t, trapTriggered: true } : t);
 
+    // Destiny modifiers for trap severity
+    let damageMod = 1.0;
+    let durationMod = 0;
+    let destinyPrefix = '';
+
+    switch (destiny?.state) {
+      case 'cursed':
+        damageMod = 1.5;
+        durationMod = 2;
+        destinyPrefix = '💀 Cursed! ';
+        break;
+      case 'unlucky':
+        damageMod = 1.25;
+        durationMod = 1;
+        destinyPrefix = '📉 Unlucky! ';
+        break;
+      case 'balanced':
+        damageMod = 1.0;
+        durationMod = 0;
+        destinyPrefix = '';
+        break;
+      case 'favored':
+        damageMod = 0.75;
+        durationMod = -1;
+        destinyPrefix = '📈 Favored! ';
+        break;
+      case 'exalted':
+        damageMod = 0.5;
+        durationMod = -2;
+        destinyPrefix = '✨ Exalted! ';
+        break;
+      default:
+        damageMod = 1.0;
+        durationMod = 0;
+    }
+
     switch (tile.trapType) {
       case 'fire': {
-        const burnDmg = Math.floor(5 + (state.currentFloor - 1) * 0.8); // 5 → 12 by floor 10
+        const baseBurnDmg = Math.floor(5 + (state.currentFloor - 1) * 0.8);
+        const burnDmg = Math.floor(baseBurnDmg * damageMod);
+        const duration = Math.max(1, 4 + durationMod);
         const already = newPlayer.statusEffects.some((e) => e.type === 'burn');
         newPlayer = { ...newPlayer, statusEffects: already
-          ? newPlayer.statusEffects.map((e) => e.type === 'burn' ? { ...e, duration: Math.max(e.duration, 4), value: Math.max(e.value ?? 0, burnDmg) } : e)
-          : [...newPlayer.statusEffects, { type: 'burn' as const, duration: 4, value: burnDmg }] };
-        message = `Fire Trap! You are set ablaze! Burn ${burnDmg}/turn for 4 turns.`;
+          ? newPlayer.statusEffects.map((e) => e.type === 'burn' ? { ...e, duration: Math.max(e.duration, duration), value: Math.max(e.value ?? 0, burnDmg) } : e)
+          : [...newPlayer.statusEffects, { type: 'burn' as const, duration, value: burnDmg }] };
+        message = `${destinyPrefix}Fire Trap! You are set ablaze! Burn ${burnDmg}/turn for ${duration} turns.`;
         break;
       }
       case 'spike': {
-        // Scales from 15 at floor 1 to ~60 at floor 10, ~120 at floor 20
-        const dmg = Math.floor(15 * (1 + (state.currentFloor - 1) * 0.35));
+        const baseDmg = Math.floor(15 * (1 + (state.currentFloor - 1) * 0.35));
+        const dmg = Math.floor(baseDmg * damageMod);
         newPlayer = { ...newPlayer, health: Math.max(0, newPlayer.health - dmg) };
-        message = `Spike Trap! You take ${dmg} direct damage!`;
+        message = `${destinyPrefix}Spike Trap! You take ${dmg} direct damage!`;
         break;
       }
       case 'poison_gas': {
-        const poisonDmg = Math.floor(6 + (state.currentFloor - 1) * 1.0); // 6 → 15 by floor 10
+        const basePoisonDmg = Math.floor(6 + (state.currentFloor - 1) * 1.0);
+        const poisonDmg = Math.floor(basePoisonDmg * damageMod);
+        const duration = Math.max(1, 3 + durationMod);
         const already = newPlayer.statusEffects.some((e) => e.type === 'poison');
         newPlayer = { ...newPlayer, statusEffects: already
-          ? newPlayer.statusEffects.map((e) => e.type === 'poison' ? { ...e, duration: Math.max(e.duration, 3), value: Math.max(e.value ?? 0, poisonDmg) } : e)
-          : [...newPlayer.statusEffects, { type: 'poison' as const, duration: 3, value: poisonDmg }] };
-        message = `Poison Gas Trap! Poisoned ${poisonDmg}/turn for 3 turns.`;
+          ? newPlayer.statusEffects.map((e) => e.type === 'poison' ? { ...e, duration: Math.max(e.duration, duration), value: Math.max(e.value ?? 0, poisonDmg) } : e)
+          : [...newPlayer.statusEffects, { type: 'poison' as const, duration, value: poisonDmg }] };
+        message = `${destinyPrefix}Poison Gas Trap! Poisoned ${poisonDmg}/turn for ${duration} turns.`;
         break;
       }
       default:
-        message = 'You triggered a trap!';
+        message = `${destinyPrefix}You triggered a trap!`;
     }
 
     setGameState({ ...state, player: newPlayer, board: newBoard });

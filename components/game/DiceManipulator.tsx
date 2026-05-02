@@ -45,6 +45,14 @@ const DESTINY_BG: Record<string, string> = {
   exalted:  'border-yellow-300 bg-yellow-950/80',
 };
 
+// Trap effect preview — shown on tile buttons before the player commits
+// Note: Actual severity varies with destiny roll (Cursed = worse, Exalted = better)
+const TRAP_PREVIEW: Record<string, { icon: string; label: string; effect: string }> = {
+  fire:        { icon: '🔥', label: 'Fire Trap',    effect: 'Burn (varies)' },
+  spike:       { icon: '🗡️', label: 'Spike Trap',   effect: 'Damage (varies)' },
+  poison_gas:  { icon: '🧪', label: 'Poison Trap',  effect: 'Poison (varies)' },
+};
+
 export default function DiceManipulator({ branchChoice, board, onSelectTile, onConfirmDestiny, onHoverTile }: DiceManipulatorProps) {
   const { tileOptions, chosenTileId, destinyResult } = branchChoice;
   const [rolling, setRolling] = useState(false);
@@ -138,8 +146,18 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
                     disabled={rolling}
                     className={`flex flex-col items-center gap-1 px-5 py-3 rounded-xl border-2 ${bg} text-white font-bold shadow-lg cursor-pointer min-w-[90px] disabled:opacity-60`}
                   >
-                    <span className="text-3xl">{TILE_EMOJI[tile.type] ?? '⬜'}</span>
+                    <span className="text-3xl">
+                      {tile.type === 'trap' && tile.trapType
+                        ? TRAP_PREVIEW[tile.trapType]?.icon ?? '⚠️'
+                        : (TILE_EMOJI[tile.type] ?? '⬜')}
+                    </span>
                     <span className="text-sm">{TILE_LABELS[tile.type] ?? tile.type}</span>
+                    {tile.type === 'trap' && tile.trapType && TRAP_PREVIEW[tile.trapType] && (
+                      <span className="text-[10px] font-bold mt-0.5 px-1.5 py-0.5 rounded"
+                        style={{ background: 'rgba(0,0,0,0.4)', color: '#fbbf24' }}>
+                        {TRAP_PREVIEW[tile.trapType].effect}
+                      </span>
+                    )}
                   </motion.button>
                 );
               })}
