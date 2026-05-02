@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BranchChoice, DestinyResult } from '@/lib/game-engine/types';
 import { BoardTile } from '@/lib/game-engine/types';
@@ -12,6 +12,8 @@ interface DiceManipulatorProps {
   onSelectTile: (tileId: number) => void;
   /** Called after 2d6 is shown and player confirms to proceed */
   onConfirmDestiny?: () => void;
+  /** Called when hovering a tile option (null = unhovered) */
+  onHoverTile?: (tileId: number | null) => void;
 }
 
 const TILE_LABELS: Record<string, string> = {
@@ -43,9 +45,12 @@ const DESTINY_BG: Record<string, string> = {
   exalted:  'border-yellow-300 bg-yellow-950/80',
 };
 
-export default function DiceManipulator({ branchChoice, board, onSelectTile, onConfirmDestiny }: DiceManipulatorProps) {
+export default function DiceManipulator({ branchChoice, board, onSelectTile, onConfirmDestiny, onHoverTile }: DiceManipulatorProps) {
   const { tileOptions, chosenTileId, destinyResult } = branchChoice;
   const [rolling, setRolling] = useState(false);
+  const [rollOverlay, setRollOverlay] = useState(false);
+  const [overlayFace1, setOverlayFace1] = useState(1);
+  const [overlayFace2, setOverlayFace2] = useState(1);
 
   // Phase 1: show branch options (no destiny yet)
   // Phase 2: destiny result shown (chosenTileId + destinyResult set)
@@ -54,20 +59,62 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
   const handleTileClick = (id: number) => {
     if (rolling || showingDestiny) return;
     setRolling(true);
-    // Small delay for "rolling" feel
-    setTimeout(() => {
-      setRolling(false);
-      onSelectTile(id);
-    }, 300);
+    setRollOverlay(true);
+
+    // Animate both dice faces rapidly
+    let ticks = 0;
+    const maxTicks = 12;
+    const interval = setInterval(() => {
+      setOverlayFace1(Math.floor(Math.random() * 6) + 1);
+      setOverlayFace2(Math.floor(Math.random() * 6) + 1);
+      ticks++;
+      if (ticks >= maxTicks) {
+        clearInterval(interval);
+        setRolling(false);
+        setTimeout(() => {
+          setRollOverlay(false);
+          onSelectTile(id);
+        }, 400);
+      }
+    }, 130);
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 60 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 60 }}
-      className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center pb-6 pt-4 px-3 bg-gradient-to-t from-black/95 via-black/80 to-transparent"
-    >
+    <>
+      {/* ── Centered 2d6 roll overlay ── */}
+      <AnimatePresence>
+        {rollOverlay && (
+          <motion.div
+            key="2d6-overlay"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+          >
+            <div
+              className="flex items-center gap-4 rounded-2xl border-4 border-game-gold px-8 py-6 shadow-2xl"
+              style={{ background: 'rgba(14,10,6,0.92)' }}
+            >
+              <RollingDice face={overlayFace1} spinning={rolling} />
+              <span className="text-white text-3xl font-black">+</span>
+              <RollingDice face={overlayFace2} spinning={rolling} />
+              {rolling && (
+                <span className="absolute bottom-3 text-xs font-bold uppercase tracking-widest text-gray-400">
+                  Rolling...
+                </span>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        initial={{ opacity: 0, y: 60 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 60 }}
+        className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center pb-6 pt-4 px-3 bg-gradient-to-t from-black/95 via-black/80 to-transparent"
+      >
       <AnimatePresence mode="wait">
         {!showingDestiny ? (
           /* ── Phase 1: Choose your path ── */
@@ -86,6 +133,8 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
                     whileHover={{ scale: 1.08 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleTileClick(id)}
+                    onMouseEnter={() => onHoverTile?.(id)}
+                    onMouseLeave={() => onHoverTile?.(null)}
                     disabled={rolling}
                     className={`flex flex-col items-center gap-1 px-5 py-3 rounded-xl border-2 ${bg} text-white font-bold shadow-lg cursor-pointer min-w-[90px] disabled:opacity-60`}
                   >
@@ -102,7 +151,43 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
           <DestinyReveal destinyResult={destinyResult!} chosenTileId={chosenTileId!} board={board} onConfirm={onConfirmDestiny} />
         )}
       </AnimatePresence>
-    </motion.div>
+      </motion.div>
+    </>
+  );
+}
+
+// Spritesheet: 96x16px, 6 frames of 16x16 (faces 1-6 left to right)
+const FRAME_SIZE = 16;
+const DISPLAY_SIZE = 80; // rendered size in px
+const SCALE = DISPLAY_SIZE / FRAME_SIZE;
+
+function DiceSprite({ face, spinning }: { face: number; spinning: boolean }) {
+  // frame index 0-5 for faces 1-6
+  const frameX = (face - 1) * FRAME_SIZE;
+  return (
+    <motion.div
+      animate={spinning
+        ? { rotate: [0, -18, 18, -14, 14, -8, 8, 0], scale: [1, 1.15, 0.9, 1.1, 0.95, 1] }
+        : { rotate: 0, scale: 1 }}
+      transition={{ duration: 0.8, repeat: spinning ? Infinity : 0, ease: 'easeInOut' }}
+      style={{
+        width: DISPLAY_SIZE,
+        height: DISPLAY_SIZE,
+        backgroundImage: 'url(/dice/dice1.png)',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: `${96 * SCALE}px ${FRAME_SIZE * SCALE}px`,
+        backgroundPosition: `-${frameX * SCALE}px 0px`,
+        imageRendering: 'pixelated',
+      }}
+    />
+  );
+}
+
+function RollingDice({ face, spinning }: { face: number; spinning: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <DiceSprite face={face} spinning={spinning} />
+    </div>
   );
 }
 
@@ -162,17 +247,33 @@ function DestinyReveal({ destinyResult, chosenTileId, board, onConfirm }: {
   );
 }
 
-const DICE_UNICODE = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-
 function DiceFace({ value }: { value: number }) {
+  const [rolling, setRolling] = useState(true);
+  const [display, setDisplay] = useState(Math.floor(Math.random() * 6) + 1);
+
+  useEffect(() => {
+    let ticks = 0;
+    const maxTicks = 8;
+    const interval = setInterval(() => {
+      setDisplay(Math.floor(Math.random() * 6) + 1);
+      ticks++;
+      if (ticks >= maxTicks) {
+        clearInterval(interval);
+        setDisplay(value);
+        setRolling(false);
+      }
+    }, 130);
+    return () => clearInterval(interval);
+  }, [value]);
+
   return (
-    <motion.span
+    <motion.div
       initial={{ rotateY: 180, opacity: 0 }}
       animate={{ rotateY: 0, opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="text-4xl select-none"
+      className="select-none"
     >
-      {DICE_UNICODE[value - 1] ?? value}
-    </motion.span>
+      <DiceSprite face={display} spinning={rolling} />
+    </motion.div>
   );
 }

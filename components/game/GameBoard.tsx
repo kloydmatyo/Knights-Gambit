@@ -10,6 +10,7 @@ interface GameBoardProps {
   choosableTileIds?: number[];
   onTileClick?: (tileId: number) => void;
   playerSpriteUrl?: string;
+  highlightedTileId?: number | null;
 }
 
 const TILE_COLOR: Record<string, string> = {
@@ -65,6 +66,7 @@ export default function GameBoard({
   choosableTileIds = [],
   onTileClick,
   playerSpriteUrl,
+  highlightedTileId,
 }: GameBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -171,15 +173,16 @@ export default function GameBoard({
           const isVisible = isCurrent || isVisited || isImmediateNext;
           const tileOpacity = isChoosable ? 1 : isCurrent ? 1 : isVisited ? 0.85 : isImmediateNext ? 0.6 : 0.2;
           const isInteractive = isChoosable;
+          const isHighlighted = highlightedTileId === tile.id;
 
           return (
             <motion.div
               key={tile.id}
               initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: tileOpacity }}
-              transition={{ delay: idx * 0.01 }}
+              animate={{ scale: isHighlighted ? 1.35 : 1, opacity: tileOpacity }}
+              transition={{ delay: idx * 0.01, scale: { type: 'spring', stiffness: 300, damping: 20 } }}
               className="absolute"
-              style={{ left: tile.x * scale - half, top: tile.y * scale - half, width: tileSize, height: tileSize }}
+              style={{ left: tile.x * scale - half, top: tile.y * scale - half, width: tileSize, height: tileSize, zIndex: isHighlighted ? 30 : undefined }}
             >
               <div
                 onClick={() => isInteractive && onTileClick?.(tile.id)}

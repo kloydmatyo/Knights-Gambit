@@ -60,6 +60,7 @@ export default function GamePage() {
   const [savedRuns, setSavedRuns] = useState<SaveData[]>([]);
   const [pendingFloorAdvance, setPendingFloorAdvance] = useState<GameState | null>(null);
   const [floorCompleteState, setFloorCompleteState] = useState<GameState | null>(null);
+  const [hoveredTileId, setHoveredTileId] = useState<number | null>(null);
 
   // Detect saved runs on mount
   useEffect(() => {
@@ -104,6 +105,7 @@ export default function GamePage() {
   // -- Tile chosen -- roll 2d6 for destiny, show result before resolving ------
   const handleTileChosen = (tileId: number) => {
     if (!gameState) return;
+    setHoveredTileId(null);
 
     // If destiny already rolled for this tile, resolve the node
     if (pendingChoice?.chosenTileId === tileId && pendingChoice?.destinyResult) {
@@ -671,6 +673,7 @@ export default function GamePage() {
             choosableTileIds={choosableTileIds}
             onTileClick={(pendingChoice && !pendingChoice.destinyResult) ? handleTileChosen : undefined}
             playerSpriteUrl={(gameState.player as any).spriteDataUrl}
+            highlightedTileId={hoveredTileId}
           />
         </div>
       </div>
@@ -716,6 +719,7 @@ export default function GamePage() {
             board={gameState.board}
             onSelectTile={handleTileChosen}
             onConfirmDestiny={pendingChoice.destinyResult ? handleConfirmDestiny : undefined}
+            onHoverTile={setHoveredTileId}
           />
         )}
       </AnimatePresence>

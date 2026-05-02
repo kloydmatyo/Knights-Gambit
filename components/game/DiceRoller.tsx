@@ -10,89 +10,97 @@ interface DiceRollerProps {
   lastRoll?: number;
 }
 
-const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+// Spritesheet: 96x16px, 6 frames of 16x16 (faces 1-6 left to right)
+const FRAME_SIZE = 16;
+const DISPLAY_SIZE = 96;
+const SCALE = DISPLAY_SIZE / FRAME_SIZE;
+
+function DiceSprite({ face, spinning }: { face: number; spinning: boolean }) {
+  const frameX = (face - 1) * FRAME_SIZE;
+  return (
+    <motion.div
+      animate={spinning
+        ? { rotate: [0, -18, 18, -14, 14, -8, 8, 0], scale: [1, 1.15, 0.9, 1.1, 0.95, 1] }
+        : { rotate: 0, scale: 1 }}
+      transition={{ duration: 0.8, repeat: spinning ? Infinity : 0, ease: 'easeInOut' }}
+      style={{
+        width: DISPLAY_SIZE,
+        height: DISPLAY_SIZE,
+        backgroundImage: 'url(/dice/dice1.png)',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: `${96 * SCALE}px ${FRAME_SIZE * SCALE}px`,
+        backgroundPosition: `-${frameX * SCALE}px 0px`,
+        imageRendering: 'pixelated',
+      }}
+    />
+  );
+}
 
 export default function DiceRoller({ onRoll, disabled, lastRoll }: DiceRollerProps) {
   const [isRolling, setIsRolling] = useState(false);
-  const [displayFace, setDisplayFace] = useState<number | null>(null);
-  const [highlight, setHighlight] = useState(false);
+  const [displayFace, setDisplayFace] = useState<number>(1);
+  const [showOverlay, setShowOverlay] = useState(false);
 
-  // When lastRoll updates (real result from game logic), show it with a highlight
   useEffect(() => {
-    if (lastRoll) {
-      setDisplayFace(lastRoll);
-      setHighlight(true);
-      const t = setTimeout(() => setHighlight(false), 800);
-      return () => clearTimeout(t);
-    }
+    if (lastRoll) setDisplayFace(lastRoll);
   }, [lastRoll]);
 
   const handleRoll = () => {
     if (isRolling || disabled) return;
     setIsRolling(true);
-    setHighlight(false);
+    setShowOverlay(true);
 
-    // Animate through random faces during the roll
     let ticks = 0;
-    const maxTicks = 10;
+    const maxTicks = 14;
     const interval = setInterval(() => {
       setDisplayFace(Math.floor(Math.random() * 6) + 1);
       ticks++;
       if (ticks >= maxTicks) {
         clearInterval(interval);
-        // Now call the real roll - the useEffect above will sync the final value
         onRoll();
         setIsRolling(false);
+        setTimeout(() => setShowOverlay(false), 500);
       }
-    }, 60);
+    }, 130);
   };
 
   return (
-    <div className="fixed bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-30">
-      <div className="flex flex-col items-center gap-1.5 sm:gap-4">
-
-        {/* Dice face display */}
-        <AnimatePresence mode="wait">
-          {displayFace && (
-            <motion.div
-              key={`${displayFace}-${highlight}`}
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.7, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className={`rounded-xl px-4 sm:px-8 py-2 sm:py-4 shadow-2xl border-2 transition-colors duration-200 ${
-                highlight
-                  ? 'bg-game-gold border-yellow-300 shadow-yellow-400/50'
-                  : 'bg-game-primary border-game-gold'
-              }`}
-            >
-              <div className="text-center">
-                <div className={`text-[10px] sm:text-xs mb-0.5 sm:mb-1 font-bold uppercase tracking-wider ${highlight ? 'text-black' : 'text-gray-400'}`}>
-                  {isRolling ? 'Loading...' : 'Last Roll'}
-                </div>
-                <div className={`text-3xl sm:text-5xl font-bold drop-shadow-lg ${highlight ? 'text-black' : 'text-game-gold'}`}>
-                  {DICE_FACES[(displayFace - 1)]} {displayFace}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Roll button */}
-        <motion.div
-          animate={isRolling ? { rotate: [0, 180, 360, 540, 720] } : { rotate: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <Button
-            size="lg"
-            onClick={handleRoll}
-            disabled={disabled || isRolling}
-            className="text-base sm:text-2xl px-8 sm:px-16 py-4 sm:py-8 shadow-2xl text-white font-bold uppercase tracking-wider"
+    <>
+      {/* ── Centered board overlay during roll ── */}
+      <AnimatePresence>
+        {showOverlay && (
+          <motion.div
+            key="dice-overlay"
+            initial={{ opacity: 0, scale: 0.4 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.4 }}
+            transition={{ duration: 0.7 }}
+            className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none"
           >
+            <div
+              className="flex flex-col items-center gap-3 rounded-2xl border-4 border-game-gold px-10 py-8 shadow-2xl"
+              style={{ background: 'rgba(14,10,6,0.9)' }}
+            >
+              <DiceSprite face={displayFace} spinning={isRolling} />
+              <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                {isRolling ? 'Rolling...' : `Rolled ${displayFace}`}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Bottom button ── */}
+      <div className="fixed bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-30">
+        <Button
+          size="lg"
+          onClick={handleRoll}
+          disabled={disabled || isRolling}
+          className="text-base sm:text-2xl px-8 sm:px-16 py-4 sm:py-8 shadow-2xl text-white font-bold uppercase tracking-wider"
+        >
           {isRolling ? '🗺️ Loading...' : '🗺️ CHOOSE PATH'}
-          </Button>
-        </motion.div>
+        </Button>
       </div>
-    </div>
+    </>
   );
 }
