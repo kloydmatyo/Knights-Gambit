@@ -12,6 +12,10 @@ interface HUDProps {
   turnCount: number;
   onInventoryClick: () => void;
   playerSpriteUrl?: string;
+  upgradeState?: {
+    totalCritChanceBonus: number;
+    totalCritDamageBonus: number;
+  };
 }
 
 const STATUS_ICON: Record<string, string> = {
@@ -47,8 +51,9 @@ function HpRing({ percent, health, maxHealth }: { percent: number; health: numbe
   );
 }
 
-export default function HUD({ player, floor, turnCount, onInventoryClick, playerSpriteUrl }: HUDProps) {
+export default function HUD({ player, floor, turnCount, onInventoryClick, playerSpriteUrl, upgradeState }: HUDProps) {
   const [statusExpanded, setStatusExpanded] = useState(false);
+  const [statsExpanded, setStatsExpanded] = useState(false);
   const healthPercent = (player.health / player.maxHealth) * 100;
   const manaPercent = player.mana && player.maxMana ? (player.mana / player.maxMana) * 100 : 0;
   const dungeonNum = getDungeonNumber(floor);
@@ -56,6 +61,12 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
   const activeEffects = player.statusEffects.filter(e => e.type !== 'shield');
   const shieldEffect = player.statusEffects.find(e => e.type === 'shield');
   const totalItems = player.inventory.reduce((s, i) => s + i.quantity, 0);
+  
+  // Calculate crit stats
+  const baseCritChance = 0.05; // 5% base
+  const totalCritChance = Math.min(0.95, baseCritChance + (upgradeState?.totalCritChanceBonus ?? 0));
+  const baseCritDamage = 1.5; // 150% base
+  const totalCritDamage = baseCritDamage + (upgradeState?.totalCritDamageBonus ?? 0);
 
   // Dungeon palette
   const cardBg = 'rgba(14, 10, 6, 0.92)';
@@ -121,15 +132,50 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
           </div>
 
           {/* Stat pills — stone badge style */}
-          <div className="flex gap-1.5">
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold"
-              style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#e8a050' }}>
-              ⚔️ {player.attack}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex gap-1.5">
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold"
+                style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#e8a050' }}>
+                ⚔️ {player.attack}
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold"
+                style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#7ab4d4' }}>
+                🛡️ {player.defense}
+              </div>
             </div>
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold"
-              style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#7ab4d4' }}>
-              🛡️ {player.defense}
-            </div>
+            
+            {/* Expandable advanced stats */}
+            {!statsExpanded ? (
+              <button onClick={() => setStatsExpanded(true)}
+                className="text-[10px] font-bold px-2 py-1 rounded-lg transition-colors text-left"
+                style={{ background: 'rgba(30,15,5,0.7)', border: '1px solid #4a3020', color: '#8a6a4a' }}>
+                ⚡ Stats ▾
+              </button>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <button onClick={() => setStatsExpanded(false)}
+                  className="text-[10px] font-bold px-2 py-1 rounded-lg transition-colors text-left"
+                  style={{ background: 'rgba(30,15,5,0.7)', border: '1px solid #4a3020', color: '#8a6a4a' }}>
+                  ⚡ Stats ▴
+                </button>
+                <div className="grid grid-cols-2 gap-1">
+                  {player.armorPen > 0 && (
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold"
+                      style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#d4a070' }}>
+                      🗡️ {player.armorPen}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold"
+                    style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#f0a040' }}>
+                    ⚡ {Math.round(totalCritChance * 100)}%
+                  </div>
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold"
+                    style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#e06060' }}>
+                    💥 {Math.round(totalCritDamage * 100)}%
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Inventory button — torch gold */}

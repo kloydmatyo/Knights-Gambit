@@ -61,7 +61,7 @@ const TABS: { id: ShopTab; label: string; icon: string }[] = [
 
 function categorize(item: Item): ShopTab {
   if (item.effect.type === 'relic') return 'relics';
-  if (item.effect.type === 'permanent' || item.effect.type === 'buff') return 'upgrades';
+  if (item.effect.type === 'permanent' || item.effect.type === 'buff' || item.effect.type === 'upgrade_bonus') return 'upgrades';
   return 'consumables';
 }
 
@@ -470,6 +470,7 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                               u.effect.defenseBonus  && `+${u.effect.defenseBonus} DEF`,
                               u.effect.healthBonus   && `+${u.effect.healthBonus} HP`,
                               (u.effect as any).manaBonus && `+${(u.effect as any).manaBonus} MP`,
+                              (u.effect as any).armorPenBonus && `+${(u.effect as any).armorPenBonus} Armor Pen`,
                               u.effect.critChanceBonus && `+${Math.round(u.effect.critChanceBonus * 100)}% Crit`,
                               u.effect.critDamageBonus && `+${Math.round(u.effect.critDamageBonus * 100)}% Crit Dmg`,
                               u.effect.specialAbility  && `🌟 ${u.effect.specialAbility.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}`,
@@ -542,6 +543,7 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                               {upgrade.effect.defenseBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#7ab4d4' }}>+{upgrade.effect.defenseBonus} DEF</span>}
                               {upgrade.effect.healthBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#6adc6a' }}>+{upgrade.effect.healthBonus} HP</span>}
                               {(upgrade.effect as any).manaBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3b6fa0', color: '#7ab4d4' }}>+{(upgrade.effect as any).manaBonus} MP</span>}
+                              {(upgrade.effect as any).armorPenBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#d4a070' }}>+{(upgrade.effect as any).armorPenBonus} Pen</span>}
                               {upgrade.effect.critChanceBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#d4a030' }}>+{Math.round(upgrade.effect.critChanceBonus * 100)}% Crit</span>}
                               {upgrade.effect.specialAbility && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #8a6010', color: '#d4a030' }}>🌟 Special</span>}
                             </div>

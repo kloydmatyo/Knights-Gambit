@@ -15,6 +15,7 @@ export interface Player {
   maxHealth: number;
   attack: number;
   defense: number;
+  armorPen: number;
   coins: number;
   position: number;
   inventory: Item[];
@@ -128,9 +129,9 @@ export interface Item {
 }
 
 export interface ItemEffect {
-  type: 'heal' | 'cure' | 'cure_curse' | 'buff' | 'permanent' | 'relic' | 'shield';
+  type: 'heal' | 'cure' | 'cure_curse' | 'buff' | 'permanent' | 'relic' | 'shield' | 'upgrade_bonus';
   value?: number;
-  stat?: 'health' | 'attack' | 'defense';
+  stat?: 'health' | 'attack' | 'defense' | 'armorPen' | 'critChance' | 'critDamage';
   duration?: number;
   /** For relic type: which passive bonus this relic grants */
   relicId?: string;
@@ -221,6 +222,7 @@ export interface WeaponUpgradeEffect {
   critDamageBonus?: number;   // multiplier bonus e.g. 0.5 = +50%
   healthBonus?: number;
   manaBonus?: number;         // mage only — increases max mana
+  armorPenBonus?: number;     // flat armor penetration
   specialAbility?: string;    // unique ability id granted by this upgrade
 }
 
@@ -246,5 +248,6 @@ export interface WeaponUpgradeState {
   totalCritDamageBonus: number;
   totalHealthBonus: number;
   totalManaBonus: number;
+  totalArmorPenBonus: number;
   unlockedAbilities: string[];
 }

@@ -55,21 +55,11 @@ export class InventoryEngine {
         autoConsume: true,
       },
       {
-        id: ITEM_TYPES.STAT_UPGRADE,
-        type: ITEM_TYPES.STAT_UPGRADE,
-        name: 'Stat Upgrade',
-        description: 'Permanently increases ATK by 5 — applied instantly',
-        price: p(SHOP_PRICES.STAT_UPGRADE),
-        effect: { type: 'permanent', stat: 'attack', value: 5 },
-        quantity: 1,
-        autoConsume: true,
-      },
-      {
-        id: ITEM_TYPES.BLESSING_SCROLL,
-        type: ITEM_TYPES.BLESSING_SCROLL,
+        id: ITEM_TYPES.BLESSING,
+        type: ITEM_TYPES.BLESSING,
         name: 'Blessing Scroll',
         description: 'Grants blessed status for 5 turns — applied instantly',
-        price: p(SHOP_PRICES.BLESSING_SCROLL),
+        price: p(102),
         effect: { type: 'buff', duration: 5 },
         quantity: 1,
         autoConsume: true,
@@ -77,10 +67,60 @@ export class InventoryEngine {
       {
         id: ITEM_TYPES.HEARTSTONE_AMULET,
         type: ITEM_TYPES.HEARTSTONE_AMULET,
-        name: 'Heartstone Amulet',
-        description: 'Increases max HP by 20 — applied instantly',
-        price: p(SHOP_PRICES.HEARTSTONE_AMULET),
+        name: 'Health Upgrade',
+        description: 'Permanently +20 Max HP — applied instantly',
+        price: p(40),
         effect: { type: 'permanent', stat: 'health', value: 20 },
+        quantity: 1,
+        autoConsume: true,
+      },
+      {
+        id: 'attack_upgrade',
+        type: ITEM_TYPES.STAT_UPGRADE,
+        name: 'Attack Upgrade',
+        description: 'Permanently +5 ATK — applied instantly',
+        price: p(50),
+        effect: { type: 'permanent', stat: 'attack', value: 5 },
+        quantity: 1,
+        autoConsume: true,
+      },
+      {
+        id: 'defense_upgrade',
+        type: ITEM_TYPES.STAT_UPGRADE,
+        name: 'Defense Upgrade',
+        description: 'Permanently +3 DEF — applied instantly',
+        price: p(50),
+        effect: { type: 'permanent', stat: 'defense', value: 3 },
+        quantity: 1,
+        autoConsume: true,
+      },
+      {
+        id: 'armor_pen_upgrade',
+        type: ITEM_TYPES.STAT_UPGRADE,
+        name: 'Armor Pen Upgrade',
+        description: 'Permanently +5 Armor Pen — applied instantly',
+        price: p(60),
+        effect: { type: 'upgrade_bonus', stat: 'armorPen', value: 5 },
+        quantity: 1,
+        autoConsume: true,
+      },
+      {
+        id: 'crit_chance_upgrade',
+        type: ITEM_TYPES.STAT_UPGRADE,
+        name: 'Crit Chance Upgrade',
+        description: 'Permanently +5% Crit Chance — applied instantly',
+        price: p(70),
+        effect: { type: 'upgrade_bonus', stat: 'critChance', value: 0.05 },
+        quantity: 1,
+        autoConsume: true,
+      },
+      {
+        id: 'crit_damage_upgrade',
+        type: ITEM_TYPES.STAT_UPGRADE,
+        name: 'Crit Damage Upgrade',
+        description: 'Permanently +10% Crit Damage — applied instantly',
+        price: p(70),
+        effect: { type: 'upgrade_bonus', stat: 'critDamage', value: 0.1 },
         quantity: 1,
         autoConsume: true,
       },
@@ -334,7 +374,7 @@ export class InventoryEngine {
         message = `${item.name} — you feel blessed!`;
         break;
       case 'permanent':
-        if (item.effect.stat) {
+        if (item.effect.stat && (item.effect.stat === 'health' || item.effect.stat === 'attack' || item.effect.stat === 'defense')) {
           updatedPlayer = CharacterEngine.upgradeStat(
             player,
             item.effect.stat,
@@ -349,7 +389,7 @@ export class InventoryEngine {
         const relicId = item.effect.relicId ?? item.id;
         updatedPlayer = { ...player, relics: [...(player.relics ?? []), relicId] };
         // Apply any immediate stat bonus (iron_heart, war_drum, stone_skin)
-        if (item.effect.stat && item.effect.value) {
+        if (item.effect.stat && item.effect.value && (item.effect.stat === 'health' || item.effect.stat === 'attack' || item.effect.stat === 'defense')) {
           updatedPlayer = CharacterEngine.upgradeStat(updatedPlayer, item.effect.stat, item.effect.value);
         }
         message = `${item.name} equipped! Its power flows through you.`;

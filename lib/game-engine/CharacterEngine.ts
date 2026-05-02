@@ -16,6 +16,7 @@ export class CharacterEngine {
       maxHealth: stats.baseHealth,
       attack: stats.baseAttack,
       defense: stats.baseDefense,
+      armorPen: 0,
       coins: stats.startingCoins,
       position: 0,
       inventory: [],

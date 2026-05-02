@@ -46,6 +46,7 @@ export class WeaponUpgradeEngine {
     defenseDelta: number;
     healthDelta: number;
     manaDelta: number;
+    armorPenDelta: number;
     upgradeState: WeaponUpgradeState;
     message: string;
   } | null {
@@ -66,6 +67,7 @@ export class WeaponUpgradeEngine {
       defenseDelta: upgrade.effect.defenseBonus ?? 0,
       healthDelta: upgrade.effect.healthBonus ?? 0,
       manaDelta: upgrade.effect.manaBonus ?? 0,
+      armorPenDelta: upgrade.effect.armorPenBonus ?? 0,
       upgradeState: newUpgradeState,
       message: `Upgraded to ${upgrade.name}! ${upgrade.description}`,
     };
@@ -84,6 +86,7 @@ export class WeaponUpgradeEngine {
       totalCritDamageBonus: state.totalCritDamageBonus + (effect.critDamageBonus ?? 0),
       totalHealthBonus: state.totalHealthBonus + (effect.healthBonus ?? 0),
       totalManaBonus: state.totalManaBonus + (effect.manaBonus ?? 0),
+      totalArmorPenBonus: state.totalArmorPenBonus + (effect.armorPenBonus ?? 0),
       unlockedAbilities: effect.specialAbility
         ? [...state.unlockedAbilities, effect.specialAbility]
         : state.unlockedAbilities,
@@ -123,6 +126,7 @@ export class WeaponUpgradeEngine {
       totalCritDamageBonus: 0,
       totalHealthBonus: 0,
       totalManaBonus: 0,
+      totalArmorPenBonus: 0,
       unlockedAbilities: [],
     };
   }

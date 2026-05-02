@@ -450,9 +450,56 @@ export default function GamePage() {
 
   const handlePurchase = (item: Item) => {
     if (!gameState) return;
+    
+    // Handle upgrade_bonus type items (crit, armor pen, etc.)
+    if (item.effect.type === 'upgrade_bonus') {
+      const { stat, value } = item.effect;
+      if (!stat || value === undefined) return;
+      
+      // Check caps
+      if (stat === 'critChance' && upgradeState.totalCritChanceBonus >= 1.0) {
+        showNotification('❌ Crit Chance is already at maximum (100%)!');
+        return;
+      }
+      if (stat === 'critDamage' && upgradeState.totalCritDamageBonus >= 2.0) {
+        showNotification('❌ Crit Damage is already at maximum (200%)!');
+        return;
+      }
+      if (stat === 'armorPen' && upgradeState.totalArmorPenBonus >= 100) {
+        showNotification('❌ Armor Pen is already at maximum (100)!');
+        return;
+      }
+      
+      // Check if player can afford
+      if (gameState.player.coins < item.price) {
+        showNotification('❌ Not enough coins!');
+        return;
+      }
+      
+      // Apply the upgrade
+      const newPlayer = { ...gameState.player, coins: gameState.player.coins - item.price };
+      let newUpgradeState = { ...upgradeState };
+      
+      if (stat === 'armorPen') {
+        const newValue = Math.min(100, upgradeState.totalArmorPenBonus + value);
+        newUpgradeState.totalArmorPenBonus = newValue;
+        newPlayer.armorPen = newPlayer.armorPen + (newValue - upgradeState.totalArmorPenBonus);
+      } else if (stat === 'critChance') {
+        newUpgradeState.totalCritChanceBonus = Math.min(1.0, upgradeState.totalCritChanceBonus + value);
+      } else if (stat === 'critDamage') {
+        newUpgradeState.totalCritDamageBonus = Math.min(2.0, upgradeState.totalCritDamageBonus + value);
+      }
+      
+      setUpgradeState(newUpgradeState);
+      setGameState({ ...gameState, player: newPlayer });
+      showNotification(`✅ ${item.name} purchased!`);
+      return;
+    }
+    
+    // Handle regular items
     const { player: newPlayer, success, message } = InventoryEngine.purchaseItem(gameState.player, item);
     if (success) {
-      const newCounts = item.effect.type === 'permanent' && item.effect.stat
+      const newCounts = item.effect.type === 'permanent' && item.effect.stat && (item.effect.stat === 'health' || item.effect.stat === 'attack' || item.effect.stat === 'defense')
         ? incrementStatCount(gameState.statUpgradeCounts, item.effect.stat)
         : gameState.statUpgradeCounts;
       setGameState({ ...gameState, player: newPlayer, statUpgradeCounts: newCounts });
@@ -652,7 +699,7 @@ export default function GamePage() {
     const outcome = WeaponUpgradeEngine.purchaseUpgrade(gameState.player.class, gameState.player.coins, upgradeId, gameState.currentFloor, upgradeState);
     if (!outcome) return { success: false, message: 'Cannot purchase this upgrade.' };
     setUpgradeState(outcome.upgradeState);
-    setGameState({ ...gameState, player: { ...gameState.player, coins: outcome.coins, attack: gameState.player.attack + outcome.attackDelta, defense: gameState.player.defense + outcome.defenseDelta, maxHealth: gameState.player.maxHealth + outcome.healthDelta, health: Math.min(gameState.player.health + outcome.healthDelta, gameState.player.maxHealth + outcome.healthDelta), ...(outcome.manaDelta && gameState.player.maxMana !== undefined ? { maxMana: gameState.player.maxMana + outcome.manaDelta, mana: Math.min((gameState.player.mana ?? 0) + outcome.manaDelta, gameState.player.maxMana + outcome.manaDelta) } : {}) } });
+    setGameState({ ...gameState, player: { ...gameState.player, coins: outcome.coins, attack: gameState.player.attack + outcome.attackDelta, defense: gameState.player.defense + outcome.defenseDelta, armorPen: gameState.player.armorPen + outcome.armorPenDelta, maxHealth: gameState.player.maxHealth + outcome.healthDelta, health: Math.min(gameState.player.health + outcome.healthDelta, gameState.player.maxHealth + outcome.healthDelta), ...(outcome.manaDelta && gameState.player.maxMana !== undefined ? { maxMana: gameState.player.maxMana + outcome.manaDelta, mana: Math.min((gameState.player.mana ?? 0) + outcome.manaDelta, gameState.player.maxMana + outcome.manaDelta) } : {}) } });
     showNotification(outcome.message);
     return { success: true, message: outcome.message };
   };
@@ -673,9 +720,10 @@ export default function GamePage() {
   const handleResume = (save: SaveData) => {
     setActiveSlot(save.slot);
     setPlayerName(save.playerName);
-    const gs = { ...save.gameState, flags: save.gameState.flags ?? {} };
+    const gs = { ...save.gameState, flags: save.gameState.flags ?? {}, player: { ...save.gameState.player, armorPen: save.gameState.player.armorPen ?? 0 } };
     setGameState(gs);
-    setUpgradeState(save.upgradeState);
+    const us = { ...save.upgradeState, totalArmorPenBonus: save.upgradeState.totalArmorPenBonus ?? 0 };
+    setUpgradeState(us);
     // Restore pending branch choice if the game was saved mid-turn
     if (gs.pendingBranchChoice) {
       setPendingChoice(gs.pendingBranchChoice);
@@ -767,8 +815,8 @@ export default function GamePage() {
     for (const upgrade of classUpgrades) {
       if (cs.purchasedUpgradeIds.includes(upgrade.id)) continue;
       const { effect } = upgrade;
-      cs = { purchasedUpgradeIds: [...cs.purchasedUpgradeIds, upgrade.id], totalAttackBonus: cs.totalAttackBonus + (effect.attackBonus ?? 0), totalDefenseBonus: cs.totalDefenseBonus + (effect.defenseBonus ?? 0), totalCritChanceBonus: cs.totalCritChanceBonus + (effect.critChanceBonus ?? 0), totalCritDamageBonus: cs.totalCritDamageBonus + (effect.critDamageBonus ?? 0), totalHealthBonus: cs.totalHealthBonus + (effect.healthBonus ?? 0), totalManaBonus: cs.totalManaBonus + ((effect as any).manaBonus ?? 0), unlockedAbilities: effect.specialAbility ? [...cs.unlockedAbilities, effect.specialAbility] : cs.unlockedAbilities };
-      player = { ...player, attack: player.attack + (effect.attackBonus ?? 0), defense: player.defense + (effect.defenseBonus ?? 0), maxHealth: player.maxHealth + (effect.healthBonus ?? 0), health: Math.min(player.health + (effect.healthBonus ?? 0), player.maxHealth + (effect.healthBonus ?? 0)), ...(((effect as any).manaBonus ?? 0) > 0 && player.maxMana !== undefined ? { maxMana: player.maxMana + (effect as any).manaBonus, mana: Math.min((player.mana ?? 0) + (effect as any).manaBonus, player.maxMana + (effect as any).manaBonus) } : {}) };
+      cs = { purchasedUpgradeIds: [...cs.purchasedUpgradeIds, upgrade.id], totalAttackBonus: cs.totalAttackBonus + (effect.attackBonus ?? 0), totalDefenseBonus: cs.totalDefenseBonus + (effect.defenseBonus ?? 0), totalCritChanceBonus: cs.totalCritChanceBonus + (effect.critChanceBonus ?? 0), totalCritDamageBonus: cs.totalCritDamageBonus + (effect.critDamageBonus ?? 0), totalHealthBonus: cs.totalHealthBonus + (effect.healthBonus ?? 0), totalManaBonus: cs.totalManaBonus + ((effect as any).manaBonus ?? 0), totalArmorPenBonus: cs.totalArmorPenBonus + ((effect as any).armorPenBonus ?? 0), unlockedAbilities: effect.specialAbility ? [...cs.unlockedAbilities, effect.specialAbility] : cs.unlockedAbilities };
+      player = { ...player, attack: player.attack + (effect.attackBonus ?? 0), defense: player.defense + (effect.defenseBonus ?? 0), armorPen: player.armorPen + ((effect as any).armorPenBonus ?? 0), maxHealth: player.maxHealth + (effect.healthBonus ?? 0), health: Math.min(player.health + (effect.healthBonus ?? 0), player.maxHealth + (effect.healthBonus ?? 0)), ...(((effect as any).manaBonus ?? 0) > 0 && player.maxMana !== undefined ? { maxMana: player.maxMana + (effect as any).manaBonus, mana: Math.min((player.mana ?? 0) + (effect as any).manaBonus, player.maxMana + (effect as any).manaBonus) } : {}) };
     }
     setUpgradeState(cs); setGameState({ ...gameState, player }); showNotification(`[DEBUG] All ${gameState.player.class} upgrades unlocked!`);
   };
@@ -776,7 +824,7 @@ export default function GamePage() {
     if (!gameState) return;
     const purchased = WeaponUpgradeEngine.getPurchasedUpgrades(upgradeState);
     let player = gameState.player;
-    for (const upgrade of purchased) { const { effect } = upgrade; player = { ...player, attack: player.attack - (effect.attackBonus ?? 0), defense: player.defense - (effect.defenseBonus ?? 0), maxHealth: player.maxHealth - (effect.healthBonus ?? 0), health: Math.min(player.health, player.maxHealth - (effect.healthBonus ?? 0)) }; }
+    for (const upgrade of purchased) { const { effect } = upgrade; player = { ...player, attack: player.attack - (effect.attackBonus ?? 0), defense: player.defense - (effect.defenseBonus ?? 0), armorPen: player.armorPen - ((effect as any).armorPenBonus ?? 0), maxHealth: player.maxHealth - (effect.healthBonus ?? 0), health: Math.min(player.health, player.maxHealth - (effect.healthBonus ?? 0)) }; }
     setUpgradeState(WeaponUpgradeEngine.createInitialState()); setGameState({ ...gameState, player }); showNotification('[DEBUG] All weapon upgrades reset.');
   };
 
@@ -796,7 +844,7 @@ export default function GamePage() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}>
-      <HUD player={gameState.player} floor={gameState.currentFloor} turnCount={gameState.turnCount} onInventoryClick={() => setIsInventoryOpen(true)} playerSpriteUrl={(gameState.player as any).spriteDataUrl} />
+      <HUD player={gameState.player} floor={gameState.currentFloor} turnCount={gameState.turnCount} onInventoryClick={() => setIsInventoryOpen(true)} playerSpriteUrl={(gameState.player as any).spriteDataUrl} upgradeState={upgradeState} />
 
       {/* Board — no spacer needed, HUD floats over the board */}
       <div className="flex-1 flex items-center justify-center px-1 sm:px-4 pb-44 sm:pb-48 min-h-0 relative">

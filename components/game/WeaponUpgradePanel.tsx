@@ -41,6 +41,7 @@ function EffectBadges({ effect }: { effect: WeaponUpgrade['effect'] }) {
   if (effect.defenseBonus) badges.push(`+${effect.defenseBonus} DEF`);
   if (effect.healthBonus) badges.push(`+${effect.healthBonus} HP`);
   if (effect.manaBonus) badges.push(`+${effect.manaBonus} MP`);
+  if (effect.armorPenBonus) badges.push(`+${effect.armorPenBonus} Pen`);
   if (effect.critChanceBonus) badges.push(`+${Math.round(effect.critChanceBonus * 100)}% Crit`);
   if (effect.critDamageBonus) badges.push(`+${Math.round(effect.critDamageBonus * 100)}% Crit DMG`);
   if (effect.specialAbility) badges.push(`🌟 Special`);
@@ -95,10 +96,40 @@ export default function WeaponUpgradePanel({
             <span className="text-green-400">+{upgradeState.totalAttackBonus}</span>
           </div>
         )}
+        {upgradeState.totalDefenseBonus > 0 && (
+          <div className="flex justify-between">
+            <span className="text-gray-400">Upgrade DEF:</span>
+            <span className="text-blue-400">+{upgradeState.totalDefenseBonus}</span>
+          </div>
+        )}
+        {upgradeState.totalArmorPenBonus > 0 && (
+          <div className="flex justify-between">
+            <span className="text-gray-400">Armor Pen:</span>
+            <span className="text-orange-400">+{upgradeState.totalArmorPenBonus}</span>
+          </div>
+        )}
         {upgradeState.totalCritChanceBonus > 0 && (
           <div className="flex justify-between">
-            <span className="text-gray-400">Upgrade Crit:</span>
+            <span className="text-gray-400">Crit Chance:</span>
             <span className="text-yellow-400">+{Math.round(upgradeState.totalCritChanceBonus * 100)}%</span>
+          </div>
+        )}
+        {upgradeState.totalCritDamageBonus > 0 && (
+          <div className="flex justify-between">
+            <span className="text-gray-400">Crit Damage:</span>
+            <span className="text-red-400">+{Math.round(upgradeState.totalCritDamageBonus * 100)}%</span>
+          </div>
+        )}
+        {upgradeState.totalHealthBonus > 0 && (
+          <div className="flex justify-between">
+            <span className="text-gray-400">Upgrade HP:</span>
+            <span className="text-green-400">+{upgradeState.totalHealthBonus}</span>
+          </div>
+        )}
+        {upgradeState.totalManaBonus > 0 && (
+          <div className="flex justify-between">
+            <span className="text-gray-400">Upgrade MP:</span>
+            <span className="text-cyan-400">+{upgradeState.totalManaBonus}</span>
           </div>
         )}
       </div>

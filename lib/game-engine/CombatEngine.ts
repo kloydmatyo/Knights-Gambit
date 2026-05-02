@@ -73,7 +73,8 @@ export class CombatEngine {
         messages.push(`⚡ Divine Retribution! Holy wrath deals ${retribDmg} damage!`);
       } else {
         // Normal attack with crit check
-        const baseDmg = this.calculateDamage(effectiveAttack, enemy.defense);
+        const effectiveEnemyDef = Math.max(0, enemy.defense - player.armorPen);
+        const baseDmg = this.calculateDamage(effectiveAttack, effectiveEnemyDef);
         if (this.isCriticalHit(player, enemy, critChanceBonus)) {
           playerDamage = this.applyCritical(baseDmg, critMultiplier);
           messages.push(`💥 Critical hit! You deal ${playerDamage} damage!`);
