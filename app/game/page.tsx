@@ -776,20 +776,46 @@ export default function GamePage() {
                 Floor {pendingFloorAdvance.currentFloor} cleared.
               </p>
               <p className="text-gray-500 text-xs mb-5">
-                {pendingFloorAdvance.player.health}/{pendingFloorAdvance.player.maxHealth} HP · {pendingFloorAdvance.player.coins} coins
+                {gameState.player.health}/{gameState.player.maxHealth} HP · {gameState.player.coins} coins
               </p>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-2">
                 <motion.button
-                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                   onClick={confirmFloorAdvance}
-                  className="flex-1 bg-game-gold text-black font-black py-3 rounded-xl text-sm shadow-lg"
+                  className="w-full font-black py-3 rounded-xl text-sm shadow-lg"
+                  style={{
+                    background: 'linear-gradient(180deg,#c8621a,#8a3e0a)',
+                    border: '1px solid #e8821a',
+                    borderBottom: '3px solid #4a1e04',
+                    color: 'white',
+                  }}
                 >
                   ▶ Advance to Floor {pendingFloorAdvance.currentFloor + 1}
                 </motion.button>
+                {(() => {
+                  const currentTile = gameState.board.find(t => t.id === gameState.player.position);
+                  if (currentTile?.type !== 'shop') return null;
+                  return (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                      onClick={() => { setPendingFloorAdvance(null); setIsShopOpen(true); }}
+                      className="w-full font-black py-3 rounded-xl text-sm shadow-lg"
+                      style={{
+                        background: 'linear-gradient(180deg,#c8860a,#9a6008)',
+                        border: '1px solid #e8a030',
+                        borderBottom: '3px solid #5a3a00',
+                        color: '#fff8e8',
+                      }}
+                    >
+                      🏪 Open Shop
+                    </motion.button>
+                  );
+                })()}
                 <motion.button
-                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                   onClick={() => setPendingFloorAdvance(null)}
-                  className="px-4 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl text-sm"
+                  className="w-full font-bold py-2.5 rounded-xl text-sm"
+                  style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#8a6a4a' }}
                 >
                   Stay
                 </motion.button>

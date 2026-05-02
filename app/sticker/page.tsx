@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 
@@ -68,12 +69,12 @@ export default function StickerPage() {
         <p className="text-sm" style={{ color: '#6a4a2a' }}>
           Design your character and download a print-ready 3″ × 3″ sticker
         </p>
-        <a href="/" className="text-xs underline mt-2 inline-block transition-colors"
+        <Link href="/" className="text-xs underline mt-2 inline-block transition-colors"
           style={{ color: '#5a3a1a' }}
           onMouseEnter={e => (e.currentTarget.style.color = '#d4a030')}
           onMouseLeave={e => (e.currentTarget.style.color = '#5a3a1a')}>
           ← Back to home
-        </a>
+        </Link>
       </motion.div>
 
       {step === 'create' && (

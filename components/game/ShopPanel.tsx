@@ -213,7 +213,8 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
           className="pointer-events-auto w-full flex flex-col rounded-2xl overflow-hidden shadow-2xl"
           style={{
             maxWidth: 640,
-            maxHeight: '85vh',
+            height: '75vh',
+            minHeight: 480,
             background: 'rgba(14,10,6,0.97)',
             border: '2px solid #5a3e28',
             boxShadow: '0 0 0 1px rgba(255,180,80,0.06), 0 24px 64px rgba(0,0,0,0.9)',
@@ -263,8 +264,7 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
           </div>
 
           {/* ── Item grid ── */}
-          <div className="flex-1 overflow-y-auto p-4"
-            style={{ borderTop: '1px solid #3d2a14' }}>
+          <div className="flex-1 overflow-y-auto p-4" style={{ minHeight: 320, borderTop: '1px solid #3d2a14' }}>
             <AnimatePresence mode="wait">
               <motion.div key={activeTab}
                 initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
