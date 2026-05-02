@@ -40,6 +40,7 @@ function EffectBadges({ effect }: { effect: WeaponUpgrade['effect'] }) {
   if (effect.attackBonus) badges.push(`+${effect.attackBonus} ATK`);
   if (effect.defenseBonus) badges.push(`+${effect.defenseBonus} DEF`);
   if (effect.healthBonus) badges.push(`+${effect.healthBonus} HP`);
+  if (effect.manaBonus) badges.push(`+${effect.manaBonus} MP`);
   if (effect.critChanceBonus) badges.push(`+${Math.round(effect.critChanceBonus * 100)}% Crit`);
   if (effect.critDamageBonus) badges.push(`+${Math.round(effect.critDamageBonus * 100)}% Crit DMG`);
   if (effect.specialAbility) badges.push(`🌟 Special`);

@@ -576,7 +576,7 @@ export default function GamePage() {
     const outcome = WeaponUpgradeEngine.purchaseUpgrade(gameState.player.class, gameState.player.coins, upgradeId, gameState.currentFloor, upgradeState);
     if (!outcome) return { success: false, message: 'Cannot purchase this upgrade.' };
     setUpgradeState(outcome.upgradeState);
-    setGameState({ ...gameState, player: { ...gameState.player, coins: outcome.coins, attack: gameState.player.attack + outcome.attackDelta, defense: gameState.player.defense + outcome.defenseDelta, maxHealth: gameState.player.maxHealth + outcome.healthDelta, health: Math.min(gameState.player.health + outcome.healthDelta, gameState.player.maxHealth + outcome.healthDelta) } });
+    setGameState({ ...gameState, player: { ...gameState.player, coins: outcome.coins, attack: gameState.player.attack + outcome.attackDelta, defense: gameState.player.defense + outcome.defenseDelta, maxHealth: gameState.player.maxHealth + outcome.healthDelta, health: Math.min(gameState.player.health + outcome.healthDelta, gameState.player.maxHealth + outcome.healthDelta), ...(outcome.manaDelta && gameState.player.maxMana !== undefined ? { maxMana: gameState.player.maxMana + outcome.manaDelta, mana: Math.min((gameState.player.mana ?? 0) + outcome.manaDelta, gameState.player.maxMana + outcome.manaDelta) } : {}) } });
     showNotification(outcome.message);
     return { success: true, message: outcome.message };
   };
@@ -678,8 +678,8 @@ export default function GamePage() {
     for (const upgrade of classUpgrades) {
       if (cs.purchasedUpgradeIds.includes(upgrade.id)) continue;
       const { effect } = upgrade;
-      cs = { purchasedUpgradeIds: [...cs.purchasedUpgradeIds, upgrade.id], totalAttackBonus: cs.totalAttackBonus + (effect.attackBonus ?? 0), totalDefenseBonus: cs.totalDefenseBonus + (effect.defenseBonus ?? 0), totalCritChanceBonus: cs.totalCritChanceBonus + (effect.critChanceBonus ?? 0), totalCritDamageBonus: cs.totalCritDamageBonus + (effect.critDamageBonus ?? 0), totalHealthBonus: cs.totalHealthBonus + (effect.healthBonus ?? 0), unlockedAbilities: effect.specialAbility ? [...cs.unlockedAbilities, effect.specialAbility] : cs.unlockedAbilities };
-      player = { ...player, attack: player.attack + (effect.attackBonus ?? 0), defense: player.defense + (effect.defenseBonus ?? 0), maxHealth: player.maxHealth + (effect.healthBonus ?? 0), health: Math.min(player.health + (effect.healthBonus ?? 0), player.maxHealth + (effect.healthBonus ?? 0)) };
+      cs = { purchasedUpgradeIds: [...cs.purchasedUpgradeIds, upgrade.id], totalAttackBonus: cs.totalAttackBonus + (effect.attackBonus ?? 0), totalDefenseBonus: cs.totalDefenseBonus + (effect.defenseBonus ?? 0), totalCritChanceBonus: cs.totalCritChanceBonus + (effect.critChanceBonus ?? 0), totalCritDamageBonus: cs.totalCritDamageBonus + (effect.critDamageBonus ?? 0), totalHealthBonus: cs.totalHealthBonus + (effect.healthBonus ?? 0), totalManaBonus: cs.totalManaBonus + ((effect as any).manaBonus ?? 0), unlockedAbilities: effect.specialAbility ? [...cs.unlockedAbilities, effect.specialAbility] : cs.unlockedAbilities };
+      player = { ...player, attack: player.attack + (effect.attackBonus ?? 0), defense: player.defense + (effect.defenseBonus ?? 0), maxHealth: player.maxHealth + (effect.healthBonus ?? 0), health: Math.min(player.health + (effect.healthBonus ?? 0), player.maxHealth + (effect.healthBonus ?? 0)), ...(((effect as any).manaBonus ?? 0) > 0 && player.maxMana !== undefined ? { maxMana: player.maxMana + (effect as any).manaBonus, mana: Math.min((player.mana ?? 0) + (effect as any).manaBonus, player.maxMana + (effect as any).manaBonus) } : {}) };
     }
     setUpgradeState(cs); setGameState({ ...gameState, player }); showNotification(`[DEBUG] All ${gameState.player.class} upgrades unlocked!`);
   };

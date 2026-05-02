@@ -220,6 +220,7 @@ export interface WeaponUpgradeEffect {
   critChanceBonus?: number;   // 0.0 - 1.0
   critDamageBonus?: number;   // multiplier bonus e.g. 0.5 = +50%
   healthBonus?: number;
+  manaBonus?: number;         // mage only — increases max mana
   specialAbility?: string;    // unique ability id granted by this upgrade
 }
 
@@ -244,5 +245,6 @@ export interface WeaponUpgradeState {
   totalCritChanceBonus: number;
   totalCritDamageBonus: number;
   totalHealthBonus: number;
+  totalManaBonus: number;
   unlockedAbilities: string[];
 }
