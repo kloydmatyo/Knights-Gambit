@@ -59,6 +59,9 @@ export interface GameState {
   enemies: Enemy[];
   isInCombat: boolean;
   turnCount: number;
+  // Exalted shop state — persisted so free picks can't be reset by closing the shop
+  exaltedCategory: 'consumables' | 'upgrades' | 'relics' | null;
+  exaltedPurchaseCount: number;
 }
 
 export interface UIState {

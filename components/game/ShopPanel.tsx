@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Player, Item } from '@/lib/game-engine';
 import { StatUpgradeCounts, WeaponUpgradeState, WeaponUpgrade } from '@/lib/game-engine/types';
 import { calcUpgradePrice } from '@/lib/game-engine/StatUpgradeEngine';
 import { WeaponUpgradeEngine } from '@/lib/game-engine/WeaponUpgradeEngine';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useStore } from '@/store';
 
 // ── Exalted free-pick limits ──────────────────────────────────────────────
 const EXALTED_LIMITS: Record<'consumables' | 'upgrades' | 'relics', number> = {
@@ -204,19 +205,13 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
 // ── Main ShopPanel ─────────────────────────────────────────────────────────
 export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, title = '🏪 Shop', statUpgradeCounts, destinyState, currentFloor = 1, upgradeState, onWeaponUpgrade, allRelics }: ShopPanelProps) {
   const [activeTab, setActiveTab] = useState<ShopTab>('consumables');
-  // Exalted category lock state
-  const [exaltedCategory, setExaltedCategory] = useState<'consumables' | 'upgrades' | 'relics' | null>(null);
-  const [exaltedPurchaseCount, setExaltedPurchaseCount] = useState(0);
+  // Exalted state is persisted in the store so closing/reopening the shop doesn't reset free picks
+  const exaltedCategory = useStore(s => s.game.exaltedCategory);
+  const exaltedPurchaseCount = useStore(s => s.game.exaltedPurchaseCount);
+  const setExaltedCategory = useStore(s => s.setExaltedCategory);
+  const incrementExaltedPurchaseCount = useStore(s => s.incrementExaltedPurchaseCount);
 
   const isExalted = destinyState === 'exalted';
-
-  // Reset exalted state when shop opens
-  useEffect(() => {
-    if (isOpen) {
-      setExaltedCategory(null);
-      setExaltedPurchaseCount(0);
-    }
-  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -240,13 +235,19 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
 
   // Apply destiny price modifier — exalted: free only for chosen category
   const priceMultiplier = destinyState === 'cursed' ? 3 : destinyState === 'favored' ? 0.75 : destinyState === 'unlucky' ? 1.25 : 1;
-  const modifiedItems = items.map(item => {
-    const tab = categorize(item);
+  const applyPriceMod = (item: Item, tab: ShopTab) => {
     const mult = isExalted
       ? (exaltedCategory === tab && !exaltedDone ? 0 : 1)
       : priceMultiplier;
     return { ...item, price: Math.round(item.price * mult), _originalPrice: item.price };
-  }) as (Item & { _originalPrice?: number })[];
+  };
+  const modifiedItems = items.map(item =>
+    applyPriceMod(item, categorize(item))
+  ) as (Item & { _originalPrice?: number })[];
+  // Apply the same modifier to allRelics so free picks work in the relics tab
+  const modifiedRelics = allRelics?.map(r =>
+    ({ ...applyPriceMod(r, 'relics'), locked: r.locked, lockedReason: r.lockedReason })
+  );
 
   const canAfford = (price: number) => player.coins >= price;
 
@@ -261,7 +262,7 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
   const tabCounts = {
     consumables: sortedItems.filter(i => categorize(i) === 'consumables').length,
     upgrades:    sortedItems.filter(i => categorize(i) === 'upgrades').length,
-    relics:      allRelics ? allRelics.filter(r => !r.locked).length : sortedItems.filter(i => categorize(i) === 'relics').length,
+    relics:      modifiedRelics ? modifiedRelics.filter(r => !r.locked).length : sortedItems.filter(i => categorize(i) === 'relics').length,
     weapons:     availableWeaponUpgrades.length,
   };
 
@@ -270,13 +271,13 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
     const tab = categorize(item);
     const isFree = isExalted && exaltedCategory === tab && !exaltedDone;
     onPurchase(item);
-    if (isFree) setExaltedPurchaseCount(c => c + 1);
+    if (isFree) incrementExaltedPurchaseCount();
   };
 
   const handleWeaponUpgradeWithTracking = (upgradeId: string) => {
     const result = onWeaponUpgrade?.(upgradeId);
     if (result?.success && isExalted && exaltedCategory === 'upgrades' && !exaltedDone) {
-      setExaltedPurchaseCount(c => c + 1);
+      incrementExaltedPurchaseCount();
     }
     return result ?? { success: false, message: '' };
   };
@@ -423,23 +424,23 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                   <p className="col-span-full text-center py-8 text-sm" style={{ color: '#4a3020' }}>
                     Nothing available in this category.
                   </p>
-                ) : activeTab === 'relics' && allRelics ? (
+                ) : activeTab === 'relics' && modifiedRelics ? (
                   // ── All relics: available + locked ──
                   <div className="col-span-full flex flex-col gap-3">
-                    {allRelics.filter(r => !r.locked).length === 0 && (
+                    {modifiedRelics.filter(r => !r.locked).length === 0 && (
                       <p className="text-center py-4 text-sm" style={{ color: '#4a3020' }}>No relics available yet.</p>
                     )}
                     <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
-                      {allRelics.filter(r => !r.locked).map((relic, i) => (
+                      {modifiedRelics.filter(r => !r.locked).map((relic, i) => (
                         <ItemCard key={relic.id} item={relic} player={player}
                           onPurchase={handlePurchaseWithTracking} statUpgradeCounts={statUpgradeCounts} />
                       ))}
                     </div>
-                    {allRelics.filter(r => r.locked).length > 0 && (
+                    {modifiedRelics.filter(r => r.locked).length > 0 && (
                       <div>
                         <p className="text-xs font-bold uppercase tracking-widest mb-2 mt-2" style={{ color: '#4a3020' }}>Locked</p>
                         <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
-                          {allRelics.filter(r => r.locked).map(relic => (
+                          {modifiedRelics.filter(r => r.locked).map(relic => (
                             <div key={relic.id} className="flex items-center gap-2 p-2 rounded-lg opacity-40"
                               style={{ background: 'rgba(20,12,4,0.6)', border: '1px solid #2a1a0a' }}>
                               <span className="text-xl grayscale">{RELIC_EMOJIS[relic.id] ?? '✨'}</span>

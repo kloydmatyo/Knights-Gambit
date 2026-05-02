@@ -21,6 +21,9 @@ interface Store {
   addToInventory: (item: any) => void;
   removeFromInventory: (itemId: string) => void;
   purchaseWeaponUpgrade: (upgradeId: string) => { success: boolean; message: string };
+  setExaltedCategory: (category: 'consumables' | 'upgrades' | 'relics' | null) => void;
+  incrementExaltedPurchaseCount: () => void;
+  resetExaltedState: () => void;
   
   // UI Actions
   openModal: (modalType: string) => void;
@@ -42,6 +45,8 @@ export const useStore = create<Store>()(
           enemies: [],
           isInCombat: false,
           turnCount: 0,
+          exaltedCategory: null,
+          exaltedPurchaseCount: 0,
         },
         
         // Initial UI State
@@ -73,6 +78,8 @@ export const useStore = create<Store>()(
                 skills: [],
                 statusEffects: [],
               },
+              exaltedCategory: null,
+              exaltedPurchaseCount: 0,
             },
             weaponUpgrades: WeaponUpgradeEngine.createInitialState(),
           })),
@@ -160,6 +167,21 @@ export const useStore = create<Store>()(
           });
           return result;
         },
+
+        setExaltedCategory: (category) =>
+          set((state) => ({
+            game: { ...state.game, exaltedCategory: category },
+          })),
+
+        incrementExaltedPurchaseCount: () =>
+          set((state) => ({
+            game: { ...state.game, exaltedPurchaseCount: state.game.exaltedPurchaseCount + 1 },
+          })),
+
+        resetExaltedState: () =>
+          set((state) => ({
+            game: { ...state.game, exaltedCategory: null, exaltedPurchaseCount: 0 },
+          })),
         
         // UI Actions
         openModal: (modalType) =>

@@ -34,10 +34,12 @@ import { getDungeonNumber, isDungeonBossFloor } from '@/lib/game-engine/constant
 import { SaveEngine, SaveData } from '@/lib/game-engine/SaveEngine';
 import { onFlee, onBribe, onTruce, checkEventPayoff, consumePayoff } from '@/lib/game-engine/FlagEngine';
 import ResumePrompt from '@/components/game/ResumePrompt';
+import { useStore } from '@/store';
 
 type GamePhase = 'character-selection' | 'playing' | 'combat' | 'shop' | 'game-over' | 'dungeon-clear' | 'resume-prompt';
 
 export default function GamePage() {
+  const resetExaltedState = useStore(s => s.resetExaltedState);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [phase, setPhase] = useState<GamePhase>('character-selection');
   const [lastDiceRoll, setLastDiceRoll] = useState<number | undefined>();
@@ -255,6 +257,7 @@ export default function GamePage() {
         // Exalted = free shop, Cursed = 3x prices (handled in ShopPanel via destinyState prop)
         setGameState(stateAfterMove);
         setShopDestinyState(destinyState);
+        resetExaltedState();
         const shopMsg = destiny?.state === 'exalted' ? ' Exalted! Everything is FREE!'
           : destiny?.state === 'cursed' ? ' Cursed! Prices are tripled!'
           : destiny?.state === 'favored' ? ' Favored! 25% discount!'
@@ -919,10 +922,10 @@ export default function GamePage() {
                 <div className="border-t border-purple-400 pt-2 mt-1">
                   <p className="text-purple-300 text-xs mb-2 font-bold">Shop Destiny</p>
                   <div className="grid grid-cols-2 gap-1">
-                    <button onClick={() => { setShopDestinyState('exalted'); setIsShopOpen(true); }} className="bg-yellow-700 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs font-bold">Exalted</button>
-                    <button onClick={() => { setShopDestinyState('favored'); setIsShopOpen(true); }} className="bg-green-700 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs font-bold">Favored</button>
-                    <button onClick={() => { setShopDestinyState('unlucky'); setIsShopOpen(true); }} className="bg-orange-700 hover:bg-orange-600 text-white px-2 py-1.5 rounded text-xs font-bold">Unlucky</button>
-                    <button onClick={() => { setShopDestinyState('cursed'); setIsShopOpen(true); }} className="bg-red-800 hover:bg-red-700 text-white px-2 py-1.5 rounded text-xs font-bold">Cursed</button>
+                    <button onClick={() => { setShopDestinyState('exalted'); resetExaltedState(); setIsShopOpen(true); }} className="bg-yellow-700 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs font-bold">Exalted</button>
+                    <button onClick={() => { setShopDestinyState('favored'); resetExaltedState(); setIsShopOpen(true); }} className="bg-green-700 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs font-bold">Favored</button>
+                    <button onClick={() => { setShopDestinyState('unlucky'); resetExaltedState(); setIsShopOpen(true); }} className="bg-orange-700 hover:bg-orange-600 text-white px-2 py-1.5 rounded text-xs font-bold">Unlucky</button>
+                    <button onClick={() => { setShopDestinyState('cursed'); resetExaltedState(); setIsShopOpen(true); }} className="bg-red-800 hover:bg-red-700 text-white px-2 py-1.5 rounded text-xs font-bold">Cursed</button>
                   </div>
                 </div>
                 <div className="border-t border-purple-400 pt-2 mt-1">
