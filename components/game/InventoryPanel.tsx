@@ -28,6 +28,7 @@ const MIN_ROWS = 3;
 
 export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isInCombat }: InventoryPanelProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pendingConfirm, setPendingConfirm] = useState(false);
 
   if (!isOpen) return null;
 
@@ -40,11 +41,39 @@ export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isI
 
   const selectedItem = selectedId ? sortedInventory.find(i => i.id === selectedId) ?? null : null;
 
+  // Returns a warning string if using this item would be wasteful, null otherwise
+  function getWasteWarning(item: typeof selectedItem): string | null {
+    if (!item) return null;
+    if (item.effect.type === 'heal') {
+      const missing = player.maxHealth - player.health;
+      const healVal = item.effect.value ?? 0;
+      if (missing === 0) return "You're already at full HP!";
+      if (missing < healVal * 0.25) return `Only ${missing} HP missing — most of this potion will be wasted.`;
+    }
+    if (item.effect.type === 'shield') {
+      const hasShield = player.statusEffects.some(e => e.type === 'shield');
+      if (hasShield) return 'You already have an active shield — using this will replace it.';
+    }
+    return null;
+  }
+
+  const wasteWarning = getWasteWarning(selectedItem);
+
   function handleUse() {
     if (!selectedItem) return;
+    // If there's a warning and we haven't confirmed yet, enter confirm mode
+    if (wasteWarning && !pendingConfirm) {
+      setPendingConfirm(true);
+      return;
+    }
     onUseItem(selectedItem.id);
-    // If item will be consumed (quantity 1), deselect
+    setPendingConfirm(false);
     if (selectedItem.quantity <= 1) setSelectedId(null);
+  }
+
+  function handleSelect(id: string) {
+    setSelectedId(prev => prev === id ? null : id);
+    setPendingConfirm(false);
   }
 
   return (
@@ -110,7 +139,7 @@ export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isI
                         key={item.id}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setSelectedId(isSelected ? null : item.id)}
+                        onClick={() => handleSelect(item.id)}
                         className="relative aspect-square rounded-lg flex items-center justify-center transition-all"
                         style={{
                           background: isSelected ? 'rgba(90,62,40,0.8)' : 'rgba(30,18,6,0.8)',
@@ -176,19 +205,55 @@ export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isI
                     {selectedItem.autoConsume ? (
                       <p className="text-xs italic" style={{ color: '#4a8a4a' }}>✅ Applied on purchase</p>
                     ) : (
-                      <button onClick={handleUse}
-                        className="w-full py-2 rounded-xl font-black text-sm transition-all active:scale-95"
-                        style={{
-                          background: 'linear-gradient(180deg,#c8621a,#8a3e0a)',
-                          border: '1px solid #e8821a',
-                          borderBottom: '3px solid #4a1e04',
-                          color: 'white',
-                          textShadow: '0 1px 2px rgba(0,0,0,0.6)',
-                        }}>
-                        {selectedItem.effect.type === 'heal' || selectedItem.effect.type === 'cure'
-                          ? isInCombat ? '💊 Use Now' : '💊 Use'
-                          : 'Use Item'}
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        {/* Waste warning */}
+                        {wasteWarning && (
+                          <div className="rounded-lg px-2.5 py-2 text-[10px] leading-snug font-bold"
+                            style={{ background: 'rgba(180,100,0,0.2)', border: '1px solid #8a5010', color: '#f0a040' }}>
+                            ⚠️ {wasteWarning}
+                          </div>
+                        )}
+                        {pendingConfirm ? (
+                          <div className="flex flex-col gap-1.5">
+                            <p className="text-[10px] text-center font-bold" style={{ color: '#f0a040' }}>Use anyway?</p>
+                            <div className="flex gap-1.5">
+                              <button onClick={handleUse}
+                                className="flex-1 py-1.5 rounded-lg font-black text-xs transition-all active:scale-95"
+                                style={{
+                                  background: 'linear-gradient(180deg,#c8621a,#8a3e0a)',
+                                  border: '1px solid #e8821a',
+                                  borderBottom: '2px solid #4a1e04',
+                                  color: 'white',
+                                }}>
+                                Yes
+                              </button>
+                              <button onClick={() => setPendingConfirm(false)}
+                                className="flex-1 py-1.5 rounded-lg font-black text-xs transition-all active:scale-95"
+                                style={{
+                                  background: 'rgba(30,18,6,0.8)',
+                                  border: '1px solid #3d2a14',
+                                  color: '#8a6a4a',
+                                }}>
+                                No
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button onClick={handleUse}
+                            className="w-full py-2 rounded-xl font-black text-sm transition-all active:scale-95"
+                            style={{
+                              background: 'linear-gradient(180deg,#c8621a,#8a3e0a)',
+                              border: '1px solid #e8821a',
+                              borderBottom: '3px solid #4a1e04',
+                              color: 'white',
+                              textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+                            }}>
+                            {selectedItem.effect.type === 'heal' || selectedItem.effect.type === 'cure'
+                              ? isInCombat ? '💊 Use Now' : '💊 Use'
+                              : 'Use Item'}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </motion.div>
                 ) : (

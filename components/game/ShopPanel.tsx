@@ -463,12 +463,46 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                       <div>
                         <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#4a8a4a' }}>Owned</p>
                         <div className="flex flex-wrap gap-2">
-                          {purchasedWeaponUpgrades.map(u => (
-                            <span key={u.id} className="text-xs px-2 py-1 rounded font-bold"
-                              style={{ background: 'rgba(20,60,20,0.6)', border: '1px solid #2a6a2a', color: '#6adc6a' }}>
-                              {u.emoji} {u.name}
-                            </span>
-                          ))}
+                          {purchasedWeaponUpgrades.map(u => {
+                            const tierColor = u.tier === 'legendary' ? '#d4a030' : u.tier === 'elite' ? '#b080e0' : u.tier === 'advanced' ? '#6090e0' : '#8a8a8a';
+                            const statLines = [
+                              u.effect.attackBonus   && `+${u.effect.attackBonus} ATK`,
+                              u.effect.defenseBonus  && `+${u.effect.defenseBonus} DEF`,
+                              u.effect.healthBonus   && `+${u.effect.healthBonus} HP`,
+                              (u.effect as any).manaBonus && `+${(u.effect as any).manaBonus} MP`,
+                              u.effect.critChanceBonus && `+${Math.round(u.effect.critChanceBonus * 100)}% Crit`,
+                              u.effect.critDamageBonus && `+${Math.round(u.effect.critDamageBonus * 100)}% Crit Dmg`,
+                              u.effect.specialAbility  && `🌟 ${u.effect.specialAbility.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}`,
+                            ].filter(Boolean) as string[];
+                            return (
+                              <div key={u.id} className="relative group">
+                                <span
+                                  className="text-xs px-2 py-1 rounded font-bold cursor-default"
+                                  style={{ background: 'rgba(20,60,20,0.6)', border: '1px solid #2a6a2a', color: '#6adc6a' }}
+                                >
+                                  {u.emoji} {u.name}
+                                </span>
+                                {/* Tooltip — appears below, clamped to right edge */}
+                                <div
+                                  className="absolute top-full left-0 mt-1.5 z-50 hidden group-hover:block pointer-events-none"
+                                  style={{ minWidth: 180, maxWidth: 220 }}
+                                >
+                                  <div className="rounded-xl p-2.5 shadow-2xl"
+                                    style={{ background: 'rgba(14,10,6,0.97)', border: `1px solid ${tierColor}`, boxShadow: `0 0 16px rgba(0,0,0,0.9)` }}>
+                                    <p className="font-black text-xs mb-1" style={{ color: tierColor }}>{u.emoji} {u.name}</p>
+                                    <p className="text-[10px] mb-2 leading-relaxed" style={{ color: '#8a7060' }}>{u.description}</p>
+                                    {statLines.length > 0 && (
+                                      <div className="flex flex-col gap-0.5 pt-1.5" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                                        {statLines.map((line, i) => (
+                                          <span key={i} className="text-[10px] font-bold" style={{ color: '#6adc6a' }}>{line}</span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
