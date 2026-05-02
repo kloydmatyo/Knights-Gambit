@@ -72,6 +72,15 @@ export default function Home() {
           <Button
             size="lg"
             variant="secondary"
+            onClick={() => router.push('/sticker')}
+            className="text-xl w-full"
+          >
+            🎨 Create Character Sticker
+          </Button>
+
+          <Button
+            size="lg"
+            variant="secondary"
             onClick={() => setShowHowToPlay(true)}
             className="text-xl w-full"
           >

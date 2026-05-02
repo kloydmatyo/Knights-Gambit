@@ -285,7 +285,7 @@ export default function GamePage() {
     }
   };
 
-  // â”€â”€ Combat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Combat 
   const triggerCombatAnimations = (enemyType: string, result: { playerDamage: number; enemyDamage: number; isEnemyDefeated: boolean; coinsEarned: number }) => {
     const hurtFrames = ENEMY_SPRITES[enemyType]?.frames['Hurt'] ?? 3;
     const hurtDuration = (hurtFrames / 8) * 1000;
@@ -405,7 +405,7 @@ export default function GamePage() {
     }
   };
 
-  // â”€â”€ Items / Shop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Items / Shop 
   const handleUseItem = (itemId: string) => {
     if (!gameState) return;
     const { player: newPlayer, message } = InventoryEngine.useItem(gameState.player, itemId);
@@ -425,7 +425,7 @@ export default function GamePage() {
     showNotification(message);
   };
 
-  // â”€â”€ Traps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Traps 
   const handleTrapTrigger = (state: GameState, tile: BoardTile) => {
     let newPlayer = state.player;
     let message = '';
@@ -437,13 +437,13 @@ export default function GamePage() {
         newPlayer = { ...newPlayer, statusEffects: already
           ? newPlayer.statusEffects.map((e) => e.type === 'burn' ? { ...e, duration: Math.max(e.duration, 4) } : e)
           : [...newPlayer.statusEffects, { type: 'burn' as const, duration: 4, value: 5 }] };
-        message = 'ðŸ”¥ Fire Trap! You are set ablaze! Burn for 4 turns.';
+        message = 'Fire Trap! You are set ablaze! Burn for 4 turns.';
         break;
       }
       case 'spike': {
         const dmg = 15;
         newPlayer = { ...newPlayer, health: Math.max(0, newPlayer.health - dmg) };
-        message = `ðŸ—¡ï¸ Spike Trap! You take ${dmg} direct damage!`;
+        message = `Spike Trap! You take ${dmg} direct damage!`;
         break;
       }
       case 'poison_gas': {
@@ -451,11 +451,11 @@ export default function GamePage() {
         newPlayer = { ...newPlayer, statusEffects: already
           ? newPlayer.statusEffects.map((e) => e.type === 'poison' ? { ...e, duration: Math.max(e.duration, 3) } : e)
           : [...newPlayer.statusEffects, { type: 'poison' as const, duration: 3, value: 6 }] };
-        message = 'ðŸ§ª Poison Gas Trap! Poisoned for 3 turns.';
+        message = 'Poison Gas Trap! Poisoned for 3 turns.';
         break;
       }
       default:
-        message = 'âš ï¸ You triggered a trap!';
+        message = 'You triggered a trap!';
     }
 
     setGameState({ ...state, player: newPlayer, board: newBoard });
@@ -464,7 +464,7 @@ export default function GamePage() {
     else autoSave({ ...state, player: newPlayer, board: newBoard });
   };
 
-  // â”€â”€ Events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Events
   const handleRandomEventWith = (state: GameState, destiny?: { state: string; emoji: string; label: string } | null) => {
     // Check for delayed consequence payoffs first
     const payoff = checkEventPayoff(state);
