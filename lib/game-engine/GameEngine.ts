@@ -1,4 +1,4 @@
-import { GameState, Player, CharacterClass, CombatResult, WeaponUpgradeState, BranchChoice, DiceManipulation, DestinyResult, DestinyState } from './types';
+﻿import { GameState, Player, CharacterClass, CombatResult, WeaponUpgradeState, BranchChoice, DiceManipulation, DestinyResult, DestinyState } from './types';
 import { CharacterEngine } from './CharacterEngine';
 import { BoardEngine } from './BoardEngine';
 import { CombatEngine } from './CombatEngine';
@@ -333,14 +333,16 @@ export class GameEngine {
     if (skill && skill.effect.type === 'heal') {
       const healAmt = skill.effect.value || 0;
       updatedPlayer = { ...updatedPlayer, health: Math.min(updatedPlayer.maxHealth, updatedPlayer.health + healAmt) };
-      if (skill.id === 'divine_healing') {
-        // Remove debuffs but preserve beneficial effects (shield, regen, blessed)
-        const KEEP_EFFECTS = new Set(['shield', 'regen', 'blessed']);
-        updatedPlayer = {
-          ...updatedPlayer,
-          statusEffects: updatedPlayer.statusEffects.filter(e => KEEP_EFFECTS.has(e.type)),
-        };
-      }
+    }
+    
+    // Remove debuffs if skill cleansed them (divine_healing)
+    if (result.cleansedDebuffs) {
+      // Remove debuffs but preserve beneficial effects (shield, regen, blessed)
+      const KEEP_EFFECTS = new Set(['shield', 'regen', 'blessed']);
+      updatedPlayer = {
+        ...updatedPlayer,
+        statusEffects: updatedPlayer.statusEffects.filter(e => KEEP_EFFECTS.has(e.type)),
+      };
     }
 
     // Update player shield value after absorbing damage

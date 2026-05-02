@@ -11,12 +11,13 @@ export class CombatEngine {
     enemy: Enemy,
     useSkill?: Skill,
     upgradeState?: WeaponUpgradeState
-  ): CombatResult & { updatedPlayerMana?: number; updatedEnemyStatusEffects?: Enemy['statusEffects'] } {
+  ): CombatResult & { updatedPlayerMana?: number; updatedEnemyStatusEffects?: Enemy['statusEffects']; cleansedDebuffs?: boolean } {
     const messages: string[] = [];
     let playerDamage = 0;
     let enemyDamage = 0;
     let updatedPlayerMana = player.mana ?? 0;
     let updatedEnemyStatusEffects = [...enemy.statusEffects];
+    let cleansedDebuffs = false;
 
     const relics = player.relics ?? [];
     const hasCursedIdol = relics.includes('relic_cursed_idol');
@@ -38,6 +39,7 @@ export class CombatEngine {
       const skillResult = this.useSkill(cursedPlayer, enemy, useSkill, upgradeState);
       playerDamage = skillResult.damage;
       updatedPlayerMana = skillResult.updatedMana ?? updatedPlayerMana;
+      cleansedDebuffs = skillResult.cleansedDebuffs ?? false;
       if (skillResult.appliedPoison) {
         const alreadyPoisoned = updatedEnemyStatusEffects.some(e => e.type === 'poison');
         if (!alreadyPoisoned) {
@@ -197,6 +199,7 @@ export class CombatEngine {
       resolutionType: isPlayerVictory ? 'kill' : undefined,
       updatedPlayerMana,
       updatedEnemyStatusEffects,
+      cleansedDebuffs,
       // Behavior side-effects for GameEngine to apply
       behaviorEnemyAtkGain: (!isEnemyDefeated && enemy.behavior === 'berserker') ? 3 : 0,
       behaviorEnemyRegen:   (!isEnemyDefeated && enemy.behavior === 'regenerator') ? 8 : 0,
@@ -227,11 +230,12 @@ export class CombatEngine {
     enemy: Enemy,
     skill: Skill,
     upgradeState?: WeaponUpgradeState
-  ): { damage: number; messages: string[]; updatedMana?: number; appliedPoison?: boolean } {
+  ): { damage: number; messages: string[]; updatedMana?: number; appliedPoison?: boolean; cleansedDebuffs?: boolean } {
     const messages: string[] = [];
     let damage = 0;
     let updatedMana = player.mana ?? 0;
     let appliedPoison = false;
+    let cleansedDebuffs = false;
 
     // Mana cost for skills — mage only, 20 mana per active skill use
     const MANA_COST = 20;
@@ -271,6 +275,7 @@ export class CombatEngine {
         messages.push(`You heal for ${healAmount} HP!`);
         // Cleric: also remove debuffs on divine_healing
         if (skill.id === 'divine_healing') {
+          cleansedDebuffs = true;
           messages.push('✨ Debuffs cleansed!');
         }
         break;
@@ -300,7 +305,7 @@ export class CombatEngine {
         damage = player.attack;
     }
 
-    return { damage, messages, updatedMana, appliedPoison };
+    return { damage, messages, updatedMana, appliedPoison, cleansedDebuffs };
   }
 
   /**
