@@ -61,6 +61,7 @@ export default function GamePage() {
   const [pendingFloorAdvance, setPendingFloorAdvance] = useState<GameState | null>(null);
   const [floorCompleteState, setFloorCompleteState] = useState<GameState | null>(null);
   const [hoveredTileId, setHoveredTileId] = useState<number | null>(null);
+  const [shopDestinyState, setShopDestinyState] = useState<string | null>(null);
 
   // Detect saved runs on mount
   useEffect(() => {
@@ -134,6 +135,8 @@ export default function GamePage() {
 
     // Move player to chosen tile (destiny modifier applied inside chooseTile)
     let stateAfterMove = GameEngine.chooseTile(gameState, tileId);
+    // Preserve destiny for combat resolution — chooseTile clears pendingBranchChoice
+    const destinyState = destiny?.state ?? null;
 
     // Apply destiny buffs/debuffs to player for non-combat nodes
     if (destiny) {
@@ -224,7 +227,7 @@ export default function GamePage() {
 
     switch (tile.type) {
       case 'enemy': {
-        const combatState = GameEngine.startCombat(stateAfterMove);
+        const combatState = GameEngine.startCombat(stateAfterMove, destinyState);
         setGameState(combatState);
         setPhase('combat');
         setCombatEnemy(combatState.currentEnemy);
@@ -234,7 +237,7 @@ export default function GamePage() {
         return;
       }
       case 'elite': {
-        const combatState = GameEngine.startCombat(stateAfterMove);
+        const combatState = GameEngine.startCombat(stateAfterMove, destinyState);
         setGameState(combatState);
         setPhase('combat');
         setCombatEnemy(combatState.currentEnemy);
@@ -244,7 +247,7 @@ export default function GamePage() {
         return;
       }
       case 'boss': {
-        const bossState = GameEngine.startCombat(stateAfterMove);
+        const bossState = GameEngine.startCombat(stateAfterMove, destinyState);
         setGameState(bossState);
         setPhase('combat');
         setCombatEnemy(bossState.currentEnemy);
@@ -256,9 +259,11 @@ export default function GamePage() {
       case 'shop': {
         // Exalted = free shop, Cursed = 3x prices (handled in ShopPanel via destinyState prop)
         setGameState(stateAfterMove);
+        setShopDestinyState(destinyState);
         const shopMsg = destiny?.state === 'exalted' ? ' Exalted! Everything is FREE!'
           : destiny?.state === 'cursed' ? ' Cursed! Prices are tripled!'
           : destiny?.state === 'favored' ? ' Favored! 25% discount!'
+          : destiny?.state === 'unlucky' ? '📉 Unlucky! Prices are inflated!'
           : ' Welcome to the shop!';
         showNotification(shopMsg);
         // Only auto-open shop if this isn't the final tile — otherwise let the buttons handle it
@@ -747,7 +752,7 @@ export default function GamePage() {
       </AnimatePresence>
 
       <InventoryPanel isOpen={isInventoryOpen} onClose={() => setIsInventoryOpen(false)} player={gameState.player} onUseItem={handleUseItem} isInCombat={phase === 'combat'} />
-      <ShopPanel isOpen={isShopOpen} onClose={() => setIsShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getShopItems(gameState.currentFloor).filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts), ...(InventoryEngine.getRelicForFloor(gameState.currentFloor, gameState.player.relics ?? []) ? [InventoryEngine.getRelicForFloor(gameState.currentFloor, gameState.player.relics ?? [])!] : [])]} onPurchase={handlePurchase} statUpgradeCounts={gameState.statUpgradeCounts} />
+      <ShopPanel isOpen={isShopOpen} onClose={() => { setIsShopOpen(false); setShopDestinyState(null); }} player={gameState.player} items={[...InventoryEngine.getShopItems(gameState.currentFloor).filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts), ...(InventoryEngine.getRelicForFloor(gameState.currentFloor, gameState.player.relics ?? []) ? [InventoryEngine.getRelicForFloor(gameState.currentFloor, gameState.player.relics ?? [])!] : [])]} onPurchase={handlePurchase} statUpgradeCounts={gameState.statUpgradeCounts} destinyState={shopDestinyState as any} currentFloor={gameState.currentFloor} upgradeState={upgradeState} onWeaponUpgrade={handleWeaponUpgradePurchase} />
       <ShopPanel isOpen={isSpecialShopOpen} onClose={() => setIsSpecialShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getSpecialShopItems().filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts)]} onPurchase={handlePurchase} title="âœ¨ Special Shop" statUpgradeCounts={gameState.statUpgradeCounts} />
       <WeaponUpgradePanel isOpen={isUpgradePanelOpen} onClose={() => setIsUpgradePanelOpen(false)} player={gameState.player} currentFloor={gameState.currentFloor} upgradeState={upgradeState} onPurchase={handleWeaponUpgradePurchase} />
 

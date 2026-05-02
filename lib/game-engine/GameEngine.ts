@@ -1,4 +1,4 @@
-import { GameState, Player, CharacterClass, CombatResult, WeaponUpgradeState, BranchChoice, DiceManipulation, DestinyResult } from './types';
+import { GameState, Player, CharacterClass, CombatResult, WeaponUpgradeState, BranchChoice, DiceManipulation, DestinyResult, DestinyState } from './types';
 import { CharacterEngine } from './CharacterEngine';
 import { BoardEngine } from './BoardEngine';
 import { CombatEngine } from './CombatEngine';
@@ -222,16 +222,16 @@ export class GameEngine {
     return (currentTile?.depth ?? 0) === maxDepth && (currentTile?.visited ?? false);
   }
 
-  static startCombat(state: GameState): GameState {
+  static startCombat(state: GameState, destinyState?: string | null): GameState {
     const tile = BoardEngine.getTile(state.board, state.player.position);
     if (!tile) return state;
-    const destinyState = state.pendingBranchChoice?.destinyResult?.state ?? null;
+    const resolvedDestiny = ((destinyState !== undefined ? destinyState : state.pendingBranchChoice?.destinyResult?.state) ?? null) as DestinyState | null;
     if (tile.type === 'boss') {
       const boss = EnemyEngine.createBoss(state.currentFloor);
-      return { ...state, isInCombat: true, currentEnemy: boss, activeCombatDestiny: destinyState };
+      return { ...state, isInCombat: true, currentEnemy: boss, activeCombatDestiny: resolvedDestiny };
     }
     if (!tile.enemy) return state;
-    return { ...state, isInCombat: true, currentEnemy: tile.enemy, activeCombatDestiny: destinyState };
+    return { ...state, isInCombat: true, currentEnemy: tile.enemy, activeCombatDestiny: resolvedDestiny };
   }
 
   static executeCombatTurn(

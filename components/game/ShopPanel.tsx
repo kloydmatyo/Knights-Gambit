@@ -213,7 +213,7 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
     : [];
 
   // Apply destiny price modifier
-  const priceMultiplier = destinyState === 'exalted' ? 0 : destinyState === 'cursed' ? 3 : destinyState === 'favored' ? 0.75 : 1;
+  const priceMultiplier = destinyState === 'exalted' ? 0 : destinyState === 'cursed' ? 3 : destinyState === 'favored' ? 0.75 : destinyState === 'unlucky' ? 1.25 : 1;
   const modifiedItems = items.map(item => ({
     ...item,
     price: Math.round(item.price * priceMultiplier),
@@ -269,12 +269,12 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
           </div>
 
           {/* Destiny banner */}
-          {destinyState && destinyState !== 'balanced' && destinyState !== 'unlucky' && (
+          {destinyState && destinyState !== 'balanced' && (
             <div className="px-5 py-2 text-xs font-bold text-center shrink-0"
               style={{
-                background: destinyState === 'exalted' ? 'rgba(180,140,0,0.2)' : destinyState === 'cursed' ? 'rgba(180,0,0,0.2)' : 'rgba(0,140,0,0.2)',
+                background: destinyState === 'exalted' ? 'rgba(180,140,0,0.2)' : destinyState === 'cursed' ? 'rgba(180,0,0,0.2)' : destinyState === 'unlucky' ? 'rgba(180,100,0,0.2)' : 'rgba(0,140,0,0.2)',
                 borderBottom: '1px solid #3d2a14',
-                color: destinyState === 'exalted' ? '#f0c040' : destinyState === 'cursed' ? '#f06060' : '#60c060',
+                color: destinyState === 'exalted' ? '#f0c040' : destinyState === 'cursed' ? '#f06060' : destinyState === 'unlucky' ? '#f0a040' : '#60c060',
               }}>
               {destinyState === 'exalted' ? '✨ Exalted — Everything is FREE!' : destinyState === 'cursed' ? '💀 Cursed — Prices are tripled!' : '📈 Favored — 25% discount!'}
             </div>
