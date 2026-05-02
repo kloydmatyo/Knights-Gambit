@@ -103,6 +103,7 @@ export default function GamePage() {
     const { state: newState, branchChoice } = GameEngine.getBranchOptions(gameState);
     setGameState(newState);
     setPendingChoice(branchChoice);
+    autoSave(newState);
   };
 
   // -- Tile chosen -- roll 2d6 for destiny, show result before resolving ------
@@ -121,6 +122,7 @@ export default function GamePage() {
     setLastDiceRoll(destinyResult.total);
     setGameState(newState);
     setPendingChoice(newState.pendingBranchChoice ?? null);
+    autoSave(newState);
   };
 
   // -- Confirm destiny -- called when player clicks "Proceed" after seeing 2d6 -
