@@ -156,21 +156,32 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
             <div className="mt-0.5">
               {!statusExpanded ? (
                 <button onClick={() => setStatusExpanded(true)}
-                  className="flex items-center gap-1 text-xs transition-colors"
+                  className="flex flex-wrap items-center gap-1 text-xs transition-colors"
                   style={{ color: '#8a6a4a' }}>
                   {activeEffects.slice(0, 3).map((e, i) => (
-                    <span key={i}>{STATUS_ICON[e.type] ?? '⚡'}</span>
+                    <span key={i} className="flex items-center gap-0.5 rounded px-1.5 py-0.5 font-bold"
+                      style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#c8a070' }}>
+                      {STATUS_ICON[e.type] ?? '⚡'}
+                      <span className="text-[9px]" style={{ color: '#f0a040' }}>{e.duration}t</span>
+                    </span>
                   ))}
-                  {activeEffects.length > 3 && <span className="text-[10px]">+{activeEffects.length - 3}</span>}
-                  <span className="text-[10px] ml-0.5" style={{ color: '#6a4a2a' }}>▾</span>
+                  {activeEffects.length > 3 && (
+                    <span className="text-[10px] px-1" style={{ color: '#6a4a2a' }}>+{activeEffects.length - 3}</span>
+                  )}
+                  <span className="text-[10px]" style={{ color: '#6a4a2a' }}>▾</span>
                 </button>
               ) : (
                 <button onClick={() => setStatusExpanded(false)} className="w-full text-left">
                   <div className="flex flex-wrap gap-1">
                     {activeEffects.map((e, i) => (
-                      <span key={i} className="text-xs rounded px-1.5 py-0.5"
+                      <span key={i} className="flex items-center gap-1 text-xs rounded px-1.5 py-0.5"
                         style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#c8a070' }}>
-                        {STATUS_ICON[e.type] ?? '⚡'} {e.type} {e.duration}t
+                        {STATUS_ICON[e.type] ?? '⚡'}
+                        <span className="capitalize">{e.type}</span>
+                        <span className="font-black text-[10px]" style={{ color: '#f0a040' }}>{e.duration}t</span>
+                        {e.value !== undefined && (
+                          <span className="text-[9px]" style={{ color: '#ef4444' }}>−{e.value}/t</span>
+                        )}
                       </span>
                     ))}
                   </div>

@@ -634,6 +634,12 @@ export default function GamePage() {
     const gs = { ...save.gameState, flags: save.gameState.flags ?? {} };
     setGameState(gs);
     setUpgradeState(save.upgradeState);
+    // Restore pending branch choice if the game was saved mid-turn
+    if (gs.pendingBranchChoice) {
+      setPendingChoice(gs.pendingBranchChoice);
+    } else {
+      setPendingChoice(null);
+    }
     // Clear stale floor-complete state, then re-evaluate from the loaded game state
     setPendingFloorAdvance(null);
     if (GameEngine.isFloorComplete(gs) && !gs.isInCombat) {
@@ -641,7 +647,14 @@ export default function GamePage() {
     } else {
       setFloorCompleteState(null);
     }
-    setPhase('playing');
+    // Restore combat state if saved mid-combat
+    if (gs.isInCombat && gs.currentEnemy) {
+      setCombatEnemy(gs.currentEnemy);
+      setPhase('combat');
+      setCombatLog([`Resuming combat with ${gs.currentEnemy.name}...`]);
+    } else {
+      setPhase('playing');
+    }
     setSavedRuns([]);
     showNotification(`Welcome back, ${save.playerName}!`);
   };
