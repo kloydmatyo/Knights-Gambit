@@ -207,6 +207,17 @@ export default function CombatUI({
             style={{ left: '72%', bottom: 'calc(30% + 110px)', transform: 'translateX(-50%)' }}>
             <p className="text-red-400 font-extrabold text-xs tracking-widest mb-1">{enemy.name.toUpperCase()}</p>
             <HealthBar current={enemy.health} max={enemy.maxHealth} color="bg-red-500" />
+            {enemy.statusEffects.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {enemy.statusEffects.map((e, i) => (
+                  <span key={i} className="text-[9px] rounded px-1.5 py-0.5"
+                    style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#c8a070' }}>
+                    {e.type === 'poison' ? '🧪' : e.type === 'burn' ? '🔥' : e.type === 'shield' ? '🛡️' : e.type === 'cursed' ? '💀' : '⚡'}
+                    {' '}{e.type}{e.duration < 999 ? ` ${e.duration}t` : ''}{e.value ? ` (${e.value})` : ''}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Player sprite — bottom left */}

@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { Player, Item } from '@/lib/game-engine';
-import { StatUpgradeCounts } from '@/lib/game-engine/types';
+import { StatUpgradeCounts, WeaponUpgradeState, WeaponUpgrade } from '@/lib/game-engine/types';
 import { calcUpgradePrice } from '@/lib/game-engine/StatUpgradeEngine';
+import { WeaponUpgradeEngine } from '@/lib/game-engine/WeaponUpgradeEngine';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +16,10 @@ interface ShopPanelProps {
   onPurchase: (item: Item) => void;
   title?: string;
   statUpgradeCounts?: StatUpgradeCounts;
+  destinyState?: string | null;
+  currentFloor?: number;
+  upgradeState?: WeaponUpgradeState;
+  onWeaponUpgrade?: (upgradeId: string) => { success: boolean; message: string };
 }
 
 const itemEmojis: Record<string, string> = {
@@ -35,12 +40,13 @@ const RELIC_CATEGORIES: Record<string, string> = {
   relic_philosophers_stone: 'Economy', relic_death_mask: 'Combat', relic_golden_chalice: 'Economy',
 };
 
-type ShopTab = 'consumables' | 'upgrades' | 'relics';
+type ShopTab = 'consumables' | 'upgrades' | 'relics' | 'weapons';
 
 const TABS: { id: ShopTab; label: string; icon: string }[] = [
   { id: 'consumables', label: 'Consumables', icon: '🧪' },
   { id: 'upgrades',    label: 'Upgrades',    icon: '⬆️' },
   { id: 'relics',      label: 'Relics',       icon: '✨' },
+  { id: 'weapons',     label: 'Weapons',      icon: '⚔️' },
 ];
 
 function categorize(item: Item): ShopTab {
@@ -60,7 +66,7 @@ function getNextPrice(item: Item, counts?: StatUpgradeCounts): number | null {
 
 // ── Single item card ──────────────────────────────────────────────────────
 function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
-  item: Item; player: Player;
+  item: Item & { _originalPrice?: number }; player: Player;
   onPurchase: (item: Item) => void;
   statUpgradeCounts?: StatUpgradeCounts;
 }) {
@@ -147,7 +153,16 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
       {/* Price + owned + buy */}
       <div className="flex items-center justify-between gap-2 mt-auto">
         <div className="flex flex-col">
-          <span className="font-black text-base" style={{ color: '#d4a030' }}>💰 {item.price}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-black text-base" style={{ color: item.price === 0 ? '#60c060' : '#d4a030' }}>
+              {item.price === 0 ? 'FREE' : `💰 ${item.price}`}
+            </span>
+            {(item as any)._originalPrice !== undefined && (item as any)._originalPrice !== item.price && (
+              <span className="text-xs line-through" style={{ color: '#6a4a2a' }}>
+                💰 {(item as any)._originalPrice}
+              </span>
+            )}
+          </div>
           {owned > 0 && (
             <span className="text-[10px]" style={{ color: '#6a5040' }}>
               Owned: <span className="text-white font-bold">{owned}</span>
@@ -178,14 +193,36 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
 }
 
 // ── Main ShopPanel ─────────────────────────────────────────────────────────
-export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, title = '🏪 Shop', statUpgradeCounts }: ShopPanelProps) {
+export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, title = '🏪 Shop', statUpgradeCounts, destinyState, currentFloor = 1, upgradeState, onWeaponUpgrade }: ShopPanelProps) {
   const [activeTab, setActiveTab] = useState<ShopTab>('consumables');
 
   if (!isOpen) return null;
 
+  // Weapon upgrades available at this floor
+  const availableWeaponUpgrades = upgradeState
+    ? WeaponUpgradeEngine.getAvailableUpgrades(player.class, currentFloor, upgradeState)
+    : [];
+  const lockedWeaponUpgrades = upgradeState
+    ? WeaponUpgradeEngine.getClassUpgrades(player.class).filter(u =>
+        !upgradeState.purchasedUpgradeIds.includes(u.id) &&
+        !availableWeaponUpgrades.find(a => a.id === u.id)
+      )
+    : [];
+  const purchasedWeaponUpgrades = upgradeState
+    ? WeaponUpgradeEngine.getPurchasedUpgrades(upgradeState)
+    : [];
+
+  // Apply destiny price modifier
+  const priceMultiplier = destinyState === 'exalted' ? 0 : destinyState === 'cursed' ? 3 : destinyState === 'favored' ? 0.75 : 1;
+  const modifiedItems = items.map(item => ({
+    ...item,
+    price: Math.round(item.price * priceMultiplier),
+    _originalPrice: item.price,
+  })) as (Item & { _originalPrice?: number })[];
+
   const canAfford = (price: number) => player.coins >= price;
 
-  const sortedItems = [...items].sort((a, b) => {
+  const sortedItems = [...modifiedItems].sort((a, b) => {
     const aAfford = canAfford(a.price) ? 0 : 1;
     const bAfford = canAfford(b.price) ? 0 : 1;
     if (aAfford !== bAfford) return aAfford - bAfford;
@@ -197,6 +234,7 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
     consumables: sortedItems.filter(i => categorize(i) === 'consumables').length,
     upgrades:    sortedItems.filter(i => categorize(i) === 'upgrades').length,
     relics:      sortedItems.filter(i => categorize(i) === 'relics').length,
+    weapons:     availableWeaponUpgrades.length,
   };
 
   return (
@@ -229,6 +267,18 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
               onMouseEnter={e => (e.currentTarget.style.color = '#d4a030')}
               onMouseLeave={e => (e.currentTarget.style.color = '#6a4a2a')}>×</button>
           </div>
+
+          {/* Destiny banner */}
+          {destinyState && destinyState !== 'balanced' && destinyState !== 'unlucky' && (
+            <div className="px-5 py-2 text-xs font-bold text-center shrink-0"
+              style={{
+                background: destinyState === 'exalted' ? 'rgba(180,140,0,0.2)' : destinyState === 'cursed' ? 'rgba(180,0,0,0.2)' : 'rgba(0,140,0,0.2)',
+                borderBottom: '1px solid #3d2a14',
+                color: destinyState === 'exalted' ? '#f0c040' : destinyState === 'cursed' ? '#f06060' : '#60c060',
+              }}>
+              {destinyState === 'exalted' ? '✨ Exalted — Everything is FREE!' : destinyState === 'cursed' ? '💀 Cursed — Prices are tripled!' : '📈 Favored — 25% discount!'}
+            </div>
+          )}
 
           {/* ── Tabs ── */}
           <div className="flex shrink-0 px-4 pt-3 gap-1">
@@ -271,10 +321,100 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                 transition={{ duration: 0.15 }}
                 className="grid gap-3"
                 style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
-                {tabItems.length === 0 ? (
+                {tabItems.length === 0 && activeTab !== 'weapons' ? (
                   <p className="col-span-full text-center py-8 text-sm" style={{ color: '#4a3020' }}>
                     Nothing available in this category.
                   </p>
+                ) : activeTab === 'weapons' ? (
+                  <div className="col-span-full flex flex-col gap-3">
+                    {/* Purchased */}
+                    {purchasedWeaponUpgrades.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#4a8a4a' }}>Owned</p>
+                        <div className="flex flex-wrap gap-2">
+                          {purchasedWeaponUpgrades.map(u => (
+                            <span key={u.id} className="text-xs px-2 py-1 rounded font-bold"
+                              style={{ background: 'rgba(20,60,20,0.6)', border: '1px solid #2a6a2a', color: '#6adc6a' }}>
+                              {u.emoji} {u.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Available */}
+                    {availableWeaponUpgrades.length === 0 && purchasedWeaponUpgrades.length === 0 && (
+                      <p className="text-center py-8 text-sm" style={{ color: '#4a3020' }}>
+                        No weapon upgrades available yet — progress further to unlock.
+                      </p>
+                    )}
+                    {availableWeaponUpgrades.length === 0 && purchasedWeaponUpgrades.length > 0 && lockedWeaponUpgrades.length === 0 && (
+                      <p className="text-center py-4 text-sm" style={{ color: '#4a8a4a' }}>✅ All upgrades purchased!</p>
+                    )}
+                    <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+                      {availableWeaponUpgrades.map((upgrade, i) => {
+                        const affordable = player.coins >= upgrade.cost;
+                        const tierColor = upgrade.tier === 'legendary' ? '#d4a030' : upgrade.tier === 'elite' ? '#b080e0' : upgrade.tier === 'advanced' ? '#6090e0' : '#8a8a8a';
+                        const tierBorder = upgrade.tier === 'legendary' ? '#8a6010' : upgrade.tier === 'elite' ? '#6a3a9a' : upgrade.tier === 'advanced' ? '#2a4a9a' : '#3d2a14';
+                        return (
+                          <motion.div key={upgrade.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className={cn('flex flex-col rounded-xl p-3', affordable ? 'hover:brightness-110' : 'opacity-60')}
+                            style={{ background: 'rgba(30,18,6,0.8)', border: `1px solid ${tierBorder}` }}>
+                            <div className="flex items-start justify-between mb-2">
+                              <span className="text-3xl">{upgrade.emoji}</span>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded font-bold capitalize"
+                                style={{ background: 'rgba(10,6,2,0.8)', border: `1px solid ${tierBorder}`, color: tierColor }}>
+                                {upgrade.tier}
+                              </span>
+                            </div>
+                            <p className="font-bold text-sm mb-1" style={{ color: tierColor }}>{upgrade.name}</p>
+                            <p className="text-xs leading-relaxed flex-1 mb-2" style={{ color: '#8a7060' }}>{upgrade.description}</p>
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {upgrade.effect.attackBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#e8a050' }}>+{upgrade.effect.attackBonus} ATK</span>}
+                              {upgrade.effect.defenseBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#7ab4d4' }}>+{upgrade.effect.defenseBonus} DEF</span>}
+                              {upgrade.effect.healthBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#6adc6a' }}>+{upgrade.effect.healthBonus} HP</span>}
+                              {upgrade.effect.critChanceBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#d4a030' }}>+{Math.round(upgrade.effect.critChanceBonus * 100)}% Crit</span>}
+                              {upgrade.effect.specialAbility && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #8a6010', color: '#d4a030' }}>🌟 Special</span>}
+                            </div>
+                            <div className="flex items-center justify-between mt-auto">
+                              <span className="font-black text-base" style={{ color: '#d4a030' }}>💰 {upgrade.cost}</span>
+                              <button onClick={() => onWeaponUpgrade?.(upgrade.id)} disabled={!affordable || !onWeaponUpgrade}
+                                className="px-3 py-1.5 rounded-lg font-black text-xs transition-all active:scale-95 disabled:opacity-40"
+                                style={affordable ? {
+                                  background: 'linear-gradient(180deg,#c8621a,#8a3e0a)',
+                                  border: '1px solid #e8821a', borderBottom: '3px solid #4a1e04',
+                                  color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+                                } : { background: 'rgba(30,18,6,0.6)', border: '1px solid #3d2a14', color: '#6a4a2a' }}>
+                                {affordable ? 'Upgrade' : 'Need Coins'}
+                              </button>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Locked */}
+                    {lockedWeaponUpgrades.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#4a3020' }}>Locked</p>
+                        <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
+                          {lockedWeaponUpgrades.map(u => (
+                            <div key={u.id} className="flex items-center gap-2 p-2 rounded-lg opacity-40"
+                              style={{ background: 'rgba(20,12,4,0.6)', border: '1px solid #2a1a0a' }}>
+                              <span className="text-xl grayscale">{u.emoji}</span>
+                              <div>
+                                <p className="text-xs font-bold" style={{ color: '#6a4a2a' }}>{u.name}</p>
+                                <p className="text-[9px]" style={{ color: '#4a3020' }}>
+                                  🔒 Floor {u.requiredFloor}{u.prerequisiteId ? ' · Needs prerequisite' : ''}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : tabItems.map((item, i) => (
                   <ItemCard key={`${item.id}-${i}`} item={item} player={player}
                     onPurchase={onPurchase} statUpgradeCounts={statUpgradeCounts} />
