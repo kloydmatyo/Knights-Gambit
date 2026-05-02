@@ -143,7 +143,7 @@ export class BoardEngine {
         x: n.x,
         y: n.y,
         depth: n.depth,
-        visited: n.id === 0,
+        visited: n.depth === 0, // start tile (depth 0) is pre-visited
         nextIds: [],
         prevIds: [],
         ...(type === TILE_TYPES.ENEMY && { enemy: EnemyEngine.generateEnemy(floor) }),

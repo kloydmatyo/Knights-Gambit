@@ -595,6 +595,13 @@ export default function GamePage() {
     const gs = { ...save.gameState, flags: save.gameState.flags ?? {} };
     setGameState(gs);
     setUpgradeState(save.upgradeState);
+    // Clear stale floor-complete state, then re-evaluate from the loaded game state
+    setPendingFloorAdvance(null);
+    if (GameEngine.isFloorComplete(gs) && !gs.isInCombat) {
+      setFloorCompleteState(gs);
+    } else {
+      setFloorCompleteState(null);
+    }
     setPhase('playing');
     setSavedRuns([]);
     showNotification(`Welcome back, ${save.playerName}!`);

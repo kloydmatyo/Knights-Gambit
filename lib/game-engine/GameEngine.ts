@@ -210,13 +210,16 @@ export class GameEngine {
    * Check if the player has reached the final tile (boss/end) of the board.
    */
   static isFloorComplete(state: GameState): boolean {
+    if (state.isInCombat) return false;
     const hasBossFloor = state.board.some((t) => t.type === 'boss');
     if (hasBossFloor) {
-      return state.board.some((t) => t.type === 'boss' && t.visited) && !state.isInCombat;
+      // Boss floor complete only when the boss tile itself has been visited
+      return state.board.some((t) => t.type === 'boss' && t.visited);
     }
-    // Non-boss floor: complete when the final depth tile is visited
+    // Non-boss floor: complete when the player is currently ON a max-depth tile
     const maxDepth = Math.max(...state.board.map(t => t.depth ?? 0));
-    return state.board.some(t => (t.depth ?? 0) === maxDepth && t.visited) && !state.isInCombat;
+    const currentTile = state.board.find(t => t.id === state.player.position);
+    return (currentTile?.depth ?? 0) === maxDepth && (currentTile?.visited ?? false);
   }
 
   static startCombat(state: GameState): GameState {
