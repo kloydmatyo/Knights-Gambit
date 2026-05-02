@@ -10,15 +10,17 @@ export class InventoryEngine {
   static getShopItems(floor = 1): Item[] {
     const scale = 1 + (floor - 1) * 0.12;
     const p = (base: number) => Math.round(base * scale);
+    // Effect values scale more gently — +5% per floor
+    const ev = (base: number) => Math.round(base * (1 + (floor - 1) * 0.1));
 
     return [
       {
         id: ITEM_TYPES.HEALING_POTION,
         type: ITEM_TYPES.HEALING_POTION,
         name: 'Healing Potion',
-        description: 'Restores 30 HP',
+        description: `Restores ${ev(30)} HP`,
         price: p(SHOP_PRICES.HEALING_POTION),
-        effect: { type: 'heal', value: 30 },
+        effect: { type: 'heal', value: ev(30) },
         quantity: 1,
         autoConsume: false,
       },
@@ -86,9 +88,9 @@ export class InventoryEngine {
         id: ITEM_TYPES.IRON_SHIELD,
         type: ITEM_TYPES.IRON_SHIELD,
         name: 'Iron Shield',
-        description: 'Absorbs up to 30 damage before breaking',
+        description: `Absorbs up to ${ev(30)} damage before breaking`,
         price: p(SHOP_PRICES.IRON_SHIELD),
-        effect: { type: 'shield', value: 30 },
+        effect: { type: 'shield', value: ev(30) },
         quantity: 1,
         autoConsume: false,
       },

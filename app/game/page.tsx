@@ -413,6 +413,34 @@ export default function GamePage() {
   // Items / Shop 
   const handleUseItem = (itemId: string) => {
     if (!gameState) return;
+
+    // In combat: using an item costs a turn — enemy attacks back
+    if (phase === 'combat' && gameState.currentEnemy) {
+      const { state: newState, messages } = GameEngine.executeItemTurn(gameState, itemId);
+      setGameState(newState);
+      if (messages.length > 0) setCombatLog(prev => [...prev, ...messages]);
+      if (GameEngine.isGameOver(newState)) {
+        SaveEngine.clearSlot(activeSlot);
+        setTimeout(() => setPhase('game-over'), 1000);
+      } else {
+        // Trigger enemy attack animation if they hit
+        const enemyDamage = newState.player.health < gameState.player.health
+          ? gameState.player.health - newState.player.health : 0;
+        if (enemyDamage > 0 && gameState.currentEnemy) {
+          const enemyType = gameState.currentEnemy.type;
+          const attackFrames = ENEMY_SPRITES[enemyType]?.frames['Attack'] ?? 3;
+          const attackDuration = (attackFrames / 8) * 1000;
+          setTimeout(() => setEnemyAnimState('Attack'), 100);
+          setTimeout(() => setPlayerHurt(true), 100 + attackDuration * 0.5);
+          setTimeout(() => setPlayerHurt(false), 100 + attackDuration * 0.5 + 400);
+          setTimeout(() => setEnemyAnimState('Idle'), 100 + attackDuration);
+        }
+        autoSave(newState);
+      }
+      return;
+    }
+
+    // Out of combat: just apply the effect
     const { player: newPlayer, message } = InventoryEngine.useItem(gameState.player, itemId);
     setGameState({ ...gameState, player: newPlayer });
     showNotification(message);

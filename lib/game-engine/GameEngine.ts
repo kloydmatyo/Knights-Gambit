@@ -3,6 +3,7 @@ import { CharacterEngine } from './CharacterEngine';
 import { BoardEngine } from './BoardEngine';
 import { CombatEngine } from './CombatEngine';
 import { EnemyEngine } from './EnemyEngine';
+import { InventoryEngine } from './InventoryEngine';
 import { GAME_CONFIG, roll2d6 } from './constants';
 import { createInitialStatCounts } from './StatUpgradeEngine';
 import { randomInt } from '@/lib/utils';
@@ -33,7 +34,7 @@ export class GameEngine {
   }
 
   /**
-   * NEW FLOW — Step 1: Show branch options to player (no dice yet).
+   * NEW FLOW � Step 1: Show branch options to player (no dice yet).
    * Returns the adjacent tile options the player can choose from.
    */
   static getBranchOptions(state: GameState): { state: GameState; branchChoice: BranchChoice } {
@@ -46,7 +47,7 @@ export class GameEngine {
   }
 
   /**
-   * NEW FLOW — Step 2: Player chose a tile, now roll 2d6 for the outcome modifier.
+   * NEW FLOW � Step 2: Player chose a tile, now roll 2d6 for the outcome modifier.
    * Returns the destiny result and updated state with chosen tile + destiny.
    */
   static rollOutcome(state: GameState, chosenTileId: number): { state: GameState; destinyResult: DestinyResult } {
@@ -68,7 +69,7 @@ export class GameEngine {
   }
 
   /**
-   * LEGACY — Roll dice (kept for backward compat / debug).
+   * LEGACY � Roll dice (kept for backward compat / debug).
    * @deprecated Use getBranchOptions() + rollOutcome() instead.
    */
   static rollDice(state: GameState): { state: GameState; diceValue: number; branchChoice: BranchChoice } {
@@ -83,7 +84,7 @@ export class GameEngine {
   }
 
   /**
-   * "Choose 1 of 2 rolls" — roll twice, player picks which roll to use.
+   * "Choose 1 of 2 rolls" � roll twice, player picks which roll to use.
    * Costs 1 doubleRolls token.
    */
   static rollDouble(state: GameState): { state: GameState; branchChoice: BranchChoice } | null {
@@ -183,7 +184,7 @@ export class GameEngine {
           newEnemy = {
             ...newEnemy,
             attack: Math.floor(newEnemy.attack * 1.2),
-            // baseAttack stays as original — used for ATK badge display
+            // baseAttack stays as original � used for ATK badge display
             statusEffects: [...newEnemy.statusEffects, { type: 'shield' as const, duration: 999, value: shield }],
           };
         } else if (destiny.state === 'unlucky') {
@@ -241,6 +242,58 @@ export class GameEngine {
     return { ...state, isInCombat: true, currentEnemy: enemy, activeCombatDestiny: resolvedDestiny, combatAtkMultiplier };
   }
 
+  static executeItemTurn(
+    state: GameState,
+    itemId: string
+  ): { state: GameState; messages: string[] } {
+    if (!state.currentEnemy) return { state, messages: [] };
+
+    const { player: afterItem, message: itemMsg } = InventoryEngine.useItem(state.player, itemId);
+    const messages: string[] = [itemMsg];
+
+    const enemy = state.currentEnemy;
+    const isCursed = afterItem.statusEffects.some(e => e.type === 'cursed');
+    const effectiveDefense = isCursed ? Math.max(0, Math.floor(afterItem.defense * 0.6)) : afterItem.defense;
+    let incomingDamage = CombatEngine.calculateDamage(enemy.attack, effectiveDefense);
+
+    let updatedPlayer = afterItem;
+    const shieldEffect = updatedPlayer.statusEffects.find(e => e.type === 'shield');
+    if (shieldEffect && incomingDamage > 0) {
+      const absorbed = Math.min(shieldEffect.value ?? 0, incomingDamage);
+      incomingDamage = Math.max(0, incomingDamage - absorbed);
+      const newShieldVal = (shieldEffect.value ?? 0) - absorbed;
+      updatedPlayer = {
+        ...updatedPlayer,
+        statusEffects: newShieldVal <= 0
+          ? updatedPlayer.statusEffects.filter(e => e.type !== 'shield')
+          : updatedPlayer.statusEffects.map(e => e.type === 'shield' ? { ...e, value: newShieldVal } : e),
+      };
+      const shieldMsg = newShieldVal <= 0 ? ' Shield broken!' : ' (' + newShieldVal + ' remaining)';
+      messages.push('Shield absorbs ' + absorbed + ' damage!' + shieldMsg);
+    }
+
+    const newHealth = Math.max(0, updatedPlayer.health - incomingDamage);
+    updatedPlayer = { ...updatedPlayer, health: newHealth };
+    if (incomingDamage > 0) messages.push(enemy.name + ' attacks for ' + incomingDamage + ' damage!');
+
+    updatedPlayer = CharacterEngine.updateCooldowns(updatedPlayer);
+
+    let updatedEnemy = enemy;
+    if (enemy.behavior === 'berserker') {
+      updatedEnemy = { ...enemy, attack: enemy.attack + 3 };
+      messages.push(enemy.name + ' grows stronger! (+3 ATK)');
+    }
+
+    const newState: GameState = {
+      ...state,
+      player: updatedPlayer,
+      currentEnemy: updatedEnemy,
+      isInCombat: newHealth > 0,
+    };
+
+    return { state: newState, messages };
+  }
+
   static executeCombatTurn(
     state: GameState,
     useSkillId?: string,
@@ -251,7 +304,7 @@ export class GameEngine {
     const skill = useSkillId ? state.player.skills.find((s) => s.id === useSkillId) : undefined;
     const result = CombatEngine.executeTurn(state.player, state.currentEnemy, skill, upgradeState);
 
-    // Apply combat ATK multiplier (destiny modifier — replaces old exalted-only block)
+    // Apply combat ATK multiplier (destiny modifier � replaces old exalted-only block)
     if (state.combatAtkMultiplier && state.combatAtkMultiplier !== 1 && result.playerDamage > 0) {
       const multiplied = Math.round(result.playerDamage * state.combatAtkMultiplier);
       const diff = multiplied - result.playerDamage;
@@ -262,7 +315,7 @@ export class GameEngine {
       result.coinsEarned = result.isPlayerVictory ? state.currentEnemy.coinReward : 0;
       if (diff > 0) {
         result.messages = result.messages.map(m =>
-          m.startsWith('You attack') || m.startsWith('💥') ? `✨ ${m} (+${diff} bonus)` : m
+          m.startsWith('You attack') || m.startsWith('??') ? `? ${m} (+${diff} bonus)` : m
         );
       }
     }
@@ -330,10 +383,10 @@ export class GameEngine {
             e = { ...e, health: Math.min(e.maxHealth, e.health + result.behaviorEnemyRegen) };
           }
 
-          // Boss enrage phase: below 50% HP for the first time → +15 ATK
+          // Boss enrage phase: below 50% HP for the first time ? +15 ATK
           if (e.behavior === 'enrager' && !e.enraged && e.health < e.maxHealth * 0.5) {
             e = { ...e, attack: e.attack + 15, enraged: true };
-            result.messages.push(`💢 ${e.name} ENRAGES! (+15 ATK)`);
+            result.messages.push(`?? ${e.name} ENRAGES! (+15 ATK)`);
           }
 
           return e;
@@ -350,21 +403,21 @@ export class GameEngine {
       }
     }
 
-    // Relic: Vampiric Fang — heal 3 HP on hit
+    // Relic: Vampiric Fang � heal 3 HP on hit
     if (result.relicVampiricHeal && result.playerHealth > 0) {
       updatedPlayer = { ...updatedPlayer, health: Math.min(updatedPlayer.maxHealth, updatedPlayer.health + result.relicVampiricHeal) };
     }
 
-    // Relic: Philosopher's Stone — +5 coins on kill
+    // Relic: Philosopher's Stone � +5 coins on kill
     if (result.relicBonusCoins) {
       updatedPlayer = { ...updatedPlayer, coins: updatedPlayer.coins + result.relicBonusCoins };
-      result.messages.push(`💠 Philosopher's Stone: +${result.relicBonusCoins} coins!`);
+      result.messages.push(`?? Philosopher's Stone: +${result.relicBonusCoins} coins!`);
     }
 
     // Exalted post-combat heal: +20 HP when the enemy is defeated
     if (result.isEnemyDefeated && state.activeCombatDestiny === 'exalted') {
       updatedPlayer = { ...updatedPlayer, health: Math.min(updatedPlayer.maxHealth, updatedPlayer.health + 20) };
-      result.messages.push('✨ Exalted blessing! You recover 20 HP!');
+      result.messages.push('? Exalted blessing! You recover 20 HP!');
     }
 
     // Mage: reset mana to max on combat victory
@@ -378,7 +431,8 @@ export class GameEngine {
     };
   }
 
-  // ── Alternative combat resolution methods ──────────────────────────────
+
+  // -- Alternative combat resolution methods ------------------------------
 
   /**
    * Attempt to flee from combat. On success, combat ends with no reward.
@@ -396,14 +450,14 @@ export class GameEngine {
     };
 
     if (result.isPlayerVictory) {
-      // Flee succeeded — end combat
+      // Flee succeeded � end combat
       return {
         state: { ...state, player: updatedPlayer, currentEnemy: null, isInCombat: false, activeCombatDestiny: null, combatAtkMultiplier: null },
         result,
       };
     }
 
-    // Flee failed — combat continues
+    // Flee failed � combat continues
     return {
       state: { ...state, player: updatedPlayer },
       result,
@@ -426,7 +480,7 @@ export class GameEngine {
     };
 
     if (result.isPlayerVictory && result.bribeCost) {
-      // Bribe succeeded — deduct coins and end combat
+      // Bribe succeeded � deduct coins and end combat
       updatedPlayer = { ...updatedPlayer, coins: updatedPlayer.coins - result.bribeCost };
       return {
         state: { ...state, player: updatedPlayer, currentEnemy: null, isInCombat: false, activeCombatDestiny: null, combatAtkMultiplier: null },
@@ -434,7 +488,7 @@ export class GameEngine {
       };
     }
 
-    // Bribe failed — combat continues
+    // Bribe failed � combat continues
     return {
       state: { ...state, player: updatedPlayer },
       result,
@@ -457,14 +511,14 @@ export class GameEngine {
     };
 
     if (result.isPlayerVictory) {
-      // Truce succeeded — end combat with partial reward
+      // Truce succeeded � end combat with partial reward
       return {
         state: { ...state, player: updatedPlayer, currentEnemy: null, isInCombat: false, activeCombatDestiny: null, combatAtkMultiplier: null, enemiesKilled: state.enemiesKilled },
         result,
       };
     }
 
-    // Truce failed — combat continues
+    // Truce failed � combat continues
     return {
       state: { ...state, player: updatedPlayer },
       result,
@@ -479,7 +533,7 @@ export class GameEngine {
     const nextFloor = state.currentFloor + 1;
     const newBoard = BoardEngine.generateBoard(nextFloor);
 
-    // Relic: Golden Chalice — heal 15 HP at the start of every new floor
+    // Relic: Golden Chalice � heal 15 HP at the start of every new floor
     const chaliceHeal = (state.player.relics ?? []).includes('golden_chalice') ? 15 : 0;
 
     return {
