@@ -123,12 +123,14 @@ interface CombatUIProps {
   enemyAnimState?: EnemyAnimState;
   playerHurt?: boolean;
   playerSpriteUrl?: string;
+  activeCombatDestiny?: string | null;
+  combatAtkMultiplier?: number | null;
 }
 
 export default function CombatUI({
   player, enemy, onAttack, onUseSkill, onFlee, onBribe, onTruce,
   onOpenInventory, bribeCost, combatLog, isPlayerTurn,
-  enemyAnimState = 'Idle', playerHurt = false, playerSpriteUrl,
+  enemyAnimState = 'Idle', playerHurt = false, playerSpriteUrl, activeCombatDestiny, combatAtkMultiplier,
 }: CombatUIProps) {
   const [menu, setMenu] = useState<ActionMenu>('main');
   const isAnimating = enemyAnimState !== 'Idle';
@@ -136,6 +138,18 @@ export default function CombatUI({
   const activeSkills = player.skills.filter(s => s.type === 'active');
   const promptText = combatLog.length > 0 ? combatLog[combatLog.length - 1] : `What will ${player.class} do?`;
   const logRef = useRef<HTMLDivElement>(null);
+  // Track initial shield value for the bar percentage
+  const initialShieldRef = useRef<number | null>(null);
+  const enemyIdRef = useRef<string | null>(null);
+  if (enemy.id !== enemyIdRef.current) {
+    // New enemy — reset shield tracking
+    enemyIdRef.current = enemy.id;
+    initialShieldRef.current = null;
+  }
+  const shieldEffect = enemy.statusEffects.find(e => e.type === 'shield');
+  if (shieldEffect?.value && initialShieldRef.current === null) {
+    initialShieldRef.current = shieldEffect.value;
+  }
 
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
@@ -157,7 +171,19 @@ export default function CombatUI({
           {/* Player HP — above player sprite */}
           <div className="absolute z-10 w-52 bg-black/70 rounded-xl px-3 py-2 border border-white/10"
             style={{ left: '29%', bottom: 'calc(18% + 175px)', transform: 'translateX(-50%)' }}>
-            <p className="text-yellow-300 font-extrabold text-xs tracking-widest mb-1">{player.class.toUpperCase()}</p>
+            <div className="flex items-start justify-between mb-1">
+              <p className="text-yellow-300 font-extrabold text-xs tracking-widest leading-tight">{player.class.toUpperCase()}</p>
+              {combatAtkMultiplier && combatAtkMultiplier !== 1 && (() => {
+                const pct = Math.round((combatAtkMultiplier - 1) * 100);
+                const isUp = pct > 0;
+                return (
+                  <span className="shrink-0 ml-1 text-[9px] font-black px-1 py-0.5 rounded leading-none"
+                    style={{ background: isUp ? 'rgba(120,80,0,0.6)' : 'rgba(120,0,0,0.6)', border: `1px solid ${isUp ? '#f59e0b' : '#f87171'}`, color: isUp ? '#fde68a' : '#fca5a5' }}>
+                    ⚔️{isUp ? `+${pct}%` : `${pct}%`}
+                  </span>
+                );
+              })()}
+            </div>
             <HealthBar current={player.health} max={player.maxHealth} color="bg-emerald-500" />
             {/* Shield bar */}
             {(() => {
@@ -205,14 +231,45 @@ export default function CombatUI({
           {/* Enemy HP — above enemy sprite */}
           <div className="absolute z-10 w-52 bg-black/70 rounded-xl px-3 py-2 border border-white/10"
             style={{ left: '72%', bottom: 'calc(30% + 110px)', transform: 'translateX(-50%)' }}>
-            <p className="text-red-400 font-extrabold text-xs tracking-widest mb-1">{enemy.name.toUpperCase()}</p>
+            <div className="flex items-start justify-between mb-1">
+              <p className="text-red-400 font-extrabold text-xs tracking-widest leading-tight">{enemy.name.toUpperCase()}</p>
+              {enemy.baseAttack && enemy.attack !== enemy.baseAttack && (() => {
+                const diff = enemy.attack - enemy.baseAttack;
+                const pct = Math.round((diff / enemy.baseAttack) * 100);
+                const isUp = diff > 0;
+                return (
+                  <span className="shrink-0 ml-1 text-[9px] font-black px-1 py-0.5 rounded leading-none"
+                    style={{ background: isUp ? 'rgba(180,30,30,0.6)' : 'rgba(30,120,30,0.6)', border: `1px solid ${isUp ? '#f87171' : '#4ade80'}`, color: isUp ? '#fca5a5' : '#86efac' }}>
+                    ⚔️{isUp ? `+${pct}%` : `${pct}%`}
+                  </span>
+                );
+              })()}
+            </div>
+            {process.env.NODE_ENV === 'development' && (
+              <p className="text-[8px] text-yellow-400/60 mb-0.5">atk:{enemy.attack} base:{enemy.baseAttack ?? '?'}</p>
+            )}
             <HealthBar current={enemy.health} max={enemy.maxHealth} color="bg-red-500" />
-            {enemy.statusEffects.length > 0 && (
+            {/* Shield bar */}
+            {shieldEffect?.value ? (
+              <div className="mt-1.5">
+                <div className="flex justify-between text-[10px] font-bold mb-0.5">
+                  <span className="text-cyan-300 uppercase tracking-widest">🛡 Shield</span>
+                  <span className="text-cyan-200 font-mono">{shieldEffect.value}</span>
+                </div>
+                <div className="h-2 bg-black/60 rounded-full overflow-hidden border border-cyan-500/30">
+                  <motion.div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-400"
+                    animate={{ width: `${Math.min(100, (shieldEffect.value / (initialShieldRef.current ?? shieldEffect.value)) * 100)}%` }}
+                    transition={{ type: 'spring', stiffness: 120, damping: 20 }} />
+                </div>
+              </div>
+            ) : null}
+            {/* Other status effects (excluding shield) */}
+            {enemy.statusEffects.filter(e => e.type !== 'shield').length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1.5">
-                {enemy.statusEffects.map((e, i) => (
+                {enemy.statusEffects.filter(e => e.type !== 'shield').map((e, i) => (
                   <span key={i} className="text-[9px] rounded px-1.5 py-0.5"
                     style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#c8a070' }}>
-                    {e.type === 'poison' ? '🧪' : e.type === 'burn' ? '🔥' : e.type === 'shield' ? '🛡️' : e.type === 'cursed' ? '💀' : '⚡'}
+                    {e.type === 'poison' ? '🧪' : e.type === 'burn' ? '🔥' : e.type === 'cursed' ? '💀' : '⚡'}
                     {' '}{e.type}{e.duration < 999 ? ` ${e.duration}t` : ''}{e.value ? ` (${e.value})` : ''}
                   </span>
                 ))}

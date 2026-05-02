@@ -42,6 +42,8 @@ export interface Enemy {
   health: number;
   maxHealth: number;
   attack: number;
+  /** Base attack before any destiny modifiers — used to show ATK buff/debuff indicator */
+  baseAttack: number;
   defense: number;
   coinReward: number;
   statusEffects: StatusEffect[];
@@ -198,6 +200,8 @@ export interface GameState {
   diceManipulation: DiceManipulation;
   /** Destiny state active for the current combat (cleared on combat end) */
   activeCombatDestiny?: DestinyState | null;
+  /** Temporary ATK multiplier for the player during combat (e.g. 1.2 = +20%, 0.8 = -20%) */
+  combatAtkMultiplier?: number | null;
   /** Persistent run flags — track choices for delayed consequences */
   flags: Record<string, boolean | number | string>;
 }

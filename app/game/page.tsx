@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import {
@@ -133,36 +133,32 @@ export default function GamePage() {
     const destiny = gameState.pendingBranchChoice?.destinyResult;
     setPendingChoice(null);
 
-    // Move player to chosen tile (destiny modifier applied inside chooseTile)
-    let stateAfterMove = GameEngine.chooseTile(gameState, tileId);
+    // Move player to chosen tile — pass destiny explicitly so chooseTile always sees it
+    let stateAfterMove = GameEngine.chooseTile(gameState, tileId, destiny ?? null);
     // Preserve destiny for combat resolution — chooseTile clears pendingBranchChoice
     const destinyState = destiny?.state ?? null;
 
-    // Apply destiny buffs/debuffs to player for non-combat nodes
+    // Apply destiny buffs/debuffs to player
     if (destiny) {
       const tile = stateAfterMove.board.find((t) => t.id === tileId);
-      if (tile && tile.type !== 'enemy' && tile.type !== 'elite' && tile.type !== 'boss') {
+      const isCombatTile = tile?.type === 'enemy' || tile?.type === 'elite' || tile?.type === 'boss';
+      if (tile) {
         if (destiny.state === 'favored') {
-          // +15% max HP heal + +2 ATK for this floor
           const bonus = Math.floor(stateAfterMove.player.maxHealth * 0.15);
           stateAfterMove = { ...stateAfterMove, player: {
             ...stateAfterMove.player,
             health: Math.min(stateAfterMove.player.maxHealth, stateAfterMove.player.health + bonus),
-            attack: stateAfterMove.player.attack + 2,
           }};
-          showNotification(`📈 Favored! +${bonus} HP, +2 ATK this floor`);
+          showNotification(`📈 Favored! +${bonus} HP`);
         } else if (destiny.state === 'exalted') {
-          // +25% max HP heal + +5 ATK + +10 coins
           const bonus = Math.floor(stateAfterMove.player.maxHealth * 0.25);
           stateAfterMove = { ...stateAfterMove, player: {
             ...stateAfterMove.player,
             health: Math.min(stateAfterMove.player.maxHealth, stateAfterMove.player.health + bonus),
-            attack: stateAfterMove.player.attack + 5,
             coins: stateAfterMove.player.coins + 10,
           }};
-          showNotification(`✨ Exalted! +${bonus} HP, +5 ATK, +10 coins`);
+          showNotification(isCombatTile ? `✨ Exalted! +${bonus} HP, +10 coins — double damage active!` : `✨ Exalted! +${bonus} HP, +10 coins`);
         } else if (destiny.state === 'cursed') {
-          // -20% max HP + apply cursed status effect
           const dmg = Math.floor(stateAfterMove.player.maxHealth * 0.2);
           const alreadyCursed = stateAfterMove.player.statusEffects.some(e => e.type === 'cursed');
           stateAfterMove = { ...stateAfterMove, player: {
@@ -174,7 +170,6 @@ export default function GamePage() {
           }};
           showNotification(`💀 Cursed! -${dmg} HP + Cursed for 3 turns`);
         } else if (destiny.state === 'unlucky') {
-          // -10% max HP + -2 ATK temporarily (apply as a small debuff via notification)
           const dmg = Math.floor(stateAfterMove.player.maxHealth * 0.1);
           stateAfterMove = { ...stateAfterMove, player: {
             ...stateAfterMove.player,
@@ -504,7 +499,7 @@ export default function GamePage() {
 
     // Destiny overrides for events
     if (destiny?.state === 'exalted') {
-      event = { text: ' Exalted! Best possible outcome!', coins: 50, heal: 30, attack: 3 } as any;
+      event = { text: ' Exalted! Best possible outcome!', coins: 50, heal: 30 } as any;
     } else if (destiny?.state === 'cursed') {
       event = { text: ' Cursed! A dark spirit curses you!', curse: true } as any;
     } else if (destiny?.state === 'favored' && (event as any).curse) {
@@ -554,6 +549,7 @@ export default function GamePage() {
     setGameState(newState);
     setPendingFloorAdvance(null);
     setFloorCompleteState(null);
+    setShopDestinyState(null);
     showNotification(`Welcome to Floor ${newState.currentFloor}!`);
     autoSave(newState);
   };
@@ -569,6 +565,7 @@ export default function GamePage() {
     };
     setGameState({ ...advanced, player: rewardedPlayer });
     autoSave({ ...advanced, player: rewardedPlayer });
+    setShopDestinyState(null);
     setPhase('playing');
     showNotification(`Dungeon ${getDungeonNumber(gameState.currentFloor)} cleared! HP restored. Entering Dungeon ${getDungeonNumber(advanced.currentFloor)}...`);
   };
@@ -594,6 +591,7 @@ export default function GamePage() {
     setCombatLog([]);
     setNotification(null);
     setPendingChoice(null);
+    setShopDestinyState(null);
   };
 
   const handleResume = (save: SaveData) => {
@@ -627,8 +625,52 @@ export default function GamePage() {
   const debugHealFull = () => { if (!gameState) return; setGameState({ ...gameState, player: { ...gameState.player, health: gameState.player.maxHealth, mana: gameState.player.maxMana || 0 } }); showNotification('Fully healed!'); };
   const debugOpenShop = () => { setIsShopOpen(true); showNotification('Shop opened!'); };
   const debugNextFloor = () => { if (!gameState) return; const s = GameEngine.advanceFloor(gameState); setGameState(s); showNotification(`Advanced to Floor ${s.currentFloor}!`); };
-  const debugFightEnemy = (type: string) => { if (!gameState) return; const enemy = EnemyEngine.createEnemy(type as any, gameState.currentFloor); setGameState({ ...gameState, isInCombat: true, currentEnemy: enemy }); setPhase('combat'); setCombatEnemy(enemy); setCombatLog([`[DEBUG] A wild ${enemy.name} appears!`]); };
+  const debugFightEnemy = (type: string) => { if (!gameState) return; const enemy = EnemyEngine.createEnemy(type as any, gameState.currentFloor); setGameState({ ...gameState, isInCombat: true, currentEnemy: enemy, activeCombatDestiny: null }); setPhase('combat'); setCombatEnemy(enemy); setCombatLog([`[DEBUG] A wild ${enemy.name} appears!`]); };
+  const debugFightEnemyCursed = (type: string) => {
+    if (!gameState) return;
+    const base = EnemyEngine.createEnemy(type as any, gameState.currentFloor);
+    const shield = Math.floor(base.maxHealth * 0.3);
+    const enemy = { ...base, attack: Math.floor(base.attack * 1.2), statusEffects: [{ type: 'shield' as const, duration: 999, value: shield }] };
+    setGameState({ ...gameState, isInCombat: true, currentEnemy: enemy, activeCombatDestiny: 'cursed' as const, combatAtkMultiplier: 0.8 });
+    setPhase('combat'); setCombatEnemy(enemy); setCombatLog([`[DEBUG] 💀 Cursed! ${enemy.name} appears with shield & +20% ATK!`]);
+  };
+  const debugFightEnemyUnlucky = (type: string) => {
+    if (!gameState) return;
+    const base = EnemyEngine.createEnemy(type as any, gameState.currentFloor);
+    const enemy = { ...base, attack: Math.floor(base.attack * 1.15) };
+    setGameState({ ...gameState, isInCombat: true, currentEnemy: enemy, activeCombatDestiny: 'unlucky' as const, combatAtkMultiplier: 0.85 });
+    setPhase('combat'); setCombatEnemy(enemy); setCombatLog([`[DEBUG] 📉 Unlucky! ${enemy.name} appears with +15% ATK!`]);
+  };
+  const debugFightEnemyFavored = (type: string) => {
+    if (!gameState) return;
+    const base = EnemyEngine.createEnemy(type as any, gameState.currentFloor);
+    const enemy = { ...base, attack: Math.max(1, Math.floor(base.attack * 0.85)) };
+    setGameState({ ...gameState, isInCombat: true, currentEnemy: enemy, activeCombatDestiny: 'favored' as const, combatAtkMultiplier: 1.2 });
+    setPhase('combat'); setCombatEnemy(enemy); setCombatLog([`[DEBUG] 📈 Favored! ${enemy.name} appears with -15% ATK!`]);
+  };
   const debugSetFloor = (floor: number) => { if (!gameState) return; setGameState({ ...gameState, currentFloor: floor }); showNotification(`[DEBUG] Floor set to ${floor}`); };
+
+  // Simulate a destiny roll on the current tile — triggers the full resolveNode flow
+  const debugSimulateDestiny = (state: 'exalted' | 'favored' | 'balanced' | 'unlucky' | 'cursed') => {
+    if (!gameState || phase !== 'playing') return;
+    const DESTINY_PRESETS = {
+      exalted:  { state: 'exalted'  as const, emoji: '✨', label: 'Exalted',  description: '[DEBUG]', total: 12, die1: 6, die2: 6 },
+      favored:  { state: 'favored'  as const, emoji: '📈', label: 'Favored',  description: '[DEBUG]', total: 10, die1: 5, die2: 5 },
+      balanced: { state: 'balanced' as const, emoji: '⚪', label: 'Balanced', description: '[DEBUG]', total: 7,  die1: 3, die2: 4 },
+      unlucky:  { state: 'unlucky'  as const, emoji: '📉', label: 'Unlucky',  description: '[DEBUG]', total: 4,  die1: 2, die2: 2 },
+      cursed:   { state: 'cursed'   as const, emoji: '💀', label: 'Cursed',   description: '[DEBUG]', total: 2,  die1: 1, die2: 1 },
+    };
+    const destinyResult = DESTINY_PRESETS[state];
+    const tileId = gameState.player.position;
+    // Inject destiny into pendingBranchChoice so resolveNode reads it correctly
+    const injected: GameState = {
+      ...gameState,
+      pendingBranchChoice: { tileOptions: [tileId], chosenTileId: tileId, destinyResult, diceValue: destinyResult.total },
+    };
+    setGameState(injected);
+    setPendingChoice({ tileOptions: [tileId], chosenTileId: tileId, destinyResult, diceValue: destinyResult.total });
+    showNotification(`[DEBUG] ${destinyResult.emoji} ${destinyResult.label} — click Proceed to apply`);
+  };
   const debugUnlockAllUpgrades = () => {
     if (!gameState) return;
     const classUpgrades = WeaponUpgradeEngine.getClassUpgrades(gameState.player.class);
@@ -747,12 +789,14 @@ export default function GamePage() {
             enemyAnimState={enemyAnimState}
             playerHurt={playerHurt}
             playerSpriteUrl={(gameState.player as any).spriteDataUrl}
+            activeCombatDestiny={gameState.activeCombatDestiny}
+            combatAtkMultiplier={gameState.combatAtkMultiplier}
           />
         )}
       </AnimatePresence>
 
       <InventoryPanel isOpen={isInventoryOpen} onClose={() => setIsInventoryOpen(false)} player={gameState.player} onUseItem={handleUseItem} isInCombat={phase === 'combat'} />
-      <ShopPanel isOpen={isShopOpen} onClose={() => { setIsShopOpen(false); setShopDestinyState(null); }} player={gameState.player} items={[...InventoryEngine.getShopItems(gameState.currentFloor).filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts), ...(InventoryEngine.getRelicForFloor(gameState.currentFloor, gameState.player.relics ?? []) ? [InventoryEngine.getRelicForFloor(gameState.currentFloor, gameState.player.relics ?? [])!] : [])]} onPurchase={handlePurchase} statUpgradeCounts={gameState.statUpgradeCounts} destinyState={shopDestinyState as any} currentFloor={gameState.currentFloor} upgradeState={upgradeState} onWeaponUpgrade={handleWeaponUpgradePurchase} />
+      <ShopPanel isOpen={isShopOpen} onClose={() => setIsShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getShopItems(gameState.currentFloor).filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts)]} onPurchase={handlePurchase} statUpgradeCounts={gameState.statUpgradeCounts} destinyState={shopDestinyState as any} currentFloor={gameState.currentFloor} upgradeState={upgradeState} onWeaponUpgrade={handleWeaponUpgradePurchase} allRelics={InventoryEngine.getAllRelics(gameState.currentFloor, gameState.player.relics ?? [])} />
       <ShopPanel isOpen={isSpecialShopOpen} onClose={() => setIsSpecialShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getSpecialShopItems().filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts)]} onPurchase={handlePurchase} title="âœ¨ Special Shop" statUpgradeCounts={gameState.statUpgradeCounts} />
       <WeaponUpgradePanel isOpen={isUpgradePanelOpen} onClose={() => setIsUpgradePanelOpen(false)} player={gameState.player} currentFloor={gameState.currentFloor} upgradeState={upgradeState} onPurchase={handleWeaponUpgradePurchase} />
 
@@ -869,6 +913,26 @@ export default function GamePage() {
                 <button onClick={debugHealFull} className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs font-bold">â¤ï¸ Full Heal</button>
                 <button onClick={debugOpenShop} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-bold">ðŸª Open Shop</button>
                 <button onClick={() => setIsSpecialShopOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-xs font-bold">âœ¨ Special Shop</button>
+                <div className="border-t border-purple-400 pt-2 mt-1">
+                  <p className="text-purple-300 text-xs mb-2 font-bold">Shop Destiny</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    <button onClick={() => { setShopDestinyState('exalted'); setIsShopOpen(true); }} className="bg-yellow-700 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs font-bold">Exalted</button>
+                    <button onClick={() => { setShopDestinyState('favored'); setIsShopOpen(true); }} className="bg-green-700 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs font-bold">Favored</button>
+                    <button onClick={() => { setShopDestinyState('unlucky'); setIsShopOpen(true); }} className="bg-orange-700 hover:bg-orange-600 text-white px-2 py-1.5 rounded text-xs font-bold">Unlucky</button>
+                    <button onClick={() => { setShopDestinyState('cursed'); setIsShopOpen(true); }} className="bg-red-800 hover:bg-red-700 text-white px-2 py-1.5 rounded text-xs font-bold">Cursed</button>
+                  </div>
+                </div>
+                <div className="border-t border-purple-400 pt-2 mt-1">
+                  <p className="text-purple-300 text-xs mb-2 font-bold">🎲 Dice Destiny</p>
+                  <p className="text-gray-500 text-[9px] mb-1">Applies to current tile</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    <button onClick={() => debugSimulateDestiny('exalted')} className="bg-yellow-700 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs font-bold">✨ Exalted</button>
+                    <button onClick={() => debugSimulateDestiny('favored')} className="bg-green-700 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs font-bold">📈 Favored</button>
+                    <button onClick={() => debugSimulateDestiny('balanced')} className="bg-gray-600 hover:bg-gray-500 text-white px-2 py-1.5 rounded text-xs font-bold">⚪ Balanced</button>
+                    <button onClick={() => debugSimulateDestiny('unlucky')} className="bg-orange-700 hover:bg-orange-600 text-white px-2 py-1.5 rounded text-xs font-bold">📉 Unlucky</button>
+                    <button onClick={() => debugSimulateDestiny('cursed')} className="col-span-2 bg-red-800 hover:bg-red-700 text-white px-2 py-1.5 rounded text-xs font-bold">💀 Cursed</button>
+                  </div>
+                </div>
                 <button onClick={debugNextFloor} className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded text-xs font-bold">â¬†ï¸ Next Floor</button>
                 <div className="border-t border-purple-400 pt-2 mt-1">
                   <p className="text-purple-300 text-xs mb-2 font-bold">âš”ï¸ Fight Enemy</p>
@@ -880,6 +944,24 @@ export default function GamePage() {
                   {Object.entries(ENEMY_TYPES).map(([, type]) => (
                     <button key={type} onClick={() => debugFightEnemy(type)} className="w-full bg-red-800 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-bold mb-1">
                       {type.replace(/(\d)/, ' $1').replace(/^./, s => s.toUpperCase())}
+                    </button>
+                  ))}
+                  <p className="text-purple-300 text-[9px] mt-2 mb-1 font-bold">💀 Cursed (shield + ATK)</p>
+                  {Object.entries(ENEMY_TYPES).map(([, type]) => (
+                    <button key={`cursed-${type}`} onClick={() => debugFightEnemyCursed(type)} className="w-full bg-red-950 hover:bg-red-900 text-red-300 px-3 py-1 rounded text-[9px] font-bold mb-1 border border-red-800">
+                      💀 {type.replace(/(\d)/, ' $1').replace(/^./, s => s.toUpperCase())}
+                    </button>
+                  ))}
+                  <p className="text-purple-300 text-[9px] mt-2 mb-1 font-bold">📉 Unlucky (+15% ATK)</p>
+                  {Object.entries(ENEMY_TYPES).map(([, type]) => (
+                    <button key={`unlucky-${type}`} onClick={() => debugFightEnemyUnlucky(type)} className="w-full bg-orange-950 hover:bg-orange-900 text-orange-300 px-3 py-1 rounded text-[9px] font-bold mb-1 border border-orange-800">
+                      📉 {type.replace(/(\d)/, ' $1').replace(/^./, s => s.toUpperCase())}
+                    </button>
+                  ))}
+                  <p className="text-purple-300 text-[9px] mt-2 mb-1 font-bold">📈 Favored (-15% ATK)</p>
+                  {Object.entries(ENEMY_TYPES).map(([, type]) => (
+                    <button key={`favored-${type}`} onClick={() => debugFightEnemyFavored(type)} className="w-full bg-green-950 hover:bg-green-900 text-green-300 px-3 py-1 rounded text-[9px] font-bold mb-1 border border-green-800">
+                      📈 {type.replace(/(\d)/, ' $1').replace(/^./, s => s.toUpperCase())}
                     </button>
                   ))}
                 </div>

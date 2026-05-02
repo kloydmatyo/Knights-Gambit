@@ -1,4 +1,4 @@
-import { GameState, Player, CharacterClass, CombatResult, WeaponUpgradeState, BranchChoice, DiceManipulation, DestinyResult, DestinyState } from './types';
+﻿import { GameState, Player, CharacterClass, CombatResult, WeaponUpgradeState, BranchChoice, DiceManipulation, DestinyResult, DestinyState } from './types';
 import { CharacterEngine } from './CharacterEngine';
 import { BoardEngine } from './BoardEngine';
 import { CombatEngine } from './CombatEngine';
@@ -33,7 +33,7 @@ export class GameEngine {
   }
 
   /**
-   * NEW FLOW — Step 1: Show branch options to player (no dice yet).
+   * NEW FLOW â€” Step 1: Show branch options to player (no dice yet).
    * Returns the adjacent tile options the player can choose from.
    */
   static getBranchOptions(state: GameState): { state: GameState; branchChoice: BranchChoice } {
@@ -46,7 +46,7 @@ export class GameEngine {
   }
 
   /**
-   * NEW FLOW — Step 2: Player chose a tile, now roll 2d6 for the outcome modifier.
+   * NEW FLOW â€” Step 2: Player chose a tile, now roll 2d6 for the outcome modifier.
    * Returns the destiny result and updated state with chosen tile + destiny.
    */
   static rollOutcome(state: GameState, chosenTileId: number): { state: GameState; destinyResult: DestinyResult } {
@@ -68,7 +68,7 @@ export class GameEngine {
   }
 
   /**
-   * LEGACY — Roll dice (kept for backward compat / debug).
+   * LEGACY â€” Roll dice (kept for backward compat / debug).
    * @deprecated Use getBranchOptions() + rollOutcome() instead.
    */
   static rollDice(state: GameState): { state: GameState; diceValue: number; branchChoice: BranchChoice } {
@@ -83,7 +83,7 @@ export class GameEngine {
   }
 
   /**
-   * "Choose 1 of 2 rolls" — roll twice, player picks which roll to use.
+   * "Choose 1 of 2 rolls" â€” roll twice, player picks which roll to use.
    * Costs 1 doubleRolls token.
    */
   static rollDouble(state: GameState): { state: GameState; branchChoice: BranchChoice } | null {
@@ -169,8 +169,8 @@ export class GameEngine {
    * Player chooses a tile from the pending branch choice and moves there.
    * Optionally applies a destiny modifier to the tile's enemy (if combat).
    */
-  static chooseTile(state: GameState, tileId: number): GameState {
-    const destiny = state.pendingBranchChoice?.destinyResult;
+  static chooseTile(state: GameState, tileId: number, destinyOverride?: import('./types').DestinyResult | null): GameState {
+    const destiny = destinyOverride !== undefined ? destinyOverride : state.pendingBranchChoice?.destinyResult;
     let updatedBoard = BoardEngine.visitTile(state.board, tileId);
 
     // Apply destiny modifier to enemy if applicable
@@ -179,21 +179,18 @@ export class GameEngine {
         if (tile.id !== tileId || !tile.enemy) return tile;
         let newEnemy = { ...tile.enemy };
         if (destiny.state === 'cursed') {
-          // Cursed: enemy gains a shield (30% of max HP) AND +20% ATK
           const shield = Math.floor(newEnemy.maxHealth * 0.3);
           newEnemy = {
             ...newEnemy,
             attack: Math.floor(newEnemy.attack * 1.2),
+            // baseAttack stays as original â€” used for ATK badge display
             statusEffects: [...newEnemy.statusEffects, { type: 'shield' as const, duration: 999, value: shield }],
           };
         } else if (destiny.state === 'unlucky') {
-          // Unlucky: enemy gets +15% ATK
           newEnemy = { ...newEnemy, attack: Math.floor(newEnemy.attack * 1.15) };
         } else if (destiny.state === 'favored') {
-          // Favored: enemy gets -15% ATK
           newEnemy = { ...newEnemy, attack: Math.max(1, Math.floor(newEnemy.attack * 0.85)) };
         }
-        // exalted: no pre-combat modification — double damage handled during combat turns
         return { ...tile, enemy: newEnemy };
       });
     }
@@ -226,12 +223,22 @@ export class GameEngine {
     const tile = BoardEngine.getTile(state.board, state.player.position);
     if (!tile) return state;
     const resolvedDestiny = ((destinyState !== undefined ? destinyState : state.pendingBranchChoice?.destinyResult?.state) ?? null) as DestinyState | null;
+
+    // Player ATK multiplier for this combat based on destiny
+    const combatAtkMultiplier =
+      resolvedDestiny === 'exalted' ? 2.0 :
+      resolvedDestiny === 'favored' ? 1.2 :
+      resolvedDestiny === 'unlucky' ? 0.85 :
+      resolvedDestiny === 'cursed'  ? 0.8 :
+      null;
+
     if (tile.type === 'boss') {
       const boss = EnemyEngine.createBoss(state.currentFloor);
-      return { ...state, isInCombat: true, currentEnemy: boss, activeCombatDestiny: resolvedDestiny };
+      return { ...state, isInCombat: true, currentEnemy: boss, activeCombatDestiny: resolvedDestiny, combatAtkMultiplier };
     }
     if (!tile.enemy) return state;
-    return { ...state, isInCombat: true, currentEnemy: tile.enemy, activeCombatDestiny: resolvedDestiny };
+    const enemy = tile.enemy.baseAttack ? tile.enemy : { ...tile.enemy, baseAttack: tile.enemy.attack };
+    return { ...state, isInCombat: true, currentEnemy: enemy, activeCombatDestiny: resolvedDestiny, combatAtkMultiplier };
   }
 
   static executeCombatTurn(
@@ -244,17 +251,20 @@ export class GameEngine {
     const skill = useSkillId ? state.player.skills.find((s) => s.id === useSkillId) : undefined;
     const result = CombatEngine.executeTurn(state.player, state.currentEnemy, skill, upgradeState);
 
-    // Exalted destiny: double all player damage this combat
-    if (state.activeCombatDestiny === 'exalted' && result.playerDamage > 0) {
-      const bonus = result.playerDamage; // add equal amount on top = 2x total
-      result.playerDamage += bonus;
+    // Apply combat ATK multiplier (destiny modifier â€” replaces old exalted-only block)
+    if (state.combatAtkMultiplier && state.combatAtkMultiplier !== 1 && result.playerDamage > 0) {
+      const multiplied = Math.round(result.playerDamage * state.combatAtkMultiplier);
+      const diff = multiplied - result.playerDamage;
+      result.playerDamage = multiplied;
       result.enemyHealth = Math.max(0, state.currentEnemy.health - result.playerDamage);
       result.isEnemyDefeated = result.enemyHealth <= 0;
       result.isPlayerVictory = result.isEnemyDefeated;
       result.coinsEarned = result.isPlayerVictory ? state.currentEnemy.coinReward : 0;
-      result.messages = result.messages.map(m =>
-        m.startsWith('You attack') || m.startsWith('💥') ? `✨ Exalted! ${m} (×2)` : m
-      );
+      if (diff > 0) {
+        result.messages = result.messages.map(m =>
+          m.startsWith('You attack') || m.startsWith('ðŸ’¥') ? `âœ¨ ${m} (+${diff} bonus)` : m
+        );
+      }
     }
 
     let updatedPlayer = {
@@ -320,10 +330,10 @@ export class GameEngine {
             e = { ...e, health: Math.min(e.maxHealth, e.health + result.behaviorEnemyRegen) };
           }
 
-          // Boss enrage phase: below 50% HP for the first time → +15 ATK
+          // Boss enrage phase: below 50% HP for the first time â†’ +15 ATK
           if (e.behavior === 'enrager' && !e.enraged && e.health < e.maxHealth * 0.5) {
             e = { ...e, attack: e.attack + 15, enraged: true };
-            result.messages.push(`💢 ${e.name} ENRAGES! (+15 ATK)`);
+            result.messages.push(`ðŸ’¢ ${e.name} ENRAGES! (+15 ATK)`);
           }
 
           return e;
@@ -340,21 +350,21 @@ export class GameEngine {
       }
     }
 
-    // Relic: Vampiric Fang — heal 3 HP on hit
+    // Relic: Vampiric Fang â€” heal 3 HP on hit
     if (result.relicVampiricHeal) {
       updatedPlayer = { ...updatedPlayer, health: Math.min(updatedPlayer.maxHealth, updatedPlayer.health + result.relicVampiricHeal) };
     }
 
-    // Relic: Philosopher's Stone — +5 coins on kill
+    // Relic: Philosopher's Stone â€” +5 coins on kill
     if (result.relicBonusCoins) {
       updatedPlayer = { ...updatedPlayer, coins: updatedPlayer.coins + result.relicBonusCoins };
-      result.messages.push(`💠 Philosopher's Stone: +${result.relicBonusCoins} coins!`);
+      result.messages.push(`ðŸ’  Philosopher's Stone: +${result.relicBonusCoins} coins!`);
     }
 
     // Exalted post-combat heal: +20 HP when the enemy is defeated
     if (result.isEnemyDefeated && state.activeCombatDestiny === 'exalted') {
       updatedPlayer = { ...updatedPlayer, health: Math.min(updatedPlayer.maxHealth, updatedPlayer.health + 20) };
-      result.messages.push('✨ Exalted blessing! You recover 20 HP!');
+      result.messages.push('âœ¨ Exalted blessing! You recover 20 HP!');
     }
 
     // Mage: reset mana to max on combat victory
@@ -363,12 +373,12 @@ export class GameEngine {
     }
 
     return {
-      state: { ...state, player: updatedPlayer, currentEnemy: updatedEnemy, isInCombat: !result.isEnemyDefeated, activeCombatDestiny: result.isEnemyDefeated ? null : state.activeCombatDestiny, enemiesKilled: result.isEnemyDefeated ? state.enemiesKilled + 1 : state.enemiesKilled },
+      state: { ...state, player: updatedPlayer, currentEnemy: updatedEnemy, isInCombat: !result.isEnemyDefeated, activeCombatDestiny: result.isEnemyDefeated ? null : state.activeCombatDestiny, combatAtkMultiplier: result.isEnemyDefeated ? null : state.combatAtkMultiplier, enemiesKilled: result.isEnemyDefeated ? state.enemiesKilled + 1 : state.enemiesKilled },
       result,
     };
   }
 
-  // ── Alternative combat resolution methods ──────────────────────────────
+  // â”€â”€ Alternative combat resolution methods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   /**
    * Attempt to flee from combat. On success, combat ends with no reward.
@@ -386,14 +396,14 @@ export class GameEngine {
     };
 
     if (result.isPlayerVictory) {
-      // Flee succeeded — end combat
+      // Flee succeeded â€” end combat
       return {
-        state: { ...state, player: updatedPlayer, currentEnemy: null, isInCombat: false, activeCombatDestiny: null },
+        state: { ...state, player: updatedPlayer, currentEnemy: null, isInCombat: false, activeCombatDestiny: null, combatAtkMultiplier: null },
         result,
       };
     }
 
-    // Flee failed — combat continues
+    // Flee failed â€” combat continues
     return {
       state: { ...state, player: updatedPlayer },
       result,
@@ -416,15 +426,15 @@ export class GameEngine {
     };
 
     if (result.isPlayerVictory && result.bribeCost) {
-      // Bribe succeeded — deduct coins and end combat
+      // Bribe succeeded â€” deduct coins and end combat
       updatedPlayer = { ...updatedPlayer, coins: updatedPlayer.coins - result.bribeCost };
       return {
-        state: { ...state, player: updatedPlayer, currentEnemy: null, isInCombat: false, activeCombatDestiny: null },
+        state: { ...state, player: updatedPlayer, currentEnemy: null, isInCombat: false, activeCombatDestiny: null, combatAtkMultiplier: null },
         result,
       };
     }
 
-    // Bribe failed — combat continues
+    // Bribe failed â€” combat continues
     return {
       state: { ...state, player: updatedPlayer },
       result,
@@ -447,14 +457,14 @@ export class GameEngine {
     };
 
     if (result.isPlayerVictory) {
-      // Truce succeeded — end combat with partial reward
+      // Truce succeeded â€” end combat with partial reward
       return {
-        state: { ...state, player: updatedPlayer, currentEnemy: null, isInCombat: false, activeCombatDestiny: null, enemiesKilled: state.enemiesKilled },
+        state: { ...state, player: updatedPlayer, currentEnemy: null, isInCombat: false, activeCombatDestiny: null, combatAtkMultiplier: null, enemiesKilled: state.enemiesKilled },
         result,
       };
     }
 
-    // Truce failed — combat continues
+    // Truce failed â€” combat continues
     return {
       state: { ...state, player: updatedPlayer },
       result,
@@ -462,14 +472,14 @@ export class GameEngine {
   }
 
   static endCombat(state: GameState): GameState {
-    return { ...state, isInCombat: false, currentEnemy: null, activeCombatDestiny: null };
+    return { ...state, isInCombat: false, currentEnemy: null, activeCombatDestiny: null, combatAtkMultiplier: null };
   }
 
   static advanceFloor(state: GameState): GameState {
     const nextFloor = state.currentFloor + 1;
     const newBoard = BoardEngine.generateBoard(nextFloor);
 
-    // Relic: Golden Chalice — heal 15 HP at the start of every new floor
+    // Relic: Golden Chalice â€” heal 15 HP at the start of every new floor
     const chaliceHeal = (state.player.relics ?? []).includes('golden_chalice') ? 15 : 0;
 
     return {

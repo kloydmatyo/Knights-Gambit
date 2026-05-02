@@ -303,14 +303,16 @@ export class CharacterEngine {
   }
 
   /**
-   * Reduce skill cooldowns
+   * Reduce skill cooldowns by 1 per turn.
+   * If the player owns the Hourglass Shard relic, cooldowns tick down 2 per turn.
    */
   static updateCooldowns(player: Player): Player {
+    const extraTick = (player.relics ?? []).includes('hourglass_shard') ? 1 : 0;
     return {
       ...player,
       skills: player.skills.map((skill) => ({
         ...skill,
-        currentCooldown: Math.max(0, skill.currentCooldown - 1),
+        currentCooldown: Math.max(0, skill.currentCooldown - 1 - extraTick),
       })),
     };
   }

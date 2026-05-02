@@ -338,6 +338,15 @@ export const RELICS = [
     minFloor: 4,
     effect: { type: 'relic' as const, relicId: 'golden_chalice' },
   },
+  {
+    id: 'relic_hourglass_shard',
+    name: "Hourglass Shard",
+    description: 'All skill cooldowns tick down 1 extra turn per combat turn.',
+    emoji: '⏳',
+    price: 200,
+    minFloor: 3,
+    effect: { type: 'relic' as const, relicId: 'hourglass_shard' },
+  },
 ] as const;
 
 // Boss definitions per floor milestone (keyed by floor-within-dungeon: 5 = mid-boss, 10 = dungeon boss)

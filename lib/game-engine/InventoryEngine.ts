@@ -96,7 +96,24 @@ export class InventoryEngine {
   }
 
   /**
-   * Pick one relic to offer in the shop for this floor.
+   * Get all relics as shop items — available ones purchasable, locked ones included for display.
+   */
+  static getAllRelics(floor: number, ownedRelics: string[]): (Item & { locked?: boolean; lockedReason?: string })[] {
+    return (RELICS as readonly typeof RELICS[number][]).map(r => ({
+      id: r.id,
+      type: ITEM_TYPES.HEARTSTONE_AMULET,
+      name: r.name,
+      description: r.description,
+      price: r.price,
+      effect: r.effect as Item['effect'],
+      quantity: 1,
+      autoConsume: true,
+      locked: ownedRelics.includes(r.id) || r.minFloor > floor,
+      lockedReason: ownedRelics.includes(r.id) ? 'Owned' : r.minFloor > floor ? `Floor ${r.minFloor}` : undefined,
+    }));
+  }
+
+  /**
    * Excludes relics the player already owns and those gated behind a higher floor.
    * Returns null if no eligible relic exists.
    */

@@ -1,12 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Player, Item } from '@/lib/game-engine';
 import { StatUpgradeCounts, WeaponUpgradeState, WeaponUpgrade } from '@/lib/game-engine/types';
 import { calcUpgradePrice } from '@/lib/game-engine/StatUpgradeEngine';
 import { WeaponUpgradeEngine } from '@/lib/game-engine/WeaponUpgradeEngine';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+
+// ── Exalted free-pick limits ──────────────────────────────────────────────
+const EXALTED_LIMITS: Record<'consumables' | 'upgrades' | 'relics', number> = {
+  consumables: 5,
+  upgrades: 3,
+  relics: 1,
+};
 
 interface ShopPanelProps {
   isOpen: boolean;
@@ -20,6 +27,7 @@ interface ShopPanelProps {
   currentFloor?: number;
   upgradeState?: WeaponUpgradeState;
   onWeaponUpgrade?: (upgradeId: string) => { success: boolean; message: string };
+  allRelics?: (Item & { locked?: boolean; lockedReason?: string })[];
 }
 
 const itemEmojis: Record<string, string> = {
@@ -31,13 +39,14 @@ const itemEmojis: Record<string, string> = {
 const RELIC_EMOJIS: Record<string, string> = {
   relic_vampiric_fang: '🦷', relic_iron_heart: '🫀', relic_war_drum: '🥁',
   relic_stone_skin: '🪨', relic_cursed_idol: '🗿', relic_philosophers_stone: '💠',
-  relic_death_mask: '💀', relic_golden_chalice: '🏆',
+  relic_death_mask: '💀', relic_golden_chalice: '🏆', relic_hourglass_shard: '⏳',
 };
 
 const RELIC_CATEGORIES: Record<string, string> = {
   relic_vampiric_fang: 'Combat', relic_iron_heart: 'Defense', relic_war_drum: 'Offense',
   relic_stone_skin: 'Defense', relic_cursed_idol: 'Risk/Reward',
   relic_philosophers_stone: 'Economy', relic_death_mask: 'Combat', relic_golden_chalice: 'Economy',
+  relic_hourglass_shard: 'Utility',
 };
 
 type ShopTab = 'consumables' | 'upgrades' | 'relics' | 'weapons';
@@ -193,10 +202,27 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
 }
 
 // ── Main ShopPanel ─────────────────────────────────────────────────────────
-export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, title = '🏪 Shop', statUpgradeCounts, destinyState, currentFloor = 1, upgradeState, onWeaponUpgrade }: ShopPanelProps) {
+export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, title = '🏪 Shop', statUpgradeCounts, destinyState, currentFloor = 1, upgradeState, onWeaponUpgrade, allRelics }: ShopPanelProps) {
   const [activeTab, setActiveTab] = useState<ShopTab>('consumables');
+  // Exalted category lock state
+  const [exaltedCategory, setExaltedCategory] = useState<'consumables' | 'upgrades' | 'relics' | null>(null);
+  const [exaltedPurchaseCount, setExaltedPurchaseCount] = useState(0);
+
+  const isExalted = destinyState === 'exalted';
+
+  // Reset exalted state when shop opens
+  useEffect(() => {
+    if (isOpen) {
+      setExaltedCategory(null);
+      setExaltedPurchaseCount(0);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const exaltedLimit = exaltedCategory ? EXALTED_LIMITS[exaltedCategory] : 0;
+  const exaltedSlotsLeft = exaltedLimit - exaltedPurchaseCount;
+  const exaltedDone = isExalted && exaltedCategory !== null && exaltedSlotsLeft <= 0;
 
   // Weapon upgrades available at this floor
   const availableWeaponUpgrades = upgradeState
@@ -212,13 +238,15 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
     ? WeaponUpgradeEngine.getPurchasedUpgrades(upgradeState)
     : [];
 
-  // Apply destiny price modifier
-  const priceMultiplier = destinyState === 'exalted' ? 0 : destinyState === 'cursed' ? 3 : destinyState === 'favored' ? 0.75 : destinyState === 'unlucky' ? 1.25 : 1;
-  const modifiedItems = items.map(item => ({
-    ...item,
-    price: Math.round(item.price * priceMultiplier),
-    _originalPrice: item.price,
-  })) as (Item & { _originalPrice?: number })[];
+  // Apply destiny price modifier — exalted: free only for chosen category
+  const priceMultiplier = destinyState === 'cursed' ? 3 : destinyState === 'favored' ? 0.75 : destinyState === 'unlucky' ? 1.25 : 1;
+  const modifiedItems = items.map(item => {
+    const tab = categorize(item);
+    const mult = isExalted
+      ? (exaltedCategory === tab && !exaltedDone ? 0 : 1)
+      : priceMultiplier;
+    return { ...item, price: Math.round(item.price * mult), _originalPrice: item.price };
+  }) as (Item & { _originalPrice?: number })[];
 
   const canAfford = (price: number) => player.coins >= price;
 
@@ -233,11 +261,29 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
   const tabCounts = {
     consumables: sortedItems.filter(i => categorize(i) === 'consumables').length,
     upgrades:    sortedItems.filter(i => categorize(i) === 'upgrades').length,
-    relics:      sortedItems.filter(i => categorize(i) === 'relics').length,
+    relics:      allRelics ? allRelics.filter(r => !r.locked).length : sortedItems.filter(i => categorize(i) === 'relics').length,
     weapons:     availableWeaponUpgrades.length,
   };
 
-  return (
+  // Wrapped purchase handlers that track exalted free picks
+  const handlePurchaseWithTracking = (item: Item) => {
+    const tab = categorize(item);
+    const isFree = isExalted && exaltedCategory === tab && !exaltedDone;
+    onPurchase(item);
+    if (isFree) setExaltedPurchaseCount(c => c + 1);
+  };
+
+  const handleWeaponUpgradeWithTracking = (upgradeId: string) => {
+    const result = onWeaponUpgrade?.(upgradeId);
+    if (result?.success && isExalted && exaltedCategory === 'upgrades' && !exaltedDone) {
+      setExaltedPurchaseCount(c => c + 1);
+    }
+    return result ?? { success: false, message: '' };
+  };
+
+  // Whether a given tab's items are currently free (exalted + chosen + slots left)
+  const isTabFree = (tab: ShopTab) =>
+    isExalted && exaltedCategory === tab && !exaltedDone;  return (
     <>
       {/* Backdrop */}
       <div className="fixed inset-0 z-40 bg-black/75" onClick={onClose} />
@@ -270,13 +316,65 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
 
           {/* Destiny banner */}
           {destinyState && destinyState !== 'balanced' && (
-            <div className="px-5 py-2 text-xs font-bold text-center shrink-0"
-              style={{
-                background: destinyState === 'exalted' ? 'rgba(180,140,0,0.2)' : destinyState === 'cursed' ? 'rgba(180,0,0,0.2)' : destinyState === 'unlucky' ? 'rgba(180,100,0,0.2)' : 'rgba(0,140,0,0.2)',
-                borderBottom: '1px solid #3d2a14',
-                color: destinyState === 'exalted' ? '#f0c040' : destinyState === 'cursed' ? '#f06060' : destinyState === 'unlucky' ? '#f0a040' : '#60c060',
-              }}>
-              {destinyState === 'exalted' ? '✨ Exalted — Everything is FREE!' : destinyState === 'cursed' ? '💀 Cursed — Prices are tripled!' : '📈 Favored — 25% discount!'}
+            <div className="shrink-0" style={{ borderBottom: '1px solid #3d2a14' }}>
+              {isExalted ? (
+                exaltedCategory === null ? (
+                  <div className="px-5 py-4" style={{ background: 'rgba(180,140,0,0.12)' }}>
+                    <p className="text-center font-black text-sm mb-3" style={{ color: '#f0c040' }}>
+                      ✨ Exalted! Choose one category to receive FREE:
+                    </p>
+                    <div className="flex gap-2 justify-center flex-wrap">
+                      {([
+                        { key: 'consumables' as const, label: '5 Consumables', icon: '🧪' },
+                        { key: 'upgrades'    as const, label: '3 Upgrades',    icon: '⬆️' },
+                        { key: 'relics'      as const, label: '1 Relic',       icon: '✨' },
+                      ]).map(opt => (
+                        <motion.button key={opt.key}
+                          whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                          onClick={() => { setExaltedCategory(opt.key); setActiveTab(opt.key); }}
+                          className="px-4 py-2 rounded-xl font-black text-sm"
+                          style={{
+                            background: 'linear-gradient(180deg,#c8a010,#8a6a00)',
+                            border: '1px solid #e8c030',
+                            borderBottom: '3px solid #4a3a00',
+                            color: '#fff8d0',
+                          }}>
+                          {opt.icon} {opt.label}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="px-5 py-2 flex items-center justify-between text-xs font-bold"
+                    style={{ background: 'rgba(180,140,0,0.15)', color: exaltedDone ? '#8a7040' : '#f0c040' }}>
+                    <span>
+                      ✨ {exaltedCategory === 'consumables' ? '🧪 Consumables' : exaltedCategory === 'upgrades' ? '⬆️ Upgrades' : '✨ Relics'} FREE
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {!exaltedDone && exaltedPurchaseCount === 0 && (
+                        <button
+                          onClick={() => setExaltedCategory(null)}
+                          className="text-[10px] px-2 py-0.5 rounded font-bold transition-colors"
+                          style={{ background: 'rgba(100,80,0,0.5)', border: '1px solid #8a6a00', color: '#d4a030' }}
+                        >
+                          ↩ Change
+                        </button>
+                      )}
+                      <span style={{ color: exaltedDone ? '#ef4444' : '#f0c040' }}>
+                        {exaltedDone ? '🔒 Limit reached' : `${exaltedSlotsLeft} free pick${exaltedSlotsLeft !== 1 ? 's' : ''} left`}
+                      </span>
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="px-5 py-2 text-xs font-bold text-center"
+                  style={{
+                    background: destinyState === 'cursed' ? 'rgba(180,0,0,0.2)' : destinyState === 'unlucky' ? 'rgba(180,100,0,0.2)' : 'rgba(0,140,0,0.2)',
+                    color: destinyState === 'cursed' ? '#f06060' : destinyState === 'unlucky' ? '#f0a040' : '#60c060',
+                  }}>
+                  {destinyState === 'cursed' ? '💀 Cursed — Prices are tripled!' : destinyState === 'favored' ? '📈 Favored — 25% discount!' : '📉 Unlucky — Prices inflated!'}
+                </div>
+              )}
             </div>
           )}
 
@@ -321,10 +419,42 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                 transition={{ duration: 0.15 }}
                 className="grid gap-3"
                 style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
-                {tabItems.length === 0 && activeTab !== 'weapons' ? (
+                {tabItems.length === 0 && activeTab !== 'weapons' && activeTab !== 'relics' ? (
                   <p className="col-span-full text-center py-8 text-sm" style={{ color: '#4a3020' }}>
                     Nothing available in this category.
                   </p>
+                ) : activeTab === 'relics' && allRelics ? (
+                  // ── All relics: available + locked ──
+                  <div className="col-span-full flex flex-col gap-3">
+                    {allRelics.filter(r => !r.locked).length === 0 && (
+                      <p className="text-center py-4 text-sm" style={{ color: '#4a3020' }}>No relics available yet.</p>
+                    )}
+                    <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+                      {allRelics.filter(r => !r.locked).map((relic, i) => (
+                        <ItemCard key={relic.id} item={relic} player={player}
+                          onPurchase={handlePurchaseWithTracking} statUpgradeCounts={statUpgradeCounts} />
+                      ))}
+                    </div>
+                    {allRelics.filter(r => r.locked).length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest mb-2 mt-2" style={{ color: '#4a3020' }}>Locked</p>
+                        <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
+                          {allRelics.filter(r => r.locked).map(relic => (
+                            <div key={relic.id} className="flex items-center gap-2 p-2 rounded-lg opacity-40"
+                              style={{ background: 'rgba(20,12,4,0.6)', border: '1px solid #2a1a0a' }}>
+                              <span className="text-xl grayscale">{RELIC_EMOJIS[relic.id] ?? '✨'}</span>
+                              <div>
+                                <p className="text-xs font-bold" style={{ color: '#6a4a2a' }}>{relic.name}</p>
+                                <p className="text-[9px]" style={{ color: '#4a3020' }}>
+                                  🔒 {relic.lockedReason}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : activeTab === 'weapons' ? (
                   <div className="col-span-full flex flex-col gap-3">
                     {/* Purchased */}
@@ -353,7 +483,9 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                     )}
                     <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
                       {availableWeaponUpgrades.map((upgrade, i) => {
-                        const affordable = player.coins >= upgrade.cost;
+                        const weaponFree = isExalted && exaltedCategory === 'upgrades' && !exaltedDone;
+                        const effectiveCost = weaponFree ? 0 : upgrade.cost;
+                        const affordable = player.coins >= effectiveCost;
                         const tierColor = upgrade.tier === 'legendary' ? '#d4a030' : upgrade.tier === 'elite' ? '#b080e0' : upgrade.tier === 'advanced' ? '#6090e0' : '#8a8a8a';
                         const tierBorder = upgrade.tier === 'legendary' ? '#8a6010' : upgrade.tier === 'elite' ? '#6a3a9a' : upgrade.tier === 'advanced' ? '#2a4a9a' : '#3d2a14';
                         return (
@@ -378,8 +510,10 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                               {upgrade.effect.specialAbility && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #8a6010', color: '#d4a030' }}>🌟 Special</span>}
                             </div>
                             <div className="flex items-center justify-between mt-auto">
-                              <span className="font-black text-base" style={{ color: '#d4a030' }}>💰 {upgrade.cost}</span>
-                              <button onClick={() => onWeaponUpgrade?.(upgrade.id)} disabled={!affordable || !onWeaponUpgrade}
+                              <span className="font-black text-base" style={{ color: effectiveCost === 0 ? '#60c060' : '#d4a030' }}>
+                                {effectiveCost === 0 ? 'FREE' : `💰 ${upgrade.cost}`}
+                              </span>
+                              <button onClick={() => handleWeaponUpgradeWithTracking(upgrade.id)} disabled={!affordable || !onWeaponUpgrade || (isExalted && exaltedCategory === 'upgrades' && exaltedDone)}
                                 className="px-3 py-1.5 rounded-lg font-black text-xs transition-all active:scale-95 disabled:opacity-40"
                                 style={affordable ? {
                                   background: 'linear-gradient(180deg,#c8621a,#8a3e0a)',
@@ -417,7 +551,7 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                   </div>
                 ) : tabItems.map((item, i) => (
                   <ItemCard key={`${item.id}-${i}`} item={item} player={player}
-                    onPurchase={onPurchase} statUpgradeCounts={statUpgradeCounts} />
+                    onPurchase={handlePurchaseWithTracking} statUpgradeCounts={statUpgradeCounts} />
                 ))}
               </motion.div>
             </AnimatePresence>
