@@ -680,7 +680,7 @@ export default function GamePage() {
 
       {/* Dice Roller â€” shown only when no pending choice */}
       {phase === 'playing' && !gameState.isInCombat && !pendingChoice && !floorCompleteState && (
-        <DiceRoller onRoll={handleDiceRoll} lastRoll={lastDiceRoll} disabled={false} />
+        <DiceRoller onRoll={handleDiceRoll} disabled={false} />
       )}
 
       {/* Contextual action buttons — shop and/or next floor */}

@@ -157,15 +157,13 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
 }
 
 // Spritesheet: 96x16px, 6 frames of 16x16 (faces 1-6 left to right)
-const FRAME_SIZE = 16;
 const DISPLAY_SIZE = 80; // rendered size in px
-const SCALE = DISPLAY_SIZE / FRAME_SIZE;
 
 function DiceSprite({ face, spinning }: { face: number; spinning: boolean }) {
-  // frame index 0-5 for faces 1-6
-  const frameX = (face - 1) * FRAME_SIZE;
   return (
-    <motion.div
+    <motion.img
+      src={`/dice/die${face}.png`}
+      alt={`die showing ${face}`}
       animate={spinning
         ? { rotate: [0, -18, 18, -14, 14, -8, 8, 0], scale: [1, 1.15, 0.9, 1.1, 0.95, 1] }
         : { rotate: 0, scale: 1 }}
@@ -173,10 +171,6 @@ function DiceSprite({ face, spinning }: { face: number; spinning: boolean }) {
       style={{
         width: DISPLAY_SIZE,
         height: DISPLAY_SIZE,
-        backgroundImage: 'url(/dice/dice1.png)',
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: `${96 * SCALE}px ${FRAME_SIZE * SCALE}px`,
-        backgroundPosition: `-${frameX * SCALE}px 0px`,
         imageRendering: 'pixelated',
       }}
     />
