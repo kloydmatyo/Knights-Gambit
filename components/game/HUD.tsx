@@ -18,6 +18,25 @@ interface HUDProps {
   };
 }
 
+// Map class names to icon file paths
+const classIcons: Record<string, string> = {
+  knight: '/class_icon/knight.png',
+  archer: '/class_icon/archer.png',
+  mage: '/class_icon/mage.png',
+  barbarian: '/class_icon/warrior.png',
+  assassin: '/class_icon/assassin.png',
+  cleric: '/class_icon/cleric.png',
+};
+
+const classEmojis: Record<string, string> = {
+  knight: '🛡️',
+  archer: '🏹',
+  mage: '🔮',
+  barbarian: '⚔️',
+  assassin: '🗡️',
+  cleric: '✨',
+};
+
 const STATUS_ICON: Record<string, string> = {
   poison: '🧪', burn: '🔥', cursed: '💀', blessed: '✨', regen: '💚', shield: '🛡️',
 };
@@ -87,7 +106,29 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
 
           {/* Avatar + class + bars */}
           <div className="flex items-center gap-1.5 sm:gap-2.5">
-            <HpRing percent={healthPercent} health={player.health} maxHealth={player.maxHealth} />
+            <div className="relative shrink-0">
+              <HpRing percent={healthPercent} health={player.health} maxHealth={player.maxHealth} />
+              {/* Class icon overlay */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={classIcons[player.class] || classIcons.knight} 
+                  alt={player.class}
+                  className="w-7 h-7 sm:w-9 sm:h-9 object-contain opacity-90"
+                  style={{ imageRendering: 'pixelated', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent && !parent.querySelector('.emoji-fallback')) {
+                      const span = document.createElement('span');
+                      span.className = 'emoji-fallback text-xl sm:text-2xl';
+                      span.textContent = classEmojis[player.class] || '⚔️';
+                      parent.appendChild(span);
+                    }
+                  }}
+                />
+              </div>
+            </div>
 
             <div className="flex flex-col gap-0.5 min-w-0 flex-1">
               {/* Class name — engraved look */}
@@ -188,7 +229,24 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
               boxShadow: '0 2px 8px rgba(200,130,10,0.3), inset 0 1px 0 rgba(255,220,100,0.2)',
               textShadow: '0 1px 2px rgba(0,0,0,0.6)',
             }}>
-            📦 <span className="hidden sm:inline">Inventory</span><span className="sm:hidden">Inv</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/item_icons/inventory.png" 
+              alt="Inventory"
+              className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain"
+              style={{ imageRendering: 'pixelated' }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const parent = e.currentTarget.parentElement;
+                if (parent && !parent.querySelector('.emoji-fallback')) {
+                  const span = document.createElement('span');
+                  span.className = 'emoji-fallback text-xs sm:text-sm';
+                  span.textContent = '📦';
+                  parent.appendChild(span);
+                }
+              }}
+            />
+            <span className="hidden sm:inline">Inventory</span><span className="sm:hidden">Inv</span>
             {totalItems > 0 && (
               <span className="rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center text-[8px] sm:text-[9px] font-black leading-none"
                 style={{ background: '#1a0e04', color: '#e8a030', border: '1px solid #6a4010' }}>
@@ -252,8 +310,25 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
             D{dungeonNum} · F{floorInDungeon}
           </div>
           <div className="text-[8px] sm:text-[10px] mt-0.5" style={{ color: '#6a5040' }}>Turn {turnCount}</div>
-          <div className="font-bold text-[10px] sm:text-xs mt-0.5 sm:mt-1" style={{ color: '#e8c060' }}>
-            💰 {player.coins}
+          <div className="font-bold text-[10px] sm:text-xs mt-0.5 sm:mt-1 flex items-center gap-0.5 sm:gap-1" style={{ color: '#e8c060' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/item_icons/coins.png" 
+              alt="Coins"
+              className="w-3 h-3 sm:w-4 sm:h-4 object-contain"
+              style={{ imageRendering: 'pixelated' }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const parent = e.currentTarget.parentElement;
+                if (parent && !parent.querySelector('.emoji-fallback')) {
+                  const span = document.createElement('span');
+                  span.className = 'emoji-fallback text-[10px] sm:text-xs';
+                  span.textContent = '💰';
+                  parent.appendChild(span);
+                }
+              }}
+            />
+            {player.coins}
           </div>
         </div>
       </div>

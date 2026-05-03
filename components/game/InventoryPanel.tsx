@@ -133,7 +133,24 @@ export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isI
           <div className="flex items-center justify-between px-5 py-3 shrink-0"
             style={{ borderBottom: '1px solid #3d2a14' }}>
             <div className="flex items-center gap-3">
-              <h2 className="font-black text-lg" style={{ color: '#d4a030' }}>📦 Inventory</h2>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/item_icons/inventory.png" 
+                alt="Inventory"
+                className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+                style={{ imageRendering: 'pixelated' }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent && !parent.querySelector('.emoji-fallback')) {
+                    const span = document.createElement('span');
+                    span.className = 'emoji-fallback text-lg';
+                    span.textContent = '📦';
+                    parent.appendChild(span);
+                  }
+                }}
+              />
+              <h2 className="font-black text-lg" style={{ color: '#d4a030' }}>Inventory</h2>
               <span className="text-xs font-bold px-2 py-0.5 rounded"
                 style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#8a6a4a' }}>
                 {sortedInventory.reduce((s, i) => s + i.quantity, 0)} items
@@ -152,7 +169,6 @@ export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isI
             <div className="flex-1 overflow-y-auto p-3">
               {sortedInventory.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 gap-2">
-                  <span className="text-4xl opacity-30">📦</span>
                   <p className="text-sm" style={{ color: '#4a3020' }}>Your bag is empty</p>
                 </div>
               ) : (
@@ -334,7 +350,6 @@ export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isI
                   <motion.div key="empty"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     className="flex flex-col items-center justify-center h-full gap-2 p-4">
-                    <span className="text-3xl opacity-20">👆</span>
                     <p className="text-xs text-center" style={{ color: '#3a2a1a' }}>
                       Select an item to see details
                     </p>

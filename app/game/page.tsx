@@ -469,11 +469,11 @@ export default function GamePage() {
       
       // Check caps
       if (stat === 'critChance' && upgradeState.totalCritChanceBonus >= 1.0) {
-        showNotification('❌ Crit Chance is already at maximum (100%)!');
+        showNotification('❌ Crit Chance is already at maximum (95%)!');
         return;
       }
       if (stat === 'critDamage' && upgradeState.totalCritDamageBonus >= 2.0) {
-        showNotification('❌ Crit Damage is already at maximum (200%)!');
+        showNotification('❌ Crit Damage is already at maximum (350%)!');
         return;
       }
       if (stat === 'armorPen' && upgradeState.totalArmorPenBonus >= 100) {

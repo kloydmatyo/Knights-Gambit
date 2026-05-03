@@ -102,7 +102,7 @@ export const CLASS_STATS = {
     baseAttack: 16,
     baseDefense: 4,
     startingCoins: 70,
-    description: 'Stealthy fighter with high crit chance and evasion',
+    description: 'Stealthy fighter with high crit chance',
   },
   cleric: {
     name: 'Cleric',

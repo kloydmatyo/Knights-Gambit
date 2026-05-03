@@ -25,6 +25,16 @@ const classEmojis: Record<CharacterClass, string> = {
   cleric: '✨',
 };
 
+// Map class names to icon file paths
+const classIcons: Record<CharacterClass, string> = {
+  knight: '/class_icon/knight.png',
+  archer: '/class_icon/archer.png',
+  mage: '/class_icon/mage.png',
+  barbarian: '/class_icon/warrior.png',
+  assassin: '/class_icon/assassin.png',
+  cleric: '/class_icon/cleric.png',
+};
+
 const classAccent: Record<CharacterClass, { border: string; glow: string; bar: string }> = {
   knight:    { border: 'border-cyan-500',   glow: 'shadow-cyan-500/40',   bar: 'bg-cyan-500' },
   archer:    { border: 'border-green-500',  glow: 'shadow-green-500/40',  bar: 'bg-green-500' },
@@ -126,7 +136,26 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
                       transition={{ duration: 0.22, ease: 'easeInOut' }}
                       className="flex flex-col sm:flex-row gap-3 sm:gap-6 p-3 sm:p-6 h-full">
                       <div className="flex sm:flex-col items-center justify-center shrink-0 gap-3 sm:gap-0 sm:w-28">
-                        <div className="text-4xl sm:text-7xl drop-shadow-lg">{classEmojis[currentClass]}</div>
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src={classIcons[currentClass]} 
+                            alt={currentData.name}
+                            className="w-full h-full object-contain drop-shadow-lg"
+                            style={{ imageRendering: 'pixelated' }}
+                            onError={(e) => {
+                              // Fallback to emoji if image fails
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent && !parent.querySelector('.emoji-fallback')) {
+                                const span = document.createElement('span');
+                                span.className = 'emoji-fallback text-4xl sm:text-7xl drop-shadow-lg';
+                                span.textContent = classEmojis[currentClass];
+                                parent.appendChild(span);
+                              }
+                            }}
+                          />
+                        </div>
                         <span className={cn('text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border', accent.border, 'text-white/80')}>
                           {currentData.name}
                         </span>
@@ -159,9 +188,25 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
               <div className="flex gap-1.5 sm:gap-2 justify-center flex-wrap">
                 {CLASS_LIST.map(([cls], i) => (
                   <button key={cls} onClick={() => { setDirection(i > classIndex ? 1 : -1); setClassIndex(i); }}
-                    className={cn('w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl border-2 flex items-center justify-center text-xl sm:text-2xl transition-all hover:scale-110 btn-touch',
+                    className={cn('w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl border-2 flex items-center justify-center transition-all hover:scale-110 btn-touch p-1.5 sm:p-2',
                       i === classIndex ? cn('border-white shadow-lg scale-110', classAccent[cls].glow) : 'border-white/20 bg-black/40 opacity-60 hover:opacity-100')}>
-                    {classEmojis[cls]}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={classIcons[cls]} 
+                      alt={CLASS_STATS[cls].name}
+                      className="w-full h-full object-contain"
+                      style={{ imageRendering: 'pixelated' }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent && !parent.querySelector('.emoji-fallback')) {
+                          const span = document.createElement('span');
+                          span.className = 'emoji-fallback text-xl sm:text-2xl';
+                          span.textContent = classEmojis[cls];
+                          parent.appendChild(span);
+                        }
+                      }}
+                    />
                   </button>
                 ))}
               </div>

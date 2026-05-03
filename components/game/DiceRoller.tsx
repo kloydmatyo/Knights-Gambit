@@ -16,7 +16,7 @@ export default function DiceRoller({ onRoll, disabled }: DiceRollerProps) {
         disabled={disabled}
         className="text-sm sm:text-base md:text-2xl px-4 sm:px-8 md:px-16 py-3 sm:py-4 md:py-8 shadow-2xl text-white font-bold uppercase tracking-wider btn-touch no-select"
       >
-        🗺️ CHOOSE PATH
+         CHOOSE PATH
       </Button>
     </div>
   );

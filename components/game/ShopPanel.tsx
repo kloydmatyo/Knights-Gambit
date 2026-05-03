@@ -649,7 +649,26 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
           {/* ── Footer ── */}
           <div className="shrink-0 flex items-center justify-between px-5 py-3"
             style={{ borderTop: '1px solid #3d2a14', background: 'rgba(10,6,2,0.8)' }}>
-            <span className="font-black text-lg" style={{ color: '#d4a030' }}>💰 {player.coins}</span>
+            <div className="flex items-center gap-1.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/item_icons/coins.png" 
+                alt="Coins"
+                className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+                style={{ imageRendering: 'pixelated' }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent && !parent.querySelector('.emoji-fallback')) {
+                    const span = document.createElement('span');
+                    span.className = 'emoji-fallback text-lg';
+                    span.textContent = '💰';
+                    parent.appendChild(span);
+                  }
+                }}
+              />
+              <span className="font-black text-lg" style={{ color: '#d4a030' }}>{player.coins}</span>
+            </div>
             <button onClick={onClose}
               className="px-6 py-2 rounded-xl font-black text-sm transition-all active:scale-95"
               style={{

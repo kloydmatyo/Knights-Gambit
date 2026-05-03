@@ -23,6 +23,16 @@ const CLASS_EMOJIS: Record<string, string> = {
   barbarian: '⚔️', assassin: '🗡️', cleric: '✨',
 };
 
+// Map class names to icon file paths
+const CLASS_ICONS: Record<string, string> = {
+  knight: '/class_icon/knight.png',
+  archer: '/class_icon/archer.png',
+  mage: '/class_icon/mage.png',
+  barbarian: '/class_icon/warrior.png',
+  assassin: '/class_icon/assassin.png',
+  cleric: '/class_icon/cleric.png',
+};
+
 function floorLabel(absoluteFloor: number): string {
   const d = getDungeonNumber(absoluteFloor);
   const f = getFloorInDungeon(absoluteFloor);
@@ -111,30 +121,91 @@ export default function GameOverScreen({
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.15, type: 'spring' }}
-            className="text-7xl mb-3"
+            className="mb-3 flex justify-center"
           >
-            {isVictory ? '🏆' : '💀'}
+            {isVictory ? (
+              <span className="text-7xl">🏆</span>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img 
+                src="/item_icons/game_over.png" 
+                alt="Game Over"
+                className="w-20 h-20 object-contain"
+                style={{ imageRendering: 'pixelated' }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent && !parent.querySelector('.emoji-fallback')) {
+                    const span = document.createElement('span');
+                    span.className = 'emoji-fallback text-7xl';
+                    span.textContent = '💀';
+                    parent.appendChild(span);
+                  }
+                }}
+              />
+            )}
           </motion.div>
           <h1 className={`text-4xl font-bold mb-1 ${isVictory ? 'text-yellow-400' : 'text-red-400'}`}>
             {isVictory ? 'VICTORY!' : 'GAME OVER'}
           </h1>
-          <p className="text-gray-400">
-            {playerName && <span className="text-white font-semibold">{playerName} </span>}
-            {CLASS_EMOJIS[characterClass]} {characterClass}
-          </p>
+          <div className="flex items-center justify-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={CLASS_ICONS[characterClass] || CLASS_ICONS.knight} 
+              alt={characterClass}
+              className="w-8 h-8 object-contain"
+              style={{ imageRendering: 'pixelated' }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const parent = e.currentTarget.parentElement;
+                if (parent && !parent.querySelector('.emoji-fallback')) {
+                  const span = document.createElement('span');
+                  span.className = 'emoji-fallback text-2xl';
+                  span.textContent = CLASS_EMOJIS[characterClass] || '⚔️';
+                  parent.appendChild(span);
+                }
+              }}
+            />
+            <p className="text-gray-400">
+              {playerName && <span className="text-white font-semibold">{playerName} </span>}
+              {characterClass}
+            </p>
+          </div>
         </div>
 
         {/* Run summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { icon: '🏰', label: 'Floor Reached', value: floorLabel(floor) },
-            { icon: '💀', label: 'Enemies Killed', value: enemiesKilled },
-            { icon: '🎲', label: 'Total Turns', value: turns },
-            { icon: '💰', label: 'Coins', value: coinsEarned },
-          ].map(({ icon, label, value }) => (
+            { icon: '🏰', label: 'Floor Reached', value: floorLabel(floor), useImage: false },
+            { icon: '/item_icons/game_over.png', label: 'Enemies Killed', value: enemiesKilled, useImage: true },
+            { icon: '🎲', label: 'Total Turns', value: turns, useImage: false },
+            { icon: '/item_icons/coins.png', label: 'Coins', value: coinsEarned, useImage: true },
+          ].map(({ icon, label, value, useImage }) => (
             <div key={label} className="rounded-lg p-3 text-center"
               style={{ background: 'rgba(10,6,2,0.9)', border: '1px solid #3d2a14' }}>
-              <div className="text-2xl mb-1">{icon}</div>
+              <div className="text-2xl mb-1 flex items-center justify-center h-8">
+                {useImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img 
+                    src={icon} 
+                    alt={label}
+                    className="w-8 h-8 object-contain"
+                    style={{ imageRendering: 'pixelated' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent && !parent.querySelector('.emoji-fallback')) {
+                        const span = document.createElement('span');
+                        span.className = 'emoji-fallback text-2xl';
+                        span.textContent = label === 'Coins' ? '💰' : '💀';
+                        parent.appendChild(span);
+                      }
+                    }}
+                  />
+                ) : (
+                  <span>{icon}</span>
+                )}
+              </div>
               <div className="text-xs mb-1" style={{ color: '#6a4a2a' }}>{label}</div>
               <div className="font-bold text-xl" style={{ color: '#d4a030' }}>{value}</div>
             </div>
@@ -197,7 +268,25 @@ export default function GameOverScreen({
                       {entry.nickname}
                       {isThisRun && <span className="ml-1 text-xs text-yellow-500">(you)</span>}
                     </span>
-                    <span className="text-gray-400 text-xs">{CLASS_EMOJIS[entry.character_class] ?? '⚔️'}</span>
+                    <div className="flex items-center gap-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src={CLASS_ICONS[entry.character_class] || CLASS_ICONS.knight} 
+                        alt={entry.character_class}
+                        className="w-4 h-4 object-contain"
+                        style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent && !parent.querySelector('.emoji-fallback')) {
+                            const span = document.createElement('span');
+                            span.className = 'emoji-fallback text-xs';
+                            span.textContent = CLASS_EMOJIS[entry.character_class] || '⚔️';
+                            parent.appendChild(span);
+                          }
+                        }}
+                      />
+                    </div>
                     <span className="text-yellow-400 font-bold w-20 text-right">{floorLabel(entry.floor_reached)}</span>
                     <span className="text-gray-500 w-16 text-right">{entry.enemies_killed ?? 0} kills</span>
                   </motion.div>
@@ -220,10 +309,10 @@ export default function GameOverScreen({
                 />
                 <span className="relative z-10">Starting...</span>
               </>
-            ) : '🔄 Play Again'}
+            ) : ' Play Again'}
           </Button>
           <Button size="lg" variant="secondary" onClick={onMainMenu} className="flex-1">
-            🏠 Main Menu
+             Main Menu
           </Button>
         </div>
       </motion.div>
