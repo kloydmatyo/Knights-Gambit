@@ -137,11 +137,20 @@ export const TRAP_TYPES = {
 export const ENEMY_TYPES = {
   GOBLIN: 'goblin',
   ORC: 'orc',
+  ORC2: 'orc2',
+  ORC3: 'orc3',
   SKELETON: 'skeleton',
   TROLL: 'troll',
   SLIME1: 'slime1',
   SLIME2: 'slime2',
   SLIME3: 'slime3',
+  VAMPIRE: 'vampire',
+  VAMPIRE2: 'vampire2',
+  VAMPIRE3: 'vampire3',
+  PLANT: 'plant',
+  PLANT2: 'plant2',
+  PLANT3: 'plant3',
+  BANDIT: 'bandit',
 } as const;
 
 // Enemy Stats
@@ -195,6 +204,69 @@ export const ENEMY_STATS = {
     baseDefense: 3,
     coinReward: 28,
   },
+  vampire: {
+    name: 'Vampire',
+    baseHealth: 60,
+    baseAttack: 14,
+    baseDefense: 5,
+    coinReward: 35,
+  },
+  vampire2: {
+    name: 'Blood Vampire',
+    baseHealth: 65,
+    baseAttack: 15,
+    baseDefense: 5,
+    coinReward: 38,
+  },
+  vampire3: {
+    name: 'Ancient Vampire',
+    baseHealth: 70,
+    baseAttack: 16,
+    baseDefense: 6,
+    coinReward: 42,
+  },
+  plant: {
+    name: 'Carnivorous Plant',
+    baseHealth: 55,
+    baseAttack: 11,
+    baseDefense: 4,
+    coinReward: 30,
+  },
+  plant2: {
+    name: 'Toxic Plant',
+    baseHealth: 58,
+    baseAttack: 12,
+    baseDefense: 4,
+    coinReward: 32,
+  },
+  plant3: {
+    name: 'Deadly Plant',
+    baseHealth: 62,
+    baseAttack: 13,
+    baseDefense: 5,
+    coinReward: 36,
+  },
+  orc2: {
+    name: 'Orc Warrior',
+    baseHealth: 55,
+    baseAttack: 13,
+    baseDefense: 5,
+    coinReward: 28,
+  },
+  orc3: {
+    name: 'Orc Berserker',
+    baseHealth: 60,
+    baseAttack: 14,
+    baseDefense: 4,
+    coinReward: 32,
+  },
+  bandit: {
+    name: 'Bandit',
+    baseHealth: 40,
+    baseAttack: 10,
+    baseDefense: 3,
+    coinReward: 22,
+  },
 } as const;
 
 // Sprite config for animated enemies
@@ -206,9 +278,9 @@ export const ENEMY_SPRITES: Partial<Record<string, {
 }>> = {
   slime1: {
     sheet: (anim) => `/sprites/slimes/Slime1_${anim}.png`,
-    frameW: { Idle: 66, Hurt: 64, Attack: 58, Run: 128, Walk: 128, Death: 58 },
+    frameW: { Idle: 66, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 58 },
     frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
-    frames: { Idle: 6, Hurt: 5, Attack: 10, Run: 4, Walk: 4, Death: 10 },
+    frames: { Idle: 3, Hurt: 5, Attack: 10, Run: 4, Walk: 4, Death: 10 },
   },
   slime2: {
     sheet: (anim) => `/sprites/slimes/Slime2_${anim}.png`,
@@ -218,9 +290,69 @@ export const ENEMY_SPRITES: Partial<Record<string, {
   },
   slime3: {
     sheet: (anim) => `/sprites/slimes/Slime3_${anim}.png`,
-    frameW: { Idle: 66, Hurt: 64, Attack: 60, Run: 128, Walk: 128, Death: 58 },
+    frameW: { Idle: 66, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 58 },
     frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
     frames: { Idle: 6, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  vampire: {
+    sheet: (anim) => `/sprites/vampire/Vampires1_${anim}_without_shadow.png`,
+    frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
+    frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  vampire2: {
+    sheet: (anim) => `/sprites/vampire/Vampires2_${anim}_without_shadow.png`,
+    frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
+    frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  vampire3: {
+    sheet: (anim) => `/sprites/vampire/Vampires3_${anim}_without_shadow.png`,
+    frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
+    frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  plant: {
+    sheet: (anim) => `/sprites/plant/Plant1_${anim}_without_shadow.png`,
+    frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
+    frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  plant2: {
+    sheet: (anim) => `/sprites/plant/Plant2_${anim}_without_shadow.png`,
+    frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
+    frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  plant3: {
+    sheet: (anim) => `/sprites/plant/Plant3_${anim}_without_shadow.png`,
+    frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
+    frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  orc: {
+    sheet: (anim) => `/sprites/orc/orc1_${anim.toLowerCase()}_without_shadow.png`,
+    frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
+    frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  orc2: {
+    sheet: (anim) => `/sprites/orc/orc2_${anim.toLowerCase()}_without_shadow.png`,
+    frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
+    frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  orc3: {
+    sheet: (anim) => `/sprites/orc/orc3_${anim.toLowerCase()}_without_shadow.png`,
+    frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
+    frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  bandit: {
+    sheet: (anim) => `/sprites/bandit/Swordsman_lvl1_${anim}_without_shadow.png`,
+    frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
+    frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
+    frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
   },
 };
 

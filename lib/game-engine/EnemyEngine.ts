@@ -6,11 +6,20 @@ import { randomInt } from '@/lib/utils';
 const BEHAVIOR_POOLS: Record<string, EnemyBehavior[]> = {
   goblin:   ['berserker', 'berserker', 'glass_cannon', 'normal'],
   orc:      ['defender', 'defender', 'berserker', 'normal'],
+  orc2:     ['defender', 'berserker', 'berserker', 'normal'],
+  orc3:     ['berserker', 'berserker', 'glass_cannon', 'normal'],
   skeleton: ['regenerator', 'regenerator', 'poisoner', 'normal'],
   troll:    ['defender', 'regenerator', 'defender', 'normal'],
   slime1:   ['poisoner', 'normal', 'normal'],
   slime2:   ['regenerator', 'poisoner', 'normal'],
   slime3:   ['glass_cannon', 'berserker', 'normal'],
+  vampire:  ['regenerator', 'glass_cannon', 'berserker', 'normal'],
+  vampire2: ['regenerator', 'regenerator', 'glass_cannon', 'normal'],
+  vampire3: ['regenerator', 'berserker', 'glass_cannon', 'normal'],
+  plant:    ['poisoner', 'poisoner', 'defender', 'normal'],
+  plant2:   ['poisoner', 'poisoner', 'regenerator', 'normal'],
+  plant3:   ['poisoner', 'glass_cannon', 'defender', 'normal'],
+  bandit:   ['glass_cannon', 'berserker', 'normal', 'normal'],
 };
 
 function pickBehavior(type: string): EnemyBehavior {
