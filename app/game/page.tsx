@@ -29,6 +29,7 @@ import DiceRoller from '@/components/game/DiceRoller';
 import DiceManipulator from '@/components/game/DiceManipulator';
 import GameOverScreen from '@/components/game/GameOverScreen';
 import DungeonClearScreen from '@/components/game/DungeonClearScreen';
+import MusicManager from '@/components/game/MusicManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getDungeonNumber, isDungeonBossFloor } from '@/lib/game-engine/constants';
 import { SaveEngine, SaveData } from '@/lib/game-engine/SaveEngine';
@@ -848,6 +849,13 @@ export default function GamePage() {
 
   const choosableTileIds = (pendingChoice && !pendingChoice.destinyResult) ? pendingChoice.tileOptions : [];
 
+  // Determine current music track based on game phase
+  const currentMusicTrack = phase === 'character-selection' ? 'character_creation' 
+    : phase === 'combat' ? 'combat'
+    : (isShopOpen || isSpecialShopOpen) ? 'shop'
+    : (phase === 'playing' || phase === 'dungeon-clear') ? 'map'
+    : null;
+
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col"
       style={{
@@ -856,6 +864,9 @@ export default function GamePage() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}>
+      {/* Music Manager */}
+      <MusicManager track={currentMusicTrack} volume={0.3} />
+      
       <HUD player={gameState.player} floor={gameState.currentFloor} turnCount={gameState.turnCount} onInventoryClick={() => setIsInventoryOpen(true)} playerSpriteUrl={(gameState.player as any).spriteDataUrl} upgradeState={upgradeState} />
 
       {/* Board — no spacer needed, HUD floats over the board */}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
+import MusicManager from '@/components/game/MusicManager';
 
 const HOW_TO_PLAY = [
   { icon: '🎲', title: 'Roll & Move', text: 'Roll the dice each turn to move your token around the board. Land on different tiles to trigger events.' },
@@ -21,6 +22,9 @@ export default function Home() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4"
       style={{ background: 'radial-gradient(ellipse at center, #2a1808 0%, #0e0804 100%)' }}>
+      {/* Music Manager */}
+      <MusicManager track="home" volume={0.3} />
+      
       <motion.div
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}

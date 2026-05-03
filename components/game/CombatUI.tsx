@@ -77,19 +77,16 @@ function getPlayerAttackAnimation(characterClass: string) {
       return {
         x: [0, 80, 80, 0],
         y: [0, -10, -10, 0],
-        scale: [1, 1.1, 1.1, 1],
       };
     case 'archer':
       // Ranged: slight recoil
       return {
         x: [0, -15, 0],
-        scale: [1, 0.95, 1],
       };
     case 'mage':
       // Magic: float and glow
       return {
         y: [0, -20, -20, 0],
-        scale: [1, 1.05, 1.05, 1],
         filter: ['brightness(1)', 'brightness(1.5) saturate(1.3)', 'brightness(1.5) saturate(1.3)', 'brightness(1)'],
       };
     case 'assassin':
@@ -103,7 +100,6 @@ function getPlayerAttackAnimation(characterClass: string) {
       // Holy strike: rise and shine
       return {
         y: [0, -15, -15, 0],
-        scale: [1, 1.08, 1.08, 1],
         filter: ['brightness(1)', 'brightness(1.8) saturate(0.8)', 'brightness(1.8) saturate(0.8)', 'brightness(1)'],
       };
     default:
