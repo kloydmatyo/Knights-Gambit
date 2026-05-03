@@ -56,9 +56,6 @@ const TRAP_PREVIEW: Record<string, { icon: string; label: string; effect: string
 export default function DiceManipulator({ branchChoice, board, onSelectTile, onConfirmDestiny, onHoverTile }: DiceManipulatorProps) {
   const { tileOptions, chosenTileId, destinyResult } = branchChoice;
   const [rolling, setRolling] = useState(false);
-  const [rollOverlay, setRollOverlay] = useState(false);
-  const [overlayFace1, setOverlayFace1] = useState(1);
-  const [overlayFace2, setOverlayFace2] = useState(1);
 
   // Phase 1: show branch options (no destiny yet)
   // Phase 2: destiny result shown (chosenTileId + destinyResult set)
@@ -67,56 +64,13 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
   const handleTileClick = (id: number) => {
     if (rolling || showingDestiny) return;
     setRolling(true);
-    setRollOverlay(true);
-
-    // Animate both dice faces rapidly
-    let ticks = 0;
-    const maxTicks = 12;
-    const interval = setInterval(() => {
-      setOverlayFace1(Math.floor(Math.random() * 6) + 1);
-      setOverlayFace2(Math.floor(Math.random() * 6) + 1);
-      ticks++;
-      if (ticks >= maxTicks) {
-        clearInterval(interval);
-        setRolling(false);
-        setTimeout(() => {
-          setRollOverlay(false);
-          onSelectTile(id);
-        }, 400);
-      }
-    }, 130);
+    // Directly trigger tile selection without showing dice overlay
+    onSelectTile(id);
+    setRolling(false);
   };
 
   return (
     <>
-      {/* ── Centered 2d6 roll overlay ── */}
-      <AnimatePresence>
-        {rollOverlay && (
-          <motion.div
-            key="2d6-overlay"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
-          >
-            <div
-              className="flex items-center gap-4 rounded-2xl border-4 border-game-gold px-8 py-6 shadow-2xl"
-              style={{ background: 'rgba(14,10,6,0.92)' }}
-            >
-              <RollingDice face={overlayFace1} spinning={rolling} />
-              <span className="text-white text-3xl font-black">+</span>
-              <RollingDice face={overlayFace2} spinning={rolling} />
-              {rolling && (
-                <span className="absolute bottom-3 text-xs font-bold uppercase tracking-widest text-gray-400">
-                  Rolling...
-                </span>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <motion.div
         initial={{ opacity: 0, y: 60 }}
         animate={{ opacity: 1, y: 0 }}

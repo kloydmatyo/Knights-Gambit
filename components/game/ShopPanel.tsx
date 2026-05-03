@@ -292,9 +292,9 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
           exit={{ opacity: 0, scale: 0.95 }}
           className="pointer-events-auto w-full flex flex-col rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl"
           style={{
-            maxWidth: 'min(90vw, 640px)',
-            height: 'clamp(400px, 75vh, 800px)',
-            minHeight: 'min(480px, 80vh)',
+            maxWidth: 'min(95vw, 640px)',
+            height: 'clamp(500px, 85vh, 800px)',
+            minHeight: 'min(500px, 85vh)',
             background: 'rgba(14,10,6,0.97)',
             border: '2px solid #5a3e28',
             boxShadow: '0 0 0 1px rgba(255,180,80,0.06), 0 24px 64px rgba(0,0,0,0.9)',
@@ -303,8 +303,8 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
           {/* ── Header ── */}
           <div className="flex items-center justify-between px-3 sm:px-5 py-2 sm:py-3 shrink-0"
             style={{ borderBottom: '1px solid #3d2a14' }}>
-            <h2 className="font-black text-base sm:text-lg" style={{ color: '#d4a030' }}>{title}</h2>
-            <button onClick={onClose} className="text-xl sm:text-2xl leading-none transition-colors btn-touch"
+            <h2 className="font-black text-sm sm:text-lg" style={{ color: '#d4a030' }}>{title}</h2>
+            <button onClick={onClose} className="text-xl sm:text-2xl leading-none transition-colors btn-touch w-8 h-8 flex items-center justify-center"
               style={{ color: '#6a4a2a' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#d4a030')}
               onMouseLeave={e => (e.currentTarget.style.color = '#6a4a2a')}>×</button>
@@ -315,11 +315,11 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
             <div className="shrink-0" style={{ borderBottom: '1px solid #3d2a14' }}>
               {isExalted ? (
                 exaltedCategory === null ? (
-                  <div className="px-5 py-4" style={{ background: 'rgba(180,140,0,0.12)' }}>
-                    <p className="text-center font-black text-sm mb-3" style={{ color: '#f0c040' }}>
+                  <div className="px-3 sm:px-5 py-3 sm:py-4" style={{ background: 'rgba(180,140,0,0.12)' }}>
+                    <p className="text-center font-black text-xs sm:text-sm mb-2 sm:mb-3" style={{ color: '#f0c040' }}>
                       ✨ Exalted! Choose one category to receive FREE:
                     </p>
-                    <div className="flex gap-2 justify-center flex-wrap">
+                    <div className="flex gap-1.5 sm:gap-2 justify-center flex-wrap">
                       {([
                         { key: 'consumables' as const, label: '5 Consumables', icon: '🧪' },
                         { key: 'upgrades'    as const, label: '3 Upgrades',    icon: '⬆️' },
@@ -328,7 +328,7 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                         <motion.button key={opt.key}
                           whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                           onClick={() => { setExaltedCategory(opt.key); setActiveTab(opt.key); }}
-                          className="px-4 py-2 rounded-xl font-black text-sm"
+                          className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-black text-xs sm:text-sm"
                           style={{
                             background: 'linear-gradient(180deg,#c8a010,#8a6a00)',
                             border: '1px solid #e8c030',
@@ -341,16 +341,16 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                     </div>
                   </div>
                 ) : (
-                  <div className="px-5 py-2 flex items-center justify-between text-xs font-bold"
+                  <div className="px-3 sm:px-5 py-1.5 sm:py-2 flex items-center justify-between text-[10px] sm:text-xs font-bold"
                     style={{ background: 'rgba(180,140,0,0.15)', color: exaltedDone ? '#8a7040' : '#f0c040' }}>
                     <span>
                       ✨ {exaltedCategory === 'consumables' ? '🧪 Consumables' : exaltedCategory === 'upgrades' ? '⬆️ Upgrades' : '✨ Relics'} FREE
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       {!exaltedDone && exaltedPurchaseCount === 0 && (
                         <button
                           onClick={() => setExaltedCategory(null)}
-                          className="text-[10px] px-2 py-0.5 rounded font-bold transition-colors"
+                          className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded font-bold transition-colors"
                           style={{ background: 'rgba(100,80,0,0.5)', border: '1px solid #8a6a00', color: '#d4a030' }}
                         >
                           ↩ Change
@@ -363,7 +363,7 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                   </div>
                 )
               ) : (
-                <div className="px-5 py-2 text-xs font-bold text-center"
+                <div className="px-3 sm:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold text-center"
                   style={{
                     background: destinyState === 'cursed' ? 'rgba(180,0,0,0.2)' : destinyState === 'unlucky' ? 'rgba(180,100,0,0.2)' : 'rgba(0,140,0,0.2)',
                     color: destinyState === 'cursed' ? '#f06060' : destinyState === 'unlucky' ? '#f0a040' : '#60c060',
@@ -375,13 +375,13 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
           )}
 
           {/* ── Tabs ── */}
-          <div className="flex shrink-0 px-4 pt-3 gap-1">
+          <div className="flex shrink-0 px-2 sm:px-4 pt-2 sm:pt-3 gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
             {TABS.map(tab => {
               const count = tabCounts[tab.id];
               const isActive = activeTab === tab.id;
               return (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-t-xl font-bold text-sm transition-all"
+                  className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2 rounded-t-lg sm:rounded-t-xl font-bold text-[10px] sm:text-sm transition-all whitespace-nowrap"
                   style={isActive ? {
                     background: 'rgba(90,62,40,0.8)',
                     border: '1px solid #8a5c30',
@@ -394,10 +394,10 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                     border: '1px solid #3d2a14',
                     color: '#6a4a2a',
                   }}>
-                  <span>{tab.icon}</span>
-                  <span>{tab.label}</span>
+                  <span className="text-xs sm:text-base">{tab.icon}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
                   {count > 0 && (
-                    <span className="text-[10px] rounded-full px-1.5 font-black"
+                    <span className="text-[9px] sm:text-[10px] rounded-full px-1 sm:px-1.5 font-black"
                       style={{ background: isActive ? '#d4a030' : '#3d2a14', color: isActive ? '#0e0804' : '#6a4a2a' }}>
                       {count}
                     </span>

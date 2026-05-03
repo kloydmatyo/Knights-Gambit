@@ -130,6 +130,16 @@ body {
     scroll-behavior: smooth;
   }
   
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+  
   /* Safe area insets for notched devices */
   .safe-top {
     padding-top: env(safe-area-inset-top);
