@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resize Dice Icon for PWA</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 { color: #d4a855; }
+    .upload-area {
+      border: 3px dashed #d4a855;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      margin: 20px 0;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upload-area:hover {
+      background: #fff8e8;
+      border-color: #c8860a;
+    }
+    .upload-area.dragover {
+      background: #fff8e8;
+      border-color: #c8860a;
+      transform: scale(1.02);
+    }
+    input[type="file"] {
+      display: none;
+    }
+    button {
+      background: #d4a855;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 5px;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #c8860a;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .preview-item {
+      text-align: center;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    .preview-item canvas {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      max-width: 100%;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .preview-item canvas:hover {
+      transform: scale(1.05);
+    }
+    .preview-item p {
+      margin: 8px 0 0 0;
+      font-size: 12px;
+      color: #666;
+    }
+    .info {
+      background: #fff8e8;
+      border-left: 4px solid #d4a855;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .success {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+      display: none;
+    }
+    .original-preview {
+      text-align: center;
+      margin: 20px 0;
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 8px;
+    }
+    .original-preview img {
+      max-width: 200px;
+      border: 2px solid #d4a855;
+      border-radius: 8px;
+      padding: 10px;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎲 Resize Dice Icon for PWA</h1>
+    <p>Upload your <code>dice_icon.png</code> and generate all required PWA icon sizes.</p>
+
+    <div class="info">
+      <strong>📝 Instructions:</strong>
+      <ol>
+        <li>Click the upload area or drag your <code>dice_icon.png</code> file</li>
+        <li>Preview will show all generated sizes</li>
+        <li>Click "Download All" to get a ZIP, or click individual icons to download</li>
+        <li>Replace the files in <code>public/icons/</code></li>
+      </ol>
+    </div>
+
+    <div class="upload-area" id="uploadArea">
+      <p style="font-size: 48px; margin: 0;">📤</p>
+      <p style="font-size: 18px; margin: 10px 0;"><strong>Click to upload or drag & drop</strong></p>
+      <p style="color: #666; font-size: 14px;">dice_icon.png from public/dice/</p>
+      <input type="file" id="fileInput" accept="image/png,image/jpeg,image/jpg">
+    </div>
+
+    <div class="original-preview" id="originalPreview" style="display: none;">
+      <h3>Original Image</h3>
+      <img id="originalImg" alt="Original">
+    </div>
+
+    <div id="controls" style="text-align: center; margin: 20px 0; display: none;">
+      <button onclick="generateIcons()">🎨 Generate All Icons</button>
+      <button onclick="downloadAll()" id="downloadBtn" disabled>📦 Download All as ZIP</button>
+    </div>
+
+    <div class="success" id="successMsg">
+      ✅ Icons generated successfully! Click individual icons to download, or use "Download All".
+    </div>
+
+    <div class="preview" id="preview"></div>
+  </div>
+
+  <script>
+    let originalImage = null;
+    const sizes = [
+      { size: 72, name: 'icon-72x72.png' },
+      { size: 96, name: 'icon-96x96.png' },
+      { size: 128, name: 'icon-128x128.png' },
+      { size: 144, name: 'icon-144x144.png' },
+      { size: 152, name: 'icon-152x152.png' },
+      { size: 192, name: 'icon-192x192.png' },
+      { size: 384, name: 'icon-384x384.png' },
+      { size: 512, name: 'icon-512x512.png' },
+      { size: 192, name: 'icon-maskable-192x192.png', maskable: true },
+      { size: 512, name: 'icon-maskable-512x512.png', maskable: true },
+      { size: 180, name: 'apple-touch-icon.png' },
+    ];
+    const generatedCanvases = [];
+
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const originalPreview = document.getElementById('originalPreview');
+    const originalImg = document.getElementById('originalImg');
+    const controls = document.getElementById('controls');
+    const preview = document.getElementById('preview');
+    const successMsg = document.getElementById('successMsg');
+
+    uploadArea.onclick = () => fileInput.click();
+
+    uploadArea.ondragover = (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    };
+
+    uploadArea.ondragleave = () => {
+      uploadArea.classList.remove('dragover');
+    };
+
+    uploadArea.ondrop = (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    };
+
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    };
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          originalImage = img;
+          originalImg.src = e.target.result;
+          originalPreview.style.display = 'block';
+          controls.style.display = 'block';
+          uploadArea.style.display = 'none';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function generateIcons() {
+      if (!originalImage) return;
+
+      preview.innerHTML = '';
+      generatedCanvases.length = 0;
+
+      sizes.forEach(({ size, name, maskable }) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Background
+        ctx.fillStyle = '#0a0602';
+        ctx.fillRect(0, 0, size, size);
+
+        // Calculate padding for maskable icons (safe zone)
+        const padding = maskable ? size * 0.1 : size * 0.05;
+        const iconSize = size - (padding * 2);
+
+        // Draw image centered
+        ctx.drawImage(originalImage, padding, padding, iconSize, iconSize);
+
+        // Maskable safe zone indicator (subtle)
+        if (maskable) {
+          ctx.strokeStyle = 'rgba(212, 168, 85, 0.2)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([5, 5]);
+          ctx.strokeRect(padding, padding, iconSize, iconSize);
+          ctx.setLineDash([]);
+        }
+
+        generatedCanvases.push({ canvas, name });
+
+        // Add to preview
+        const item = document.createElement('div');
+        item.className = 'preview-item';
+        
+        const displayCanvas = canvas.cloneNode(true);
+        displayCanvas.style.width = '120px';
+        displayCanvas.style.height = '120px';
+        displayCanvas.onclick = () => downloadIcon(canvas, name);
+        displayCanvas.title = 'Click to download';
+
+        const label = document.createElement('p');
+        label.textContent = name;
+        label.style.fontWeight = 'bold';
+
+        const sizeLabel = document.createElement('p');
+        sizeLabel.textContent = `${size}x${size}px`;
+        sizeLabel.style.color = '#999';
+
+        item.appendChild(displayCanvas);
+        item.appendChild(label);
+        item.appendChild(sizeLabel);
+        preview.appendChild(item);
+      });
+
+      successMsg.style.display = 'block';
+      document.getElementById('downloadBtn').disabled = false;
+    }
+
+    function downloadIcon(canvas, filename) {
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    async function downloadAll() {
+      for (let i = 0; i < generatedCanvases.length; i++) {
+        const { canvas, name } = generatedCanvases[i];
+        await new Promise(resolve => {
+          setTimeout(() => {
+            downloadIcon(canvas, name);
+            resolve();
+          }, i * 200); // Stagger downloads
+        });
+      }
+      alert('All icons downloaded! Check your Downloads folder.');
+    }
+  </script>
+</body>
+</html>
