@@ -126,12 +126,12 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
       <AnimatePresence mode="wait">
         {!showingDestiny ? (
           /* ── Phase 1: Choose your path ── */
-          <motion.div key="choose" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-3 w-full">
-            <div className="text-sm font-semibold tracking-wide uppercase mb-1" style={{ color: '#8a6a4a' }}>
+          <motion.div key="choose" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2 sm:gap-3 w-full">
+            <div className="text-xs sm:text-sm font-semibold tracking-wide uppercase mb-0.5 sm:mb-1" style={{ color: '#8a6a4a' }}>
               Choose your path
             </div>
-            <div className="flex gap-3 flex-wrap justify-center">
-              {tileOptions.map((id) => {
+            <div className="flex gap-2 sm:gap-3 flex-wrap justify-center">
+              {tileOptions.map((id, index) => {
                 const tile = board.find(t => t.id === id);
                 if (!tile) return null;
                 const bg = TILE_BG[tile.type] ?? 'bg-gray-600 border-gray-400';
@@ -143,17 +143,23 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
                     onClick={() => handleTileClick(id)}
                     onMouseEnter={() => onHoverTile?.(id)}
                     onMouseLeave={() => onHoverTile?.(null)}
+                    onTouchStart={() => onHoverTile?.(id)}
+                    onTouchEnd={() => onHoverTile?.(null)}
                     disabled={rolling}
-                    className={`flex flex-col items-center gap-1 px-5 py-3 rounded-xl border-2 ${bg} text-white font-bold shadow-lg cursor-pointer min-w-[90px] disabled:opacity-60`}
+                    className={`relative flex flex-col items-center gap-0.5 sm:gap-1 px-3 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl border-2 ${bg} text-white font-bold shadow-lg cursor-pointer min-w-[75px] sm:min-w-[90px] disabled:opacity-60`}
                   >
-                    <span className="text-3xl">
+                    {/* Number badge */}
+                    <div className="absolute -top-2 -left-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-game-gold text-black font-black text-sm sm:text-base flex items-center justify-center shadow-lg border-2 border-yellow-700">
+                      {index + 1}
+                    </div>
+                    <span className="text-2xl sm:text-3xl">
                       {tile.type === 'trap' && tile.trapType
                         ? TRAP_PREVIEW[tile.trapType]?.icon ?? '⚠️'
                         : (TILE_EMOJI[tile.type] ?? '⬜')}
                     </span>
-                    <span className="text-sm">{TILE_LABELS[tile.type] ?? tile.type}</span>
+                    <span className="text-xs sm:text-sm">{TILE_LABELS[tile.type] ?? tile.type}</span>
                     {tile.type === 'trap' && tile.trapType && TRAP_PREVIEW[tile.trapType] && (
-                      <span className="text-[10px] font-bold mt-0.5 px-1.5 py-0.5 rounded"
+                      <span className="text-[9px] sm:text-[10px] font-bold mt-0.5 px-1 sm:px-1.5 py-0.5 rounded"
                         style={{ background: 'rgba(0,0,0,0.4)', color: '#fbbf24' }}>
                         {TRAP_PREVIEW[tile.trapType].effect}
                       </span>
@@ -162,7 +168,7 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
                 );
               })}
             </div>
-            <p className="text-gray-500 text-xs">Pick a tile — then roll 2d6 for your fate</p>
+            <p className="text-gray-500 text-[10px] sm:text-xs">Pick a tile — then roll 2d6 for your fate</p>
           </motion.div>
         ) : (
           /* ── Phase 2: Show 2d6 destiny result ── */

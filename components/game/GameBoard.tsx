@@ -168,6 +168,7 @@ export default function GameBoard({
         {tiles.map((tile, idx) => {
           const isCurrent = tile.id === currentPosition;
           const isChoosable = choosableTileIds.includes(tile.id);
+          const choiceIndex = isChoosable ? choosableTileIds.indexOf(tile.id) : -1;
           const isVisited = visitedIds.has(tile.id);
           const isImmediateNext = immediateNextIds.has(tile.id);
           const isVisible = isCurrent || isVisited || isImmediateNext;
@@ -194,6 +195,19 @@ export default function GameBoard({
                   tile.trapTriggered ? 'grayscale' : '',
                 ].filter(Boolean).join(' ')}
               >
+                {/* Number badge for choosable tiles */}
+                {isChoosable && choiceIndex >= 0 && (
+                  <div 
+                    className="absolute -top-1 -right-1 rounded-full bg-game-gold text-black font-black flex items-center justify-center shadow-lg border-2 border-yellow-700 z-10"
+                    style={{ 
+                      width: Math.max(20, 28 * scale), 
+                      height: Math.max(20, 28 * scale),
+                      fontSize: Math.max(12, 16 * scale)
+                    }}
+                  >
+                    {choiceIndex + 1}
+                  </div>
+                )}
                 {/* Only show actual emoji for visited/current/choosable — undiscovered shows ? */}
                 <span style={{ fontSize: Math.max(24, 32 * scale) }}>
                   {isVisible ? getTileEmoji(tile) : '❓'}
