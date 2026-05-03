@@ -66,12 +66,13 @@ function categorize(item: Item): ShopTab {
 }
 
 function getNextPrice(item: Item, counts?: StatUpgradeCounts): number | null {
-  if (!counts || item.effect.type !== 'permanent' || !item.effect.stat) return null;
+  if (!counts || item.effect.type !== 'permanent' && item.effect.type !== 'upgrade_bonus') return null;
+  if (!item.effect.stat) return null;
   const stat = item.effect.stat;
-  if (stat !== 'attack' && stat !== 'defense' && stat !== 'health') return null;
-  const currentCount = counts[stat];
+  if (!(stat in counts)) return null;
+  const currentCount = counts[stat as keyof StatUpgradeCounts];
   if (currentCount === 0) return null;
-  return calcUpgradePrice(stat, currentCount + 1);
+  return calcUpgradePrice(stat as keyof StatUpgradeCounts, currentCount + 1);
 }
 
 // ── Single item card ──────────────────────────────────────────────────────
@@ -251,18 +252,12 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
 
   const canAfford = (price: number) => player.coins >= price;
 
-  const sortedItems = [...modifiedItems].sort((a, b) => {
-    const aAfford = canAfford(a.price) ? 0 : 1;
-    const bAfford = canAfford(b.price) ? 0 : 1;
-    if (aAfford !== bAfford) return aAfford - bAfford;
-    return a.price - b.price;
-  });
-
-  const tabItems = sortedItems.filter(i => categorize(i) === activeTab);
+  // Keep items in stable order - no sorting to prevent accidental purchases
+  const tabItems = modifiedItems.filter(i => categorize(i) === activeTab);
   const tabCounts = {
-    consumables: sortedItems.filter(i => categorize(i) === 'consumables').length,
-    upgrades:    sortedItems.filter(i => categorize(i) === 'upgrades').length,
-    relics:      modifiedRelics ? modifiedRelics.filter(r => !r.locked).length : sortedItems.filter(i => categorize(i) === 'relics').length,
+    consumables: modifiedItems.filter(i => categorize(i) === 'consumables').length,
+    upgrades:    modifiedItems.filter(i => categorize(i) === 'upgrades').length,
+    relics:      modifiedRelics ? modifiedRelics.filter(r => !r.locked).length : modifiedItems.filter(i => categorize(i) === 'relics').length,
     weapons:     availableWeaponUpgrades.length,
   };
 

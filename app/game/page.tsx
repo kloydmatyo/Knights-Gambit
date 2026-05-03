@@ -501,8 +501,13 @@ export default function GamePage() {
         newUpgradeState.totalCritDamageBonus = Math.min(2.0, upgradeState.totalCritDamageBonus + value);
       }
       
+      // Increment stat upgrade count for exponential pricing
+      const newCounts = stat === 'armorPen' || stat === 'critChance' || stat === 'critDamage'
+        ? incrementStatCount(gameState.statUpgradeCounts, stat)
+        : gameState.statUpgradeCounts;
+      
       setUpgradeState(newUpgradeState);
-      setGameState({ ...gameState, player: newPlayer });
+      setGameState({ ...gameState, player: newPlayer, statUpgradeCounts: newCounts });
       showNotification(`✅ ${item.name} purchased!`);
       return;
     }
@@ -945,8 +950,8 @@ export default function GamePage() {
       </AnimatePresence>
 
       <InventoryPanel isOpen={isInventoryOpen} onClose={() => setIsInventoryOpen(false)} player={gameState.player} onUseItem={handleUseItem} isInCombat={phase === 'combat'} />
-      <ShopPanel isOpen={isShopOpen} onClose={() => setIsShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getShopItems(gameState.currentFloor).filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts)]} onPurchase={handlePurchase} statUpgradeCounts={gameState.statUpgradeCounts} destinyState={shopDestinyState as any} currentFloor={gameState.currentFloor} upgradeState={upgradeState} onWeaponUpgrade={handleWeaponUpgradePurchase} allRelics={InventoryEngine.getAllRelics(gameState.currentFloor, gameState.player.relics ?? [])} />
-      <ShopPanel isOpen={isSpecialShopOpen} onClose={() => setIsSpecialShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getSpecialShopItems().filter(i => i.effect.type !== 'permanent'), ...getStatUpgradeItems(gameState.statUpgradeCounts)]} onPurchase={handlePurchase} title="âœ¨ Special Shop" statUpgradeCounts={gameState.statUpgradeCounts} />
+      <ShopPanel isOpen={isShopOpen} onClose={() => setIsShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getShopItems(gameState.currentFloor).filter(i => i.effect.type !== 'permanent' && i.effect.type !== 'upgrade_bonus'), ...getStatUpgradeItems(gameState.statUpgradeCounts)]} onPurchase={handlePurchase} statUpgradeCounts={gameState.statUpgradeCounts} destinyState={shopDestinyState as any} currentFloor={gameState.currentFloor} upgradeState={upgradeState} onWeaponUpgrade={handleWeaponUpgradePurchase} allRelics={InventoryEngine.getAllRelics(gameState.currentFloor, gameState.player.relics ?? [])} />
+      <ShopPanel isOpen={isSpecialShopOpen} onClose={() => setIsSpecialShopOpen(false)} player={gameState.player} items={[...InventoryEngine.getSpecialShopItems().filter(i => i.effect.type !== 'permanent' && i.effect.type !== 'upgrade_bonus'), ...getStatUpgradeItems(gameState.statUpgradeCounts)]} onPurchase={handlePurchase} title="âœ¨ Special Shop" statUpgradeCounts={gameState.statUpgradeCounts} />
       <WeaponUpgradePanel isOpen={isUpgradePanelOpen} onClose={() => setIsUpgradePanelOpen(false)} player={gameState.player} currentFloor={gameState.currentFloor} upgradeState={upgradeState} onPurchase={handleWeaponUpgradePurchase} />
 
       <AnimatePresence>

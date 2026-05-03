@@ -44,6 +44,10 @@ export const SaveEngine = {
       if (data.slot === undefined) data.slot = slot;
       // Backfill flags for saves that predate the flag system
       if (!data.gameState.flags) data.gameState.flags = {};
+      // Backfill new stat upgrade counts for saves that predate armor pen/crit upgrades
+      if (!data.gameState.statUpgradeCounts.armorPen) data.gameState.statUpgradeCounts.armorPen = 0;
+      if (!data.gameState.statUpgradeCounts.critChance) data.gameState.statUpgradeCounts.critChance = 0;
+      if (!data.gameState.statUpgradeCounts.critDamage) data.gameState.statUpgradeCounts.critDamage = 0;
       return data;
     } catch {
       SaveEngine.clearSlot(slot);

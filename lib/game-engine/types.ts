@@ -211,6 +211,9 @@ export interface StatUpgradeCounts {
   attack: number;
   defense: number;
   health: number;
+  armorPen: number;
+  critChance: number;
+  critDamage: number;
 }
 
 // --- Weapon Upgrade System ---
