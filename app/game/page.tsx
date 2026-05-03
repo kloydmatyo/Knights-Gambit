@@ -932,9 +932,9 @@ export default function GamePage() {
             enemy={gameState.currentEnemy ?? combatEnemy}
             onAttack={handleAttack}
             onUseSkill={handleUseSkill}
-            onFlee={!fleeUsed ? handleFlee : undefined}
-            onBribe={gameState.currentEnemy?.canBeBribed && gameState.player.coins >= CombatEngine.getBribeCost(gameState.currentEnemy) ? handleBribe : undefined}
-            onTruce={gameState.currentEnemy?.willAcceptTruce ? handleTruce : undefined}
+            onFlee={!fleeUsed && gameState.currentEnemy?.behavior !== 'enrager' ? handleFlee : undefined}
+            onBribe={gameState.currentEnemy?.behavior !== 'enrager' && gameState.currentEnemy?.canBeBribed && gameState.player.coins >= CombatEngine.getBribeCost(gameState.currentEnemy) ? handleBribe : undefined}
+            onTruce={gameState.currentEnemy?.behavior !== 'enrager' && gameState.currentEnemy?.willAcceptTruce ? handleTruce : undefined}
             onOpenInventory={() => setIsInventoryOpen(true)}
             bribeCost={gameState.currentEnemy ? CombatEngine.getBribeCost(gameState.currentEnemy) : undefined}
             combatLog={combatLog}
