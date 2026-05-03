@@ -14,12 +14,48 @@ function SkillButton({ skill, disabled, onClick }: {
   disabled: boolean;
   onClick: () => void;
 }) {
-  const [hovered, setHovered] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+
+  const handleTouchStart = () => {
+    const timer = setTimeout(() => {
+      setShowTooltip(true);
+    }, 300); // Show tooltip after 300ms press
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    // Keep tooltip visible for a moment after release
+    if (showTooltip) {
+      setTimeout(() => setShowTooltip(false), 2000);
+    }
+  };
+
+  const handleClick = () => {
+    if (showTooltip) {
+      // If tooltip is showing, hide it and don't trigger action
+      setShowTooltip(false);
+    } else {
+      // Otherwise trigger the action
+      onClick();
+    }
+  };
+
   return (
-    <div className="relative" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      {hovered && <SkillTooltip skill={skill} />}
+    <div className="relative" 
+      onMouseEnter={() => setShowTooltip(true)} 
+      onMouseLeave={() => setShowTooltip(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+    >
+      {showTooltip && <SkillTooltip skill={skill} />}
       <button
-        onClick={onClick}
+        onClick={handleClick}
         disabled={disabled}
         className="w-full py-2 px-3 rounded-lg font-bold text-xs bg-yellow-600/20 hover:bg-yellow-500/30 border border-yellow-400/30 disabled:opacity-40 text-white transition-all active:scale-95 truncate"
       >
@@ -502,6 +538,10 @@ export default function CombatUI({
               {menu === 'fight' && (
                 <motion.div key="fight" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
                   className="w-full flex flex-col gap-1.5 sm:gap-2">
+                  {/* Mobile hint */}
+                  <div className="sm:hidden text-[9px] text-gray-500 text-center pb-0.5">
+                    💡 Long-press skills to see details
+                  </div>
                   <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                     <button onClick={() => { onAttack(); setMenu('main'); }} disabled={actionsDisabled}
                       className="py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg font-bold text-xs bg-red-600/80 hover:bg-red-500 disabled:opacity-40 text-white border border-red-400/40 transition-all active:scale-95">
