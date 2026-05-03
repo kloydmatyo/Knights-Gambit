@@ -236,14 +236,6 @@ export default function GamePage() {
     switch (tile.type) {
       case 'enemy': {
         const combatState = GameEngine.startCombat(stateAfterMove, destinyState);
-        // Save revive snapshot before combat
-        if (combatState.currentEnemy) {
-          setReviveSnapshot({
-            gameState: JSON.parse(JSON.stringify(combatState)),
-            upgradeState: JSON.parse(JSON.stringify(upgradeState)),
-            enemy: JSON.parse(JSON.stringify(combatState.currentEnemy))
-          });
-        }
         setGameState(combatState);
         setPhase('combat');
         setCombatEnemy(combatState.currentEnemy);
@@ -254,14 +246,6 @@ export default function GamePage() {
       }
       case 'elite': {
         const combatState = GameEngine.startCombat(stateAfterMove, destinyState);
-        // Save revive snapshot before combat
-        if (combatState.currentEnemy) {
-          setReviveSnapshot({
-            gameState: JSON.parse(JSON.stringify(combatState)),
-            upgradeState: JSON.parse(JSON.stringify(upgradeState)),
-            enemy: JSON.parse(JSON.stringify(combatState.currentEnemy))
-          });
-        }
         setGameState(combatState);
         setPhase('combat');
         setCombatEnemy(combatState.currentEnemy);
@@ -377,7 +361,19 @@ export default function GamePage() {
     setGameState(newState);
     setCombatLog((prev) => [...prev, ...result.messages]);
     triggerCombatAnimations(gameState.currentEnemy.type, result);
-    if (GameEngine.isGameOver(newState)) { SaveEngine.clearSlot(activeSlot); setTimeout(() => setPhase('game-over'), 1500); }
+    if (GameEngine.isGameOver(newState)) { 
+      // Save revive snapshot before death (only if not already used)
+      // Use newState which has enemy HP AFTER player's attack
+      if (!hasUsedRevive && newState.currentEnemy) {
+        setReviveSnapshot({
+          gameState: JSON.parse(JSON.stringify(newState)),
+          upgradeState: JSON.parse(JSON.stringify(upgradeState)),
+          enemy: JSON.parse(JSON.stringify(newState.currentEnemy))
+        });
+      }
+      SaveEngine.clearSlot(activeSlot); 
+      setTimeout(() => setPhase('game-over'), 1500); 
+    }
     else autoSave(newState);
   };
 
@@ -387,7 +383,19 @@ export default function GamePage() {
     setGameState(newState);
     setCombatLog((prev) => [...prev, ...result.messages]);
     triggerCombatAnimations(gameState.currentEnemy.type, result);
-    if (GameEngine.isGameOver(newState)) { SaveEngine.clearSlot(activeSlot); setTimeout(() => setPhase('game-over'), 1500); }
+    if (GameEngine.isGameOver(newState)) { 
+      // Save revive snapshot before death (only if not already used)
+      // Use newState which has enemy HP AFTER player's attack
+      if (!hasUsedRevive && newState.currentEnemy) {
+        setReviveSnapshot({
+          gameState: JSON.parse(JSON.stringify(newState)),
+          upgradeState: JSON.parse(JSON.stringify(upgradeState)),
+          enemy: JSON.parse(JSON.stringify(newState.currentEnemy))
+        });
+      }
+      SaveEngine.clearSlot(activeSlot); 
+      setTimeout(() => setPhase('game-over'), 1500); 
+    }
     else autoSave(newState);
   };
 
@@ -408,7 +416,19 @@ export default function GamePage() {
       showNotification('🏃 You fled successfully!');
     } else {
       showNotification('🏃 Flee failed!');
-      if (GameEngine.isGameOver(newState)) { SaveEngine.clearSlot(activeSlot); setTimeout(() => setPhase('game-over'), 1000); }
+      if (GameEngine.isGameOver(newState)) { 
+        // Save revive snapshot before death (only if not already used)
+        // Use newState which has enemy HP after flee attempt
+        if (!hasUsedRevive && newState.currentEnemy) {
+          setReviveSnapshot({
+            gameState: JSON.parse(JSON.stringify(newState)),
+            upgradeState: JSON.parse(JSON.stringify(upgradeState)),
+            enemy: JSON.parse(JSON.stringify(newState.currentEnemy))
+          });
+        }
+        SaveEngine.clearSlot(activeSlot); 
+        setTimeout(() => setPhase('game-over'), 1000); 
+      }
     }
   };
 
@@ -428,7 +448,19 @@ export default function GamePage() {
       showNotification(`💰 Bribe accepted! Paid ${result.bribeCost} coins.`);
     } else {
       showNotification('💰 Bribe failed!');
-      if (GameEngine.isGameOver(newState)) { SaveEngine.clearSlot(activeSlot); setTimeout(() => setPhase('game-over'), 1000); }
+      if (GameEngine.isGameOver(newState)) { 
+        // Save revive snapshot before death (only if not already used)
+        // Use newState which has enemy HP after bribe attempt
+        if (!hasUsedRevive && newState.currentEnemy) {
+          setReviveSnapshot({
+            gameState: JSON.parse(JSON.stringify(newState)),
+            upgradeState: JSON.parse(JSON.stringify(upgradeState)),
+            enemy: JSON.parse(JSON.stringify(newState.currentEnemy))
+          });
+        }
+        SaveEngine.clearSlot(activeSlot); 
+        setTimeout(() => setPhase('game-over'), 1000); 
+      }
     }
   };
 
@@ -448,7 +480,19 @@ export default function GamePage() {
       showNotification(`🤝 Truce! Earned ${result.coinsEarned} coins.`);
     } else {
       showNotification('🤝 Truce rejected!');
-      if (GameEngine.isGameOver(newState)) { SaveEngine.clearSlot(activeSlot); setTimeout(() => setPhase('game-over'), 1000); }
+      if (GameEngine.isGameOver(newState)) { 
+        // Save revive snapshot before death (only if not already used)
+        // Use newState which has enemy HP after truce attempt
+        if (!hasUsedRevive && newState.currentEnemy) {
+          setReviveSnapshot({
+            gameState: JSON.parse(JSON.stringify(newState)),
+            upgradeState: JSON.parse(JSON.stringify(upgradeState)),
+            enemy: JSON.parse(JSON.stringify(newState.currentEnemy))
+          });
+        }
+        SaveEngine.clearSlot(activeSlot); 
+        setTimeout(() => setPhase('game-over'), 1000); 
+      }
     }
   };
 
@@ -462,6 +506,15 @@ export default function GamePage() {
       setGameState(newState);
       if (messages.length > 0) setCombatLog(prev => [...prev, ...messages]);
       if (GameEngine.isGameOver(newState)) {
+        // Save revive snapshot before death (only if not already used)
+        // Use newState which has enemy HP after item use
+        if (!hasUsedRevive && newState.currentEnemy) {
+          setReviveSnapshot({
+            gameState: JSON.parse(JSON.stringify(newState)),
+            upgradeState: JSON.parse(JSON.stringify(upgradeState)),
+            enemy: JSON.parse(JSON.stringify(newState.currentEnemy))
+          });
+        }
         SaveEngine.clearSlot(activeSlot);
         setTimeout(() => setPhase('game-over'), 1000);
       } else {
@@ -630,7 +683,18 @@ export default function GamePage() {
 
     setGameState({ ...state, player: newPlayer, board: newBoard });
     showNotification(message);
-    if (newPlayer.health <= 0) { SaveEngine.clearSlot(activeSlot); setTimeout(() => setPhase('game-over'), 500); }
+    if (newPlayer.health <= 0) { 
+      // Save revive snapshot before death from trap (only if not already used and in combat)
+      if (!hasUsedRevive && state.currentEnemy) {
+        setReviveSnapshot({
+          gameState: JSON.parse(JSON.stringify(state)),
+          upgradeState: JSON.parse(JSON.stringify(upgradeState)),
+          enemy: JSON.parse(JSON.stringify(state.currentEnemy))
+        });
+      }
+      SaveEngine.clearSlot(activeSlot); 
+      setTimeout(() => setPhase('game-over'), 500); 
+    }
     else autoSave({ ...state, player: newPlayer, board: newBoard });
   };
 
@@ -761,22 +825,25 @@ export default function GamePage() {
   const handleRevive = () => {
     if (!reviveSnapshot || hasUsedRevive) return;
 
-    // Restore game state from snapshot
+    // Restore game state from snapshot (which has enemy HP after player's last attack)
     const restoredState = { ...reviveSnapshot.gameState };
-    // Restore player HP to 50%
-    restoredState.player.health = Math.floor(restoredState.player.maxHealth * 0.5);
-    // Reset enemy to full HP
-    if (restoredState.currentEnemy) {
-      restoredState.currentEnemy.health = restoredState.currentEnemy.maxHealth;
-    }
+    
+    // Restore player HP to 75% of max HP
+    restoredState.player = {
+      ...restoredState.player,
+      health: Math.floor(restoredState.player.maxHealth * 0.75)
+    };
+    
+    // Enemy HP is already at the correct value in the snapshot (after player's attack)
+    // No need to modify enemy HP - it's preserved from the moment of death
 
     setGameState(restoredState);
     setUpgradeState(reviveSnapshot.upgradeState);
-    setCombatEnemy(reviveSnapshot.enemy);
+    setCombatEnemy(restoredState.currentEnemy);
     setPhase('combat');
     setCombatLog(['💫 Revived! You have been given a second chance!']);
     setHasUsedRevive(true);
-    showNotification('Revived at 50% HP!');
+    showNotification('Revived at 75% HP!');
   };
 
 
@@ -917,8 +984,8 @@ export default function GamePage() {
       }}>
       {/* Music Manager */}
       <MusicManager track={currentMusicTrack} volume={0.3} muted={isMusicMuted} />
-      {/* Music Toggle Button */}
-      <MusicToggle />
+      {/* Music Toggle Button - positioned at bottom-left to avoid HUD overlap */}
+      <MusicToggle position="bottom-left" />
       
       <HUD player={gameState.player} floor={gameState.currentFloor} turnCount={gameState.turnCount} onInventoryClick={() => setIsInventoryOpen(true)} playerSpriteUrl={(gameState.player as any).spriteDataUrl} upgradeState={upgradeState} />
 

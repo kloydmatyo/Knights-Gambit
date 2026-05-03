@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-export default function MusicToggle() {
+interface MusicToggleProps {
+  position?: 'top-right' | 'bottom-left';
+}
+
+export default function MusicToggle({ position = 'top-right' }: MusicToggleProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -27,13 +31,18 @@ export default function MusicToggle() {
   // Don't render until mounted to avoid hydration mismatch
   if (!mounted) return null;
 
+  const positionStyles = position === 'bottom-left' 
+    ? { left: '1rem', bottom: '1rem', top: 'auto', right: 'auto' }
+    : { right: '1rem', top: '1rem', left: 'auto', bottom: 'auto' };
+
   return (
     <motion.button
       onClick={toggleMusic}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className="fixed top-4 right-4 z-50 w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg transition-all"
+      className="fixed z-50 w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg transition-all"
       style={{
+        ...positionStyles,
         background: isMuted 
           ? 'linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%)'
           : 'linear-gradient(135deg, #d4a030 0%, #8a6020 100%)',
