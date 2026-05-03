@@ -18,6 +18,7 @@ interface GameOverScreenProps {
   onMainMenu: () => void;
   onRevive?: () => void;
   canRevive?: boolean;
+  revivesRemaining?: number;
 }
 
 const CLASS_EMOJIS: Record<string, string> = {
@@ -53,6 +54,7 @@ export default function GameOverScreen({
   onMainMenu,
   onRevive,
   canRevive = false,
+  revivesRemaining = 0,
 }: GameOverScreenProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [playerRank, setPlayerRank] = useState<number | null>(null);
@@ -308,7 +310,7 @@ export default function GameOverScreen({
               onClick={onRevive} 
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-lg shadow-lg"
             >
-              💫 REVIVE (Continue from where you died)
+              💫 REVIVE - Continue from where you died ({revivesRemaining} {revivesRemaining === 1 ? 'revive' : 'revives'} left)
             </Button>
           )}
           <div className="flex gap-3">

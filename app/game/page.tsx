@@ -68,7 +68,8 @@ export default function GamePage() {
   const [hoveredTileId, setHoveredTileId] = useState<number | null>(null);
   const [shopDestinyState, setShopDestinyState] = useState<string | null>(null);
   const [reviveSnapshot, setReviveSnapshot] = useState<{ gameState: GameState; upgradeState: WeaponUpgradeState; enemy: Enemy } | null>(null);
-  const [hasUsedRevive, setHasUsedRevive] = useState(false);
+  const [revivesUsed, setRevivesUsed] = useState(0);
+  const MAX_REVIVES = 2;
   const isMusicMuted = useMusicMuted();
 
   // Detect saved runs on mount
@@ -362,9 +363,9 @@ export default function GamePage() {
     setCombatLog((prev) => [...prev, ...result.messages]);
     triggerCombatAnimations(gameState.currentEnemy.type, result);
     if (GameEngine.isGameOver(newState)) { 
-      // Save revive snapshot before death (only if not already used)
+      // Save revive snapshot before death (only if revives remaining)
       // Use newState which has enemy HP AFTER player's attack
-      if (!hasUsedRevive && newState.currentEnemy) {
+      if (revivesUsed < MAX_REVIVES && newState.currentEnemy) {
         setReviveSnapshot({
           gameState: JSON.parse(JSON.stringify(newState)),
           upgradeState: JSON.parse(JSON.stringify(upgradeState)),
@@ -384,9 +385,9 @@ export default function GamePage() {
     setCombatLog((prev) => [...prev, ...result.messages]);
     triggerCombatAnimations(gameState.currentEnemy.type, result);
     if (GameEngine.isGameOver(newState)) { 
-      // Save revive snapshot before death (only if not already used)
+      // Save revive snapshot before death (only if revives remaining)
       // Use newState which has enemy HP AFTER player's attack
-      if (!hasUsedRevive && newState.currentEnemy) {
+      if (revivesUsed < MAX_REVIVES && newState.currentEnemy) {
         setReviveSnapshot({
           gameState: JSON.parse(JSON.stringify(newState)),
           upgradeState: JSON.parse(JSON.stringify(upgradeState)),
@@ -417,9 +418,9 @@ export default function GamePage() {
     } else {
       showNotification('🏃 Flee failed!');
       if (GameEngine.isGameOver(newState)) { 
-        // Save revive snapshot before death (only if not already used)
+        // Save revive snapshot before death (only if revives remaining)
         // Use newState which has enemy HP after flee attempt
-        if (!hasUsedRevive && newState.currentEnemy) {
+        if (revivesUsed < MAX_REVIVES && newState.currentEnemy) {
           setReviveSnapshot({
             gameState: JSON.parse(JSON.stringify(newState)),
             upgradeState: JSON.parse(JSON.stringify(upgradeState)),
@@ -449,9 +450,9 @@ export default function GamePage() {
     } else {
       showNotification('💰 Bribe failed!');
       if (GameEngine.isGameOver(newState)) { 
-        // Save revive snapshot before death (only if not already used)
+        // Save revive snapshot before death (only if revives remaining)
         // Use newState which has enemy HP after bribe attempt
-        if (!hasUsedRevive && newState.currentEnemy) {
+        if (revivesUsed < MAX_REVIVES && newState.currentEnemy) {
           setReviveSnapshot({
             gameState: JSON.parse(JSON.stringify(newState)),
             upgradeState: JSON.parse(JSON.stringify(upgradeState)),
@@ -481,9 +482,9 @@ export default function GamePage() {
     } else {
       showNotification('🤝 Truce rejected!');
       if (GameEngine.isGameOver(newState)) { 
-        // Save revive snapshot before death (only if not already used)
+        // Save revive snapshot before death (only if revives remaining)
         // Use newState which has enemy HP after truce attempt
-        if (!hasUsedRevive && newState.currentEnemy) {
+        if (revivesUsed < MAX_REVIVES && newState.currentEnemy) {
           setReviveSnapshot({
             gameState: JSON.parse(JSON.stringify(newState)),
             upgradeState: JSON.parse(JSON.stringify(upgradeState)),
@@ -506,9 +507,9 @@ export default function GamePage() {
       setGameState(newState);
       if (messages.length > 0) setCombatLog(prev => [...prev, ...messages]);
       if (GameEngine.isGameOver(newState)) {
-        // Save revive snapshot before death (only if not already used)
+        // Save revive snapshot before death (only if revives remaining)
         // Use newState which has enemy HP after item use
-        if (!hasUsedRevive && newState.currentEnemy) {
+        if (revivesUsed < MAX_REVIVES && newState.currentEnemy) {
           setReviveSnapshot({
             gameState: JSON.parse(JSON.stringify(newState)),
             upgradeState: JSON.parse(JSON.stringify(upgradeState)),
@@ -684,8 +685,8 @@ export default function GamePage() {
     setGameState({ ...state, player: newPlayer, board: newBoard });
     showNotification(message);
     if (newPlayer.health <= 0) { 
-      // Save revive snapshot before death from trap (only if not already used and in combat)
-      if (!hasUsedRevive && state.currentEnemy) {
+      // Save revive snapshot before death from trap (only if revives remaining and in combat)
+      if (revivesUsed < MAX_REVIVES && state.currentEnemy) {
         setReviveSnapshot({
           gameState: JSON.parse(JSON.stringify(state)),
           upgradeState: JSON.parse(JSON.stringify(upgradeState)),
@@ -823,7 +824,7 @@ export default function GamePage() {
   };
   // ── Revive ────────────────────────────────────────────────────────────────────────────────
   const handleRevive = () => {
-    if (!reviveSnapshot || hasUsedRevive) return;
+    if (!reviveSnapshot || revivesUsed >= MAX_REVIVES) return;
 
     // Restore game state from snapshot (which has enemy HP after player's last attack)
     const restoredState = { ...reviveSnapshot.gameState };
@@ -841,9 +842,10 @@ export default function GamePage() {
     setUpgradeState(reviveSnapshot.upgradeState);
     setCombatEnemy(restoredState.currentEnemy);
     setPhase('combat');
-    setCombatLog(['💫 Revived! You have been given a second chance!']);
-    setHasUsedRevive(true);
-    showNotification('Revived at 75% HP!');
+    const revivesRemaining = MAX_REVIVES - revivesUsed - 1;
+    setCombatLog([`💫 Revived! You have been given a second chance! (${revivesRemaining} revive${revivesRemaining !== 1 ? 's' : ''} remaining)`]);
+    setRevivesUsed(prev => prev + 1);
+    showNotification(`Revived at 75% HP! (${revivesRemaining} left)`);
   };
 
 
@@ -1172,7 +1174,8 @@ export default function GamePage() {
             onRestart={handleRestart} 
             onMainMenu={handleMainMenu}
             onRevive={handleRevive}
-            canRevive={!!reviveSnapshot && !hasUsedRevive}
+            canRevive={!!reviveSnapshot && revivesUsed < MAX_REVIVES}
+            revivesRemaining={MAX_REVIVES - revivesUsed}
           />
         )}
       </AnimatePresence>
