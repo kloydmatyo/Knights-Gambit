@@ -969,12 +969,23 @@ export default function GamePage() {
 
   const choosableTileIds = (pendingChoice && !pendingChoice.destinyResult) ? pendingChoice.tileOptions : [];
 
-  // Determine current music track based on game phase (character-selection is handled separately above)
-  const currentMusicTrack: 'home' | 'character_creation' | 'map' | 'combat' | 'shop' | null = 
-    phase === 'combat' ? 'combat'
-    : (isShopOpen || isSpecialShopOpen) ? 'shop'
-    : (phase === 'playing' || phase === 'dungeon-clear') ? 'map'
-    : null;
+  // Determine current music track based on game phase and enemy type
+  let currentMusicTrack: 'home' | 'character_creation' | 'map' | 'combat' | 'elite_combat' | 'boss_combat' | 'shop' | null = null;
+  
+  if (phase === 'combat') {
+    // Check enemy type for boss or elite combat music
+    if (combatEnemy?.type.startsWith('boss')) {
+      currentMusicTrack = 'boss_combat';
+    } else if (gameState?.board.find(t => t.id === gameState.player.position)?.type === 'elite') {
+      currentMusicTrack = 'elite_combat';
+    } else {
+      currentMusicTrack = 'combat';
+    }
+  } else if (isShopOpen || isSpecialShopOpen) {
+    currentMusicTrack = 'shop';
+  } else if (phase === 'playing' || phase === 'dungeon-clear') {
+    currentMusicTrack = 'map';
+  }
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col"

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-type MusicTrack = 'home' | 'character_creation' | 'map' | 'combat' | 'shop' | null;
+type MusicTrack = 'home' | 'character_creation' | 'map' | 'combat' | 'elite_combat' | 'boss_combat' | 'shop' | null;
 
 interface MusicManagerProps {
   track: MusicTrack;
@@ -15,6 +15,8 @@ const TRACKS = {
   character_creation: '/ost/Character_Creation_BG.mp3',
   map: '/ost/map_ost.mp3',
   combat: '/ost/Enemy_ost.mp3',
+  elite_combat: '/ost/elite_enemy_ost.mp3',
+  boss_combat: '/ost/boss_enemy_ost.mp3',
   shop: '/ost/Shop_ost.mp3',
 };
 
