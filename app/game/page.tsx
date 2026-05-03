@@ -30,6 +30,7 @@ import DiceManipulator from '@/components/game/DiceManipulator';
 import GameOverScreen from '@/components/game/GameOverScreen';
 import DungeonClearScreen from '@/components/game/DungeonClearScreen';
 import MusicManager from '@/components/game/MusicManager';
+import MusicToggle, { useMusicMuted } from '@/components/game/MusicToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getDungeonNumber, isDungeonBossFloor } from '@/lib/game-engine/constants';
 import { SaveEngine, SaveData } from '@/lib/game-engine/SaveEngine';
@@ -68,6 +69,7 @@ export default function GamePage() {
   const [shopDestinyState, setShopDestinyState] = useState<string | null>(null);
   const [reviveSnapshot, setReviveSnapshot] = useState<{ gameState: GameState; upgradeState: WeaponUpgradeState; enemy: Enemy } | null>(null);
   const [hasUsedRevive, setHasUsedRevive] = useState(false);
+  const isMusicMuted = useMusicMuted();
 
   // Detect saved runs on mount
   useEffect(() => {
@@ -914,7 +916,9 @@ export default function GamePage() {
         backgroundPosition: 'center',
       }}>
       {/* Music Manager */}
-      <MusicManager track={currentMusicTrack} volume={0.3} />
+      <MusicManager track={currentMusicTrack} volume={0.3} muted={isMusicMuted} />
+      {/* Music Toggle Button */}
+      <MusicToggle />
       
       <HUD player={gameState.player} floor={gameState.currentFloor} turnCount={gameState.turnCount} onInventoryClick={() => setIsInventoryOpen(true)} playerSpriteUrl={(gameState.player as any).spriteDataUrl} upgradeState={upgradeState} />
 

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
 import MusicManager from '@/components/game/MusicManager';
+import MusicToggle, { useMusicMuted } from '@/components/game/MusicToggle';
 
 const HOW_TO_PLAY = [
   { icon: '🎲', title: 'Roll & Move', text: 'Roll the dice each turn to move your token around the board. Land on different tiles to trigger events.' },
@@ -18,12 +19,15 @@ const HOW_TO_PLAY = [
 export default function Home() {
   const router = useRouter();
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const isMusicMuted = useMusicMuted();
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4"
       style={{ background: 'radial-gradient(ellipse at center, #2a1808 0%, #0e0804 100%)' }}>
       {/* Music Manager */}
-      <MusicManager track="home" volume={0.3} />
+      <MusicManager track="home" volume={0.3} muted={isMusicMuted} />
+      {/* Music Toggle Button */}
+      <MusicToggle />
       
       <motion.div
         initial={{ opacity: 0, y: -50 }}
@@ -41,6 +45,7 @@ export default function Home() {
           }}
           animate={{ scale: [1, 1.04, 1, 1.04, 1] }}
           transition={{ duration: 2, ease: 'easeInOut' }}
+          suppressHydrationWarning
         >
           🎲 DICEBOUND 🎲
         </motion.h1>

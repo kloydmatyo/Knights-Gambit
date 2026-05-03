@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import MusicManager from './MusicManager';
+import MusicToggle, { useMusicMuted } from './MusicToggle';
 
 const LPCCharacterCreator = dynamic(
   () => import('./LPCCharacterCreator'),
@@ -72,6 +73,7 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
   const [spriteDataUrl, setSpriteDataUrl] = useState<string | undefined>();
   const [fullSheetUrl, setFullSheetUrl] = useState<string | undefined>();
   const [classIndex, setClassIndex] = useState(0);
+  const isMusicMuted = useMusicMuted();
   const [playerName, setPlayerName] = useState('');
   const [direction, setDirection] = useState(0);
 
@@ -107,7 +109,9 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
     <div className="min-h-screen min-h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center py-4 sm:py-8 px-3 sm:px-6 safe-top safe-bottom"
       style={{ background: 'radial-gradient(ellipse at center, #2a1808 0%, #0e0804 100%)' }}>
       {/* Music Manager */}
-      <MusicManager track="character_creation" volume={0.3} />
+      <MusicManager track="character_creation" volume={0.3} muted={isMusicMuted} />
+      {/* Music Toggle Button */}
+      <MusicToggle />
       
       <div className="w-full max-w-4xl flex flex-col items-center gap-4 sm:gap-6">
 
