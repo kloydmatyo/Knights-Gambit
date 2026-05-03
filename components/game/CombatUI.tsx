@@ -213,7 +213,7 @@ export default function CombatUI({
   // Memoize animation config to prevent unnecessary re-renders
   const playerAnimation = useMemo(() => {
     if (playerHurt) {
-      return { x: [-8, 8, -5, 5, 0], filter: ['brightness(3) saturate(0)', 'brightness(1) saturate(1)'] };
+      return { x: [-8, 8, -5, 5, 0], filter: ['brightness(1.5) saturate(2) hue-rotate(-20deg)', 'brightness(1) saturate(1)'] };
     }
     if (playerAttacking) {
       return getPlayerAttackAnimation(player.class);
@@ -368,6 +368,7 @@ export default function CombatUI({
               animate={playerAnimation}
               transition={{ duration: playerHurt ? 0.35 : 0.5 }}
               className="drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] select-none"
+              style={{ opacity: playerAttacking ? 0 : 1 }}
             >
               {playerSpriteUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element

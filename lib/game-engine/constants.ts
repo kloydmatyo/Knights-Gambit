@@ -349,7 +349,10 @@ export const ENEMY_SPRITES: Partial<Record<string, {
     frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
   },
   bandit: {
-    sheet: (anim) => `/sprites/bandit/Swordsman_lvl1_${anim}_without_shadow.png`,
+    sheet: (anim) => {
+      const animName = anim === 'Attack' ? 'attack' : anim;
+      return `/sprites/bandit/Swordsman_lvl1_${animName}_without_shadow.png`;
+    },
     frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
     frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
     frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
