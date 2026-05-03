@@ -12,6 +12,39 @@ interface InventoryPanelProps {
   isInCombat?: boolean;
 }
 
+// Helper function to get item icon image path
+function getItemIconPath(itemId: string, itemType: string): string | null {
+  const iconMap: Record<string, string> = {
+    // Consumables
+    healing_potion: 'healing_pot.png',
+    antidote: 'antidote.png',
+    holy_water: 'holy_water.png',
+    // Upgrades
+    stat_upgrade: 'upgrade.png',
+    attack: 'atk_upgrade.png',
+    defense: 'def_upgrade.png',
+    health: 'hp_upgrade.png',
+    weapon_upgrade: 'weapon_upgrade.png',
+    // Items
+    blessing_scroll: 'blessing.png',
+    heartstone_amulet: 'heartstone_amulet.png',
+    blessing: 'blessing.png',
+    // Relics
+    relic_vampiric_fang: 'vampiric_fang.png',
+    // Class icons (for potential use in class-specific items)
+    knight: 'knight.png',
+    mage: 'mage.png',
+    archer: 'archer.png',
+    assassin: 'assassin.png',
+    cleric: 'cleric.png',
+    barbarian: 'warrior.png',
+    warrior: 'warrior.png',
+  };
+  
+  const filename = iconMap[itemId] || iconMap[itemType];
+  return filename ? `/item_icons/${filename}` : null;
+}
+
 const itemEmojis: Record<string, string> = {
   healing_potion: '🧪', antidote: '💊', stat_upgrade: '⬆️',
   blessing_scroll: '📜', heartstone_amulet: '💎', holy_water: '💧',
@@ -134,6 +167,7 @@ export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isI
                     }
                     const isSelected = selectedId === item.id;
                     const emoji = itemEmojis[item.type] || '📦';
+                    const iconPath = getItemIconPath(item.id, item.type);
                     return (
                       <motion.button
                         key={item.id}
@@ -147,7 +181,27 @@ export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isI
                           boxShadow: isSelected ? '0 0 12px rgba(212,160,48,0.3)' : undefined,
                         }}
                       >
-                        <span className="text-2xl">{emoji}</span>
+                        {iconPath ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img 
+                            src={iconPath} 
+                            alt={item.name}
+                            className="w-8 h-8 object-contain"
+                            style={{ imageRendering: 'pixelated' }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent && !parent.querySelector('.emoji-fallback')) {
+                                const span = document.createElement('span');
+                                span.className = 'emoji-fallback text-2xl';
+                                span.textContent = emoji;
+                                parent.appendChild(span);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span className="text-2xl">{emoji}</span>
+                        )}
                         {/* Quantity badge */}
                         {item.quantity > 1 && (
                           <span className="absolute bottom-0.5 right-0.5 text-[9px] font-black rounded px-1 leading-tight"
@@ -178,7 +232,27 @@ export default function InventoryPanel({ isOpen, onClose, player, onUseItem, isI
                     {/* Big icon */}
                     <div className="flex items-center justify-center rounded-xl py-4"
                       style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14' }}>
-                      <span className="text-5xl">{itemEmojis[selectedItem.type] || '📦'}</span>
+                      {getItemIconPath(selectedItem.id, selectedItem.type) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img 
+                          src={getItemIconPath(selectedItem.id, selectedItem.type)!} 
+                          alt={selectedItem.name}
+                          className="w-20 h-20 object-contain"
+                          style={{ imageRendering: 'pixelated' }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const parent = e.currentTarget.parentElement;
+                            if (parent && !parent.querySelector('.emoji-fallback')) {
+                              const span = document.createElement('span');
+                              span.className = 'emoji-fallback text-5xl';
+                              span.textContent = itemEmojis[selectedItem.type] || '📦';
+                              parent.appendChild(span);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <span className="text-5xl">{itemEmojis[selectedItem.type] || '📦'}</span>
+                      )}
                     </div>
 
                     {/* Name + qty */}

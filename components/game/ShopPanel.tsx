@@ -31,6 +31,40 @@ interface ShopPanelProps {
   allRelics?: (Item & { locked?: boolean; lockedReason?: string })[];
 }
 
+// Helper function to get item icon image path
+function getItemIconPath(itemId: string, itemType: string): string | null {
+  // Map item IDs/types to icon filenames
+  const iconMap: Record<string, string> = {
+    // Consumables
+    healing_potion: 'healing_pot.png',
+    antidote: 'antidote.png',
+    holy_water: 'holy_water.png',
+    // Upgrades
+    stat_upgrade: 'upgrade.png',
+    attack: 'atk_upgrade.png',
+    defense: 'def_upgrade.png',
+    health: 'hp_upgrade.png',
+    weapon_upgrade: 'weapon_upgrade.png',
+    // Items
+    blessing_scroll: 'blessing.png',
+    heartstone_amulet: 'heartstone_amulet.png',
+    blessing: 'blessing.png',
+    // Relics
+    relic_vampiric_fang: 'vampiric_fang.png',
+    // Class icons (for potential use in class-specific items)
+    knight: 'knight.png',
+    mage: 'mage.png',
+    archer: 'archer.png',
+    assassin: 'assassin.png',
+    cleric: 'cleric.png',
+    barbarian: 'warrior.png',
+    warrior: 'warrior.png',
+  };
+  
+  const filename = iconMap[itemId] || iconMap[itemType];
+  return filename ? `/item_icons/${filename}` : null;
+}
+
 const itemEmojis: Record<string, string> = {
   healing_potion: '🧪', antidote: '💊', stat_upgrade: '⬆️',
   blessing_scroll: '📜', heartstone_amulet: '💎', holy_water: '💧',
@@ -92,6 +126,7 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
     .reduce((sum, i) => sum + i.quantity, 0);
   const isRelic = item.effect.type === 'relic';
   const emoji = isRelic ? (RELIC_EMOJIS[item.id] ?? '✨') : (itemEmojis[item.type] || '📦');
+  const iconPath = getItemIconPath(item.id, item.type);
 
   return (
     <motion.div
@@ -113,7 +148,28 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
     >
       {/* Icon + badges */}
       <div className="flex items-start justify-between mb-2">
-        <span className="text-3xl">{emoji}</span>
+        {iconPath ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img 
+            src={iconPath} 
+            alt={item.name}
+            className="w-12 h-12 object-contain"
+            style={{ imageRendering: 'pixelated' }}
+            onError={(e) => {
+              // Fallback to emoji if image fails
+              e.currentTarget.style.display = 'none';
+              const parent = e.currentTarget.parentElement;
+              if (parent && !parent.querySelector('.emoji-fallback')) {
+                const span = document.createElement('span');
+                span.className = 'emoji-fallback text-3xl';
+                span.textContent = emoji;
+                parent.insertBefore(span, parent.firstChild);
+              }
+            }}
+          />
+        ) : (
+          <span className="text-3xl">{emoji}</span>
+        )}
         <div className="flex flex-wrap gap-1 justify-end">
           {item.autoConsume && item.effect.type !== 'relic' && (
             <span className="text-[9px] px-1.5 py-0.5 rounded font-bold"

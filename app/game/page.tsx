@@ -627,7 +627,6 @@ export default function GamePage() {
       { text: 'You found a treasure chest! +20 gold', coins: 20 },
       { text: 'A mysterious stranger heals you! +15 HP', heal: 15 },
       { text: 'You feel stronger! +2 ATK', attack: 2 },
-      { text: 'Dice Blessing! +1 Reroll this floor', reroll: true },
       { text: 'A dark spirit curses you!', curse: true },
       { text: 'A fire spirit scorches you!', burn: true },
       { text: 'Nothing happens...', },
@@ -648,9 +647,6 @@ export default function GamePage() {
     if ((event as any).coins) newPlayer = { ...newPlayer, coins: newPlayer.coins + (event as any).coins };
     if ((event as any).heal) newPlayer = { ...newPlayer, health: Math.min(newPlayer.maxHealth, newPlayer.health + (event as any).heal) };
     if ((event as any).attack) newPlayer = { ...newPlayer, attack: newPlayer.attack + (event as any).attack };
-    if ((event as any).reroll) {
-      newState = { ...newState, diceManipulation: { ...newState.diceManipulation, rerolls: newState.diceManipulation.rerolls + 1 } };
-    }
     if ((event as any).curse) {
       const already = newPlayer.statusEffects.some((e) => e.type === 'cursed');
       if (!already) newPlayer = { ...newPlayer, statusEffects: [...newPlayer.statusEffects, { type: 'cursed' as const, duration: 5, value: 8 }] };

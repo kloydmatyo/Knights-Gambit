@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { BoardTile } from '@/lib/game-engine/types';
@@ -41,7 +41,27 @@ function drawBracketLine(
   ctx.stroke();
 }
 
+function getTileImage(tile: BoardTile): string | null {
+  if (tile.type === 'trap') {
+    if (tile.trapTriggered) return '/tiles/triggered_trap_tile.png';
+    if (tile.trapType === 'fire') return '/tiles/fire_trap_tile.png';
+    if (tile.trapType === 'spike') return '/tiles/spike_trap_tile.png';
+    if (tile.trapType === 'poison_gas') return '/tiles/poison_trap_tile.png';
+    return '/tiles/fire_trap_tile.png'; // Default trap
+  }
+  const map: Record<string, string> = {
+    start: '/tiles/start_tile.png',
+    enemy: '/tiles/enemy_tile.png',
+    elite: '/tiles/elite_tile.png',
+    shop: '/tiles/shop_tile.png',
+    event: '/tiles/event_tile.png',
+    boss: '/tiles/boss_tile.png',
+  };
+  return map[tile.type] ?? null;
+}
+
 function getTileEmoji(tile: BoardTile): string {
+  // Fallback emojis if image fails to load
   if (tile.type === 'trap') {
     if (tile.trapTriggered) return String.fromCharCode(10003);
     if (tile.trapType === 'fire') return String.fromCodePoint(0x1F525);
@@ -208,10 +228,35 @@ export default function GameBoard({
                     {choiceIndex + 1}
                   </div>
                 )}
-                {/* Only show actual emoji for visited/current/choosable — undiscovered shows ? */}
-                <span style={{ fontSize: Math.max(24, 32 * scale) }}>
-                  {isVisible ? getTileEmoji(tile) : '❓'}
-                </span>
+                {/* Tile icon - image or emoji fallback */}
+                {isVisible ? (
+                  getTileImage(tile) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img 
+                      src={getTileImage(tile)!} 
+                      alt={tile.type}
+                      className="w-full h-full object-cover rounded-full"
+                      style={{ imageRendering: 'pixelated' }}
+                      onError={(e) => {
+                        // Fallback to emoji if image fails
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          const span = document.createElement('span');
+                          span.style.fontSize = `${Math.max(24, 32 * scale)}px`;
+                          span.textContent = getTileEmoji(tile);
+                          parent.appendChild(span);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: Math.max(24, 32 * scale) }}>
+                      {getTileEmoji(tile)}
+                    </span>
+                  )
+                ) : (
+                  <span style={{ fontSize: Math.max(24, 32 * scale) }}>❓</span>
+                )}
                 {isCurrent && <div className="absolute inset-0 rounded-full bg-game-gold opacity-20 animate-pulse" />}
                 {isChoosable && (
                   <motion.div
