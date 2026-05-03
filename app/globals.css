@@ -102,6 +102,28 @@ body {
     -webkit-tap-highlight-color: transparent;
   }
   
+  /* Line clamping utilities */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
   /* Smooth scrolling for mobile */
   .scroll-smooth-mobile {
     -webkit-overflow-scrolling: touch;

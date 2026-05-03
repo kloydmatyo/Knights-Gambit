@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useLPCState } from './useLPCState';
 import LPCPreview from './LPCPreview';
 import { extractWalkPreviewFrame, getVariantThumbnailUrl, FRAME_SIZE } from './LPCRenderer';
@@ -35,7 +34,8 @@ const CATEGORIES = [
   { id: 'tools',    icon: '🔧', label: 'Tools' },
 ];
 
-const PREVIEW_ANIMS = ['walk', 'idle', 'slash', 'spellcast', 'run'];
+// Fixed animation for preview
+const PREVIEW_ANIM = 'walk';
 
 const THUMB_SIZE = 48;
 const IDLE_ROW = 22;
@@ -127,7 +127,6 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
   } = useLPCState(characterClass);
 
   const [activeCategory, setActiveCategory] = useState('body');
-  const [previewAnim, setPreviewAnim] = useState('walk');
   const [search, setSearch] = useState('');
 
   const metadata: Record<string, ItemMeta> = useMemo(
@@ -216,30 +215,40 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
   }
 
   return (
-    <div className="flex flex-col rounded-2xl overflow-hidden w-full"
-      style={{ height: '78vh', minHeight: 540, maxWidth: 900, background: 'rgba(14,10,6,0.97)', border: '2px solid #3d2a14' }}>
+    <div className="flex flex-col rounded-xl sm:rounded-2xl overflow-hidden w-full no-select"
+      style={{ 
+        height: 'clamp(600px, 85vh, 900px)', 
+        maxWidth: 'min(95vw, 1200px)', 
+        background: 'rgba(14,10,6,0.97)', 
+        border: '2px solid #3d2a14' 
+      }}>
 
       {/* Hidden render canvas */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
       {/* ── Main two-column body ── */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
 
         {/* ── LEFT: Category tabs + item grid ── */}
-        <div className="flex flex-col" style={{ width: '42%', minWidth: 0, borderRight: '1px solid #3d2a14' }}>
+        <div className="flex flex-col order-2 md:order-1 w-full md:w-[380px] lg:w-[420px] max-h-[40vh] md:max-h-none" 
+          style={{ 
+            minWidth: 0, 
+            borderRight: '0 md:1px solid #3d2a14', 
+            borderTop: '1px md:0 solid #3d2a14'
+          }}>
 
           {/* Category tab row */}
           <div className="flex flex-wrap gap-1 p-2 shrink-0" style={{ borderBottom: '1px solid #3d2a14', background: 'rgba(10,6,2,0.6)' }}>
             {CATEGORIES.map(cat => (
               <button key={cat.id} onClick={() => { setActiveCategory(cat.id); setSearch(''); }}
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold transition-all btn-touch ${
                   activeCategory === cat.id
                     ? 'bg-game-accent text-black'
                     : 'text-gray-300 hover:text-white'
                 }`}
                 style={activeCategory === cat.id ? {} : { background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14' }}>
-                <span>{cat.icon}</span>
-                <span>{cat.label}</span>
+                <span className="text-sm">{cat.icon}</span>
+                <span className="hidden sm:inline">{cat.label}</span>
               </button>
             ))}
           </div>
@@ -248,17 +257,17 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
           <div className="flex items-center gap-2 px-3 py-2 shrink-0" style={{ borderBottom: '1px solid #3d2a14' }}>
             <input type="text" placeholder="Search..." value={search}
               onChange={e => setSearch(e.target.value)}
-              className="flex-1 rounded-lg px-2 py-1 text-white text-xs placeholder-gray-600 focus:outline-none"
+              className="flex-1 rounded-lg px-2 py-1.5 text-white text-xs placeholder-gray-600 focus:outline-none"
               style={{ background: 'rgba(10,6,2,0.8)', border: '1px solid #3d2a14' }} />
-            <span className="text-xs text-gray-400 shrink-0">{equippedCount}/{totalCategories}</span>
+            <span className="text-xs text-gray-400 shrink-0 font-mono">{equippedCount}/{totalCategories}</span>
           </div>
 
           {/* Item grid — scrollable */}
-          <div className="flex-1 overflow-y-auto p-2">
+          <div className="flex-1 overflow-y-auto p-2 scroll-smooth-mobile" style={{ minHeight: '120px' }}>
             {panelItems.length === 0 && (
-              <p className="text-gray-500 text-xs text-center py-6">No items</p>
+              <p className="text-gray-500 text-[10px] sm:text-xs text-center py-4">No items</p>
             )}
-            <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))' }}>
+            <div className="grid gap-1 sm:gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))' }}>
               {/* None tile */}
               {(() => {
                 const catMeta = Object.values(metadata).find(m => (m.path?.[0] ?? '') === activeCategory && m.required?.includes(bodyType));
@@ -321,62 +330,58 @@ export default function LPCCharacterCreator({ onConfirm, characterClass }: Props
         </div>
 
         {/* ── RIGHT: Character preview ── */}
-        <div className="flex-1 relative flex items-center justify-center overflow-hidden" style={{ background: '#0a0804' }}>
+        <div className="flex-1 relative flex items-center justify-center overflow-hidden order-1 md:order-2 max-h-[45vh] md:max-h-none" style={{ background: '#0a0804', minHeight: '200px' }}>
           {/* Dungeon background */}
           <div className="absolute inset-0"
             style={{ backgroundImage: 'url(/background/Arena_BG.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
           {/* Vignette */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
           {/* Shadow under character */}
-          <div className="absolute bottom-[18%] left-1/2 -translate-x-1/2 w-24 h-4 bg-black/50 rounded-full blur-md" />
+          <div className="absolute bottom-[18%] left-1/2 -translate-x-1/2 w-16 sm:w-24 h-3 sm:h-4 bg-black/50 rounded-full blur-md" />
           {/* Preview */}
-          <div className="relative z-10">
-            <LPCPreview sourceCanvas={canvasRef} animation={previewAnim} scale={6} isRendering={isRendering} />
+          <div className="relative z-10 scale-[0.6] sm:scale-75 md:scale-100">
+            <LPCPreview sourceCanvas={canvasRef} animation={PREVIEW_ANIM} scale={6} isRendering={isRendering} />
           </div>
         </div>
       </div>
 
       {/* ── FOOTER BAR ── */}
-      <div className="shrink-0 flex items-center gap-3 px-4 py-3" style={{ borderTop: '1px solid #3d2a14', background: 'rgba(10,6,2,0.9)' }}>
-        {/* Gender */}
-        <div className="flex gap-1 shrink-0">
-          {BODY_TYPES.map(bt => (
-            <button key={bt} onClick={() => setBodyType(bt)}
-              className={`px-3 py-1.5 text-xs rounded-lg capitalize font-bold transition-colors ${
-                bodyType === bt ? 'bg-game-gold text-black' : 'text-gray-300 hover:text-white'
-              }`}
-              style={bodyType === bt ? {} : { background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14' }}>{bt}</button>
-          ))}
+      <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2.5 sm:py-3" style={{ borderTop: '1px solid #3d2a14', background: 'rgba(10,6,2,0.9)' }}>
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          {/* Gender */}
+          <div className="flex gap-1 shrink-0">
+            {BODY_TYPES.map(bt => (
+              <button key={bt} onClick={() => setBodyType(bt)}
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg capitalize font-bold transition-all btn-touch ${
+                  bodyType === bt ? 'bg-game-gold text-black shadow-lg' : 'text-gray-300 hover:text-white hover:scale-105'
+                }`}
+                style={bodyType === bt ? {} : { background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14' }}>{bt}</button>
+            ))}
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Randomize */}
+          <button onClick={randomizeAppearance}
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all hover:scale-105 active:scale-95 btn-touch shadow-md"
+            style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)', border: '2px solid #9333ea', color: 'white' }}>
+            <span className="text-base sm:text-lg">🎲</span>
+            <span>Random</span>
+          </button>
+
+          {/* Reset */}
+          <button onClick={resetSelections}
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all hover:scale-105 active:scale-95 btn-touch shadow-md"
+            style={{ background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)', border: '2px solid #b91c1c', color: 'white' }}>
+            <span className="text-base sm:text-lg">↺</span>
+            <span>Reset</span>
+          </button>
         </div>
-
-        <div className="w-px h-5 bg-white/20 shrink-0" />
-
-        {/* Animation pill toggle */}
-        <div className="flex gap-0.5 rounded-lg p-0.5 shrink-0" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14' }}>
-          {PREVIEW_ANIMS.map(anim => (
-            <button key={anim} onClick={() => setPreviewAnim(anim)}
-              className={`px-2.5 py-1 text-[10px] rounded-md capitalize font-bold transition-colors ${
-                previewAnim === anim ? 'bg-game-accent text-black' : 'text-gray-400 hover:text-white'
-              }`}>{anim}</button>
-          ))}
-        </div>
-
-        <div className="flex-1" />
-
-        {/* Randomize + Reset */}
-        <button onClick={randomizeAppearance}
-          className="text-purple-400 hover:text-purple-300 text-xs font-bold transition-colors shrink-0">
-          🎲 Random
-        </button>
-        <button onClick={resetSelections}
-          className="text-red-400 hover:text-red-300 text-xs underline transition-colors shrink-0">
-          Reset
-        </button>
 
         {/* Confirm — dominant CTA */}
         <button onClick={handleConfirm}
           disabled={isRendering || Object.keys(selections).length === 0}
-          className="shrink-0 px-8 py-2.5 rounded-xl font-black text-sm bg-game-gold text-black hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg border-b-4 border-yellow-700 active:scale-95">
+          className="w-full sm:w-auto shrink-0 px-6 sm:px-10 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-black text-sm sm:text-base bg-game-gold text-black hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg border-b-4 border-yellow-700 active:scale-95 btn-touch">
           {isRendering ? 'Rendering...' : '✓ Confirm Appearance'}
         </button>
       </div>

@@ -250,7 +250,7 @@ export default function CombatUI({
       >
         {/* ── STAGE ── */}
         <div className="relative w-full overflow-hidden" style={{ height: 'clamp(280px, 50vh, 520px)' }}>
-          <div className="absolute inset-0" style={{ backgroundImage: 'url(/background/Arena_BG.png)', backgroundSize: 'cover', backgroundPosition: 'center 40%' }} />
+          <div className="absolute inset-0" style={{ backgroundImage: 'url(/background/arena_bg2.png)', backgroundSize: 'cover', backgroundPosition: 'center 40%' }} />
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
 
           {/* Player HP — above player sprite */}

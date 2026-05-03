@@ -41,9 +41,9 @@ const CLASS_LIST = Object.entries(CLASS_STATS) as [CharacterClass, typeof CLASS_
 function StatBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = Math.min(100, (value / max) * 100);
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-gray-300 text-sm w-20 shrink-0">{label}</span>
-      <div className="flex-1 h-3 bg-black/40 rounded-full overflow-hidden border border-white/10">
+    <div className="flex items-center gap-2 sm:gap-3">
+      <span className="text-gray-300 text-xs sm:text-sm w-16 sm:w-20 shrink-0">{label}</span>
+      <div className="flex-1 h-2 sm:h-3 bg-black/40 rounded-full overflow-hidden border border-white/10">
         <motion.div
           className={`h-full rounded-full ${color}`}
           initial={{ width: 0 }}
@@ -51,7 +51,7 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
           transition={{ duration: 0.4, ease: 'easeOut' }}
         />
       </div>
-      <span className="text-white font-bold text-sm w-8 text-right">{value}</span>
+      <span className="text-white font-bold text-xs sm:text-sm w-6 sm:w-8 text-right">{value}</span>
     </div>
   );
 }
@@ -93,50 +93,50 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
   };
 
   return (
-    <div className="min-h-screen w-full overflow-y-auto flex flex-col items-center justify-center py-8 px-3 sm:px-6"
+    <div className="min-h-screen min-h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center py-4 sm:py-8 px-3 sm:px-6 safe-top safe-bottom"
       style={{ background: 'radial-gradient(ellipse at center, #2a1808 0%, #0e0804 100%)' }}>
-      <div className="w-full max-w-4xl flex flex-col items-center gap-6">
+      <div className="w-full max-w-4xl flex flex-col items-center gap-4 sm:gap-6">
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center w-full">
-          <h1 className="text-2xl sm:text-3xl font-bold text-game-accent mb-3">⚔️ CHARACTER CREATION ⚔️</h1>
-          <div className="flex items-center justify-center gap-3">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-game-accent mb-2 sm:mb-3">⚔️ CHARACTER CREATION ⚔️</h1>
+          <div className="flex items-center justify-center gap-2 sm:gap-3">
             <StepBadge num={1} label="Class" active={step === 'class'} done={step === 'appearance'} />
-            <div className="w-8 h-px bg-game-secondary" />
+            <div className="w-6 sm:w-8 h-px bg-game-secondary" />
             <StepBadge num={2} label="Appearance" active={step === 'appearance'} done={false} />
           </div>
         </motion.div>
 
         <AnimatePresence mode="wait">
           {step === 'class' && (
-            <motion.div key="class" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="w-full flex flex-col items-center gap-5">
+            <motion.div key="class" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="w-full flex flex-col items-center gap-3 sm:gap-5">
 
               {/* ── Carousel card ── */}
-              <div className="relative w-full flex items-center gap-3">
+              <div className="relative w-full flex items-center gap-2 sm:gap-3">
                 <button onClick={() => navigate(-1)}
-                  className="shrink-0 w-12 h-12 rounded-full bg-black/60 border border-white/20 hover:border-white/50 text-white text-xl font-bold flex items-center justify-center transition-all hover:scale-110 active:scale-95">
+                  className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 border border-white/20 hover:border-white/50 text-white text-lg sm:text-xl font-bold flex items-center justify-center transition-all hover:scale-110 active:scale-95 btn-touch">
                   ‹
                 </button>
 
-                <div className={cn('flex-1 relative overflow-hidden rounded-2xl border-2 backdrop-blur-sm shadow-2xl', accent.border, accent.glow, 'shadow-xl')}
-                  style={{ minHeight: 260, background: 'rgba(14,10,6,0.92)' }}>
+                <div className={cn('flex-1 relative overflow-hidden rounded-xl sm:rounded-2xl border-2 backdrop-blur-sm shadow-2xl', accent.border, accent.glow, 'shadow-xl')}
+                  style={{ minHeight: 'clamp(240px, 35vh, 280px)', background: 'rgba(14,10,6,0.92)' }}>
                   <AnimatePresence mode="wait" custom={direction}>
                     <motion.div key={currentClass} custom={direction} variants={variants}
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.22, ease: 'easeInOut' }}
-                      className="flex gap-6 p-6">
-                      <div className="flex flex-col items-center justify-center shrink-0 w-28">
-                        <div className="text-7xl mb-2 drop-shadow-lg">{classEmojis[currentClass]}</div>
-                        <span className={cn('text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border', accent.border, 'text-white/80')}>
+                      className="flex flex-col sm:flex-row gap-3 sm:gap-6 p-3 sm:p-6 h-full">
+                      <div className="flex sm:flex-col items-center justify-center shrink-0 gap-3 sm:gap-0 sm:w-28">
+                        <div className="text-4xl sm:text-7xl drop-shadow-lg">{classEmojis[currentClass]}</div>
+                        <span className={cn('text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border', accent.border, 'text-white/80')}>
                           {currentData.name}
                         </span>
                       </div>
-                      <div className="flex-1 flex flex-col gap-3">
+                      <div className="flex-1 flex flex-col gap-2 sm:gap-3 min-w-0">
                         <div>
-                          <h2 className="text-2xl font-black text-white tracking-wide">{currentData.name.toUpperCase()}</h2>
-                          <p className="text-gray-400 text-sm mt-1 leading-relaxed">{currentData.description}</p>
+                          <h2 className="text-lg sm:text-2xl font-black text-white tracking-wide truncate">{currentData.name.toUpperCase()}</h2>
+                          <p className="text-gray-400 text-xs sm:text-sm mt-0.5 sm:mt-1 leading-relaxed line-clamp-2">{currentData.description}</p>
                         </div>
-                        <div className="flex flex-col gap-2 mt-1">
+                        <div className="flex flex-col gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
                           <StatBar label="Health" value={currentData.baseHealth} max={150} color={accent.bar} />
                           <StatBar label="Attack" value={currentData.baseAttack} max={25} color={accent.bar} />
                           <StatBar label="Defense" value={currentData.baseDefense} max={10} color={accent.bar} />
@@ -150,16 +150,16 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
                 </div>
 
                 <button onClick={() => navigate(1)}
-                  className="shrink-0 w-12 h-12 rounded-full bg-black/60 border border-white/20 hover:border-white/50 text-white text-xl font-bold flex items-center justify-center transition-all hover:scale-110 active:scale-95">
+                  className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 border border-white/20 hover:border-white/50 text-white text-lg sm:text-xl font-bold flex items-center justify-center transition-all hover:scale-110 active:scale-95 btn-touch">
                   ›
                 </button>
               </div>
 
               {/* Thumbnail row */}
-              <div className="flex gap-2 justify-center">
+              <div className="flex gap-1.5 sm:gap-2 justify-center flex-wrap">
                 {CLASS_LIST.map(([cls], i) => (
                   <button key={cls} onClick={() => { setDirection(i > classIndex ? 1 : -1); setClassIndex(i); }}
-                    className={cn('w-12 h-12 rounded-xl border-2 flex items-center justify-center text-2xl transition-all hover:scale-110',
+                    className={cn('w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl border-2 flex items-center justify-center text-xl sm:text-2xl transition-all hover:scale-110 btn-touch',
                       i === classIndex ? cn('border-white shadow-lg scale-110', classAccent[cls].glow) : 'border-white/20 bg-black/40 opacity-60 hover:opacity-100')}>
                     {classEmojis[cls]}
                   </button>
@@ -167,13 +167,13 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
               </div>
 
               {/* Name + next */}
-              <div className="flex flex-col items-center gap-3 w-full max-w-xs">
+              <div className="flex flex-col items-center gap-2 sm:gap-3 w-full max-w-xs">
                 <input type="text" placeholder="Enter your name..." value={playerName}
                   onChange={e => setPlayerName(e.target.value)} maxLength={20}
-                  className="w-full bg-game-primary border-2 border-game-gold rounded-xl px-4 py-3 text-white text-center font-bold placeholder-gray-500 focus:outline-none focus:border-yellow-300 text-sm sm:text-base"
+                  className="w-full bg-game-primary border-2 border-game-gold rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-white text-center font-bold placeholder-gray-500 focus:outline-none focus:border-yellow-300 text-sm sm:text-base"
                 />
                 <Button size="lg" disabled={!canStart} onClick={handleStart}
-                  className="text-sm sm:text-base px-8 sm:px-12 py-2.5 sm:py-3 w-full">
+                  className="text-xs sm:text-sm md:text-base px-6 sm:px-8 md:px-12 py-2.5 sm:py-3 w-full btn-touch">
                   {!playerName.trim() ? 'ENTER YOUR NAME' : `✨ CUSTOMIZE ${currentData.name.toUpperCase()} →`}
                 </Button>
               </div>
@@ -181,8 +181,8 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
           )}
 
           {step === 'appearance' && (
-            <motion.div key="appearance" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full flex flex-col gap-3">
-              <button onClick={() => setStep('class')} className="text-xs text-gray-400 hover:text-white underline self-start">
+            <motion.div key="appearance" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full flex flex-col gap-2 sm:gap-3">
+              <button onClick={() => setStep('class')} className="text-xs text-gray-400 hover:text-white underline self-start btn-touch">
                 ← Back to class selection
               </button>
               <LPCCharacterCreator onConfirm={handleAppearanceConfirm} characterClass={currentClass} />
@@ -196,12 +196,12 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
 
 function StepBadge({ num, label, active, done }: { num: number; label: string; active: boolean; done: boolean }) {
   return (
-    <div className="flex items-center gap-1.5">
-      <div className={cn('w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+    <div className="flex items-center gap-1 sm:gap-1.5">
+      <div className={cn('w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold',
         done ? 'bg-green-600 text-white' : active ? 'bg-game-gold text-black' : 'bg-game-secondary text-gray-400')}>
         {done ? '✓' : num}
       </div>
-      <span className={cn('text-xs', active ? 'text-white font-medium' : 'text-gray-500')}>{label}</span>
+      <span className={cn('text-[10px] sm:text-xs', active ? 'text-white font-medium' : 'text-gray-500')}>{label}</span>
     </div>
   );
 }
