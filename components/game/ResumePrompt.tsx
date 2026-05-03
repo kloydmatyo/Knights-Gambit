@@ -58,7 +58,7 @@ export default function ResumePrompt({ saves, onResume, onNewGame }: ResumePromp
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <span className="text-xs text-gray-400">{timeAgo(save.savedAt)}</span>
-                  <span className="text-xs bg-game-gold text-black font-bold px-2 py-0.5 rounded">▶ Resume</span>
+                  <span className="text-xs bg-game-gold text-black font-bold px-2 py-0.5 rounded"> Resume</span>
                 </div>
               </div>
             </motion.button>

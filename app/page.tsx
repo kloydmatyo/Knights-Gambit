@@ -30,6 +30,11 @@ export default function Home() {
         {/* Title */}
         <motion.h1
           className="text-6xl md:text-8xl font-bold text-game-accent mb-4 text-shadow"
+          style={{ 
+            fontFamily: 'ByteBounce, sans-serif',
+            letterSpacing: '0.05em',
+            lineHeight: '1.2'
+          }}
           animate={{ scale: [1, 1.04, 1, 1.04, 1] }}
           transition={{ duration: 2, ease: 'easeInOut' }}
         >
@@ -66,7 +71,7 @@ export default function Home() {
             onClick={() => router.push('/game')}
             className="text-xl w-full"
           >
-            🎮 Start New Game
+             Start New Game
           </Button>
 
           <Button
@@ -75,7 +80,7 @@ export default function Home() {
             onClick={() => router.push('/sticker')}
             className="text-xl w-full"
           >
-            🎨 Create Character Sticker
+             Create Character Sticker
           </Button>
 
           <Button
@@ -84,7 +89,7 @@ export default function Home() {
             onClick={() => setShowHowToPlay(true)}
             className="text-xl w-full"
           >
-            📖 How to Play
+             How to Play
           </Button>
         </motion.div>
 
@@ -119,17 +124,6 @@ export default function Home() {
             </p>
           </div>
         </motion.div>
-      </motion.div>
-
-      {/* Footer */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
-        className="absolute bottom-4 text-center text-gray-500 text-sm"
-      >
-        <p>Built with Next.js, TypeScript & React</p>
-        <p className="mt-1">© 2024 Dicebound</p>
       </motion.div>
 
       {/* How to Play Modal */}

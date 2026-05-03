@@ -106,11 +106,56 @@ export default function DiceManipulator({ branchChoice, board, onSelectTile, onC
                     <div className="absolute -top-2 -left-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-game-gold text-black font-black text-sm sm:text-base flex items-center justify-center shadow-lg border-2 border-yellow-700">
                       {index + 1}
                     </div>
-                    <span className="text-2xl sm:text-3xl">
-                      {tile.type === 'trap' && tile.trapType
-                        ? TRAP_PREVIEW[tile.trapType]?.icon ?? '⚠️'
-                        : (TILE_EMOJI[tile.type] ?? '⬜')}
-                    </span>
+                    {/* Tile icon - image or emoji fallback */}
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+                      {(() => {
+                        const getTileImagePath = (t: BoardTile): string | null => {
+                          if (t.type === 'trap') {
+                            if (t.trapTriggered) return '/tiles/triggered_trap_tile.png';
+                            if (t.trapType === 'fire') return '/tiles/fire_trap_tile.png';
+                            if (t.trapType === 'spike') return '/tiles/spike_trap_tile.png';
+                            if (t.trapType === 'poison_gas') return '/tiles/poison_trap_tile.png';
+                            return '/tiles/fire_trap_tile.png';
+                          }
+                          const map: Record<string, string> = {
+                            start: '/tiles/start_tile.png',
+                            enemy: '/tiles/enemy_tile.png',
+                            elite: '/tiles/elite_tile.png',
+                            shop: '/tiles/shop_tile.png',
+                            event: '/tiles/event_tile.png',
+                            boss: '/tiles/boss_tile.png',
+                          };
+                          return map[t.type] ?? null;
+                        };
+                        
+                        const imagePath = getTileImagePath(tile);
+                        const fallbackEmoji = tile.type === 'trap' && tile.trapType
+                          ? TRAP_PREVIEW[tile.trapType]?.icon ?? '⚠️'
+                          : (TILE_EMOJI[tile.type] ?? '⬜');
+                        
+                        return imagePath ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img 
+                            src={imagePath} 
+                            alt={tile.type}
+                            className="w-full h-full object-contain"
+                            style={{ imageRendering: 'pixelated' }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent && !parent.querySelector('.emoji-fallback')) {
+                                const span = document.createElement('span');
+                                span.className = 'emoji-fallback text-3xl sm:text-4xl';
+                                span.textContent = fallbackEmoji;
+                                parent.appendChild(span);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span className="text-3xl sm:text-4xl">{fallbackEmoji}</span>
+                        );
+                      })()}
+                    </div>
                     <span className="text-xs sm:text-sm">{TILE_LABELS[tile.type] ?? tile.type}</span>
                     {tile.type === 'trap' && tile.trapType && TRAP_PREVIEW[tile.trapType] && (
                       <span className="text-[9px] sm:text-[10px] font-bold mt-0.5 px-1 sm:px-1.5 py-0.5 rounded"

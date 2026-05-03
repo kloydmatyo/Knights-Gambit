@@ -44,6 +44,9 @@ function getItemIconPath(itemId: string, itemType: string): string | null {
     attack: 'atk_upgrade.png',
     defense: 'def_upgrade.png',
     health: 'hp_upgrade.png',
+    attack_upgrade: 'atk_upgrade.png',
+    defense_upgrade: 'def_upgrade.png',
+    health_upgrade: 'hp_upgrade.png',
     weapon_upgrade: 'weapon_upgrade.png',
     // Items
     blessing_scroll: 'blessing.png',
@@ -51,6 +54,14 @@ function getItemIconPath(itemId: string, itemType: string): string | null {
     blessing: 'blessing.png',
     // Relics
     relic_vampiric_fang: 'vampiric_fang.png',
+    relic_iron_heart: 'iron_heart.png',
+    relic_war_drum: 'war_drum.png',
+    relic_stone_skin: 'stone_skin.png',
+    relic_cursed_idol: 'cursed_idol.png',
+    relic_philosophers_stone: "philosopher's_stone.png",
+    relic_death_mask: 'death_mask.png',
+    relic_golden_chalice: 'golden_chalice.png',
+    relic_hourglass_shard: 'hourglass_shard.png',
     // Class icons (for potential use in class-specific items)
     knight: 'knight.png',
     mage: 'mage.png',
@@ -87,10 +98,10 @@ const RELIC_CATEGORIES: Record<string, string> = {
 type ShopTab = 'consumables' | 'upgrades' | 'relics' | 'weapons';
 
 const TABS: { id: ShopTab; label: string; icon: string }[] = [
-  { id: 'consumables', label: 'Consumables', icon: '🧪' },
-  { id: 'upgrades',    label: 'Upgrades',    icon: '⬆️' },
-  { id: 'relics',      label: 'Relics',       icon: '✨' },
-  { id: 'weapons',     label: 'Weapons',      icon: '⚔️' },
+  { id: 'consumables', label: 'Consumables', icon: '' },
+  { id: 'upgrades',    label: 'Upgrades',    icon: '' },
+  { id: 'relics',      label: 'Relics',       icon: '' },
+  { id: 'weapons',     label: 'Weapons',      icon: '' },
 ];
 
 function categorize(item: Item): ShopTab {
@@ -213,7 +224,11 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
         <div className="flex items-center gap-1 mb-2 px-2 py-1 rounded text-xs"
           style={{ background: 'rgba(10,20,50,0.6)', border: '1px solid #2a3a6a' }}>
           <span style={{ color: '#6090c0' }}>📈 Next:</span>
-          <span className="font-bold" style={{ color: '#d4a030' }}>💰 {nextPrice}</span>
+          <span className="font-bold flex items-center gap-0.5" style={{ color: '#d4a030' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/item_icons/coins.png" alt="Coins" className="w-3 h-3 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => e.currentTarget.style.display = 'none'} />
+            {nextPrice}
+          </span>
         </div>
       )}
 
@@ -221,12 +236,20 @@ function ItemCard({ item, player, onPurchase, statUpgradeCounts }: {
       <div className="flex items-center justify-between gap-2 mt-auto">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <span className="font-black text-base" style={{ color: item.price === 0 ? '#60c060' : '#d4a030' }}>
-              {item.price === 0 ? 'FREE' : `💰 ${item.price}`}
+            <span className="font-black text-base flex items-center gap-1" style={{ color: item.price === 0 ? '#60c060' : '#d4a030' }}>
+              {item.price === 0 ? 'FREE' : (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/item_icons/coins.png" alt="Coins" className="w-4 h-4 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => e.currentTarget.style.display = 'none'} />
+                  {item.price}
+                </>
+              )}
             </span>
             {(item as any)._originalPrice !== undefined && (item as any)._originalPrice !== item.price && (
-              <span className="text-xs line-through" style={{ color: '#6a4a2a' }}>
-                💰 {(item as any)._originalPrice}
+              <span className="text-xs line-through flex items-center gap-0.5" style={{ color: '#6a4a2a' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/item_icons/coins.png" alt="Coins" className="w-3 h-3 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => e.currentTarget.style.display = 'none'} />
+                {(item as any)._originalPrice}
               </span>
             )}
           </div>
@@ -491,18 +514,42 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                       <div>
                         <p className="text-xs font-bold uppercase tracking-widest mb-2 mt-2" style={{ color: '#4a3020' }}>Locked</p>
                         <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
-                          {modifiedRelics.filter(r => r.locked).map(relic => (
-                            <div key={relic.id} className="flex items-center gap-2 p-2 rounded-lg opacity-40"
-                              style={{ background: 'rgba(20,12,4,0.6)', border: '1px solid #2a1a0a' }}>
-                              <span className="text-xl grayscale">{RELIC_EMOJIS[relic.id] ?? '✨'}</span>
-                              <div>
-                                <p className="text-xs font-bold" style={{ color: '#6a4a2a' }}>{relic.name}</p>
-                                <p className="text-[9px]" style={{ color: '#4a3020' }}>
-                                  🔒 {relic.lockedReason}
-                                </p>
+                          {modifiedRelics.filter(r => r.locked).map(relic => {
+                            const iconPath = getItemIconPath(relic.id, relic.type);
+                            const emoji = RELIC_EMOJIS[relic.id] ?? '✨';
+                            return (
+                              <div key={relic.id} className="flex items-center gap-2 p-2 rounded-lg opacity-40"
+                                style={{ background: 'rgba(20,12,4,0.6)', border: '1px solid #2a1a0a' }}>
+                                {iconPath ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img 
+                                    src={iconPath} 
+                                    alt={relic.name}
+                                    className="w-5 h-5 object-contain grayscale"
+                                    style={{ imageRendering: 'pixelated' }}
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                      const parent = e.currentTarget.parentElement;
+                                      if (parent && !parent.querySelector('.emoji-fallback')) {
+                                        const span = document.createElement('span');
+                                        span.className = 'emoji-fallback text-xl grayscale';
+                                        span.textContent = emoji;
+                                        parent.insertBefore(span, parent.firstChild);
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  <span className="text-xl grayscale">{emoji}</span>
+                                )}
+                                <div>
+                                  <p className="text-xs font-bold" style={{ color: '#6a4a2a' }}>{relic.name}</p>
+                                  <p className="text-[9px]" style={{ color: '#4a3020' }}>
+                                    🔒 {relic.lockedReason}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -581,7 +628,25 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                             className={cn('flex flex-col rounded-xl p-3', affordable ? 'hover:brightness-110' : 'opacity-60')}
                             style={{ background: 'rgba(30,18,6,0.8)', border: `1px solid ${tierBorder}` }}>
                             <div className="flex items-start justify-between mb-2">
-                              <span className="text-3xl">{upgrade.emoji}</span>
+                              <div className="w-12 h-12 flex items-center justify-center">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img 
+                                  src="/item_icons/weapon_upgrade.png" 
+                                  alt={upgrade.name}
+                                  className="w-full h-full object-contain"
+                                  style={{ imageRendering: 'pixelated' }}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const parent = e.currentTarget.parentElement;
+                                    if (parent && !parent.querySelector('.emoji-fallback')) {
+                                      const span = document.createElement('span');
+                                      span.className = 'emoji-fallback text-3xl';
+                                      span.textContent = upgrade.emoji;
+                                      parent.appendChild(span);
+                                    }
+                                  }}
+                                />
+                              </div>
                               <span className="text-[9px] px-1.5 py-0.5 rounded font-bold capitalize"
                                 style={{ background: 'rgba(10,6,2,0.8)', border: `1px solid ${tierBorder}`, color: tierColor }}>
                                 {upgrade.tier}
@@ -590,17 +655,41 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                             <p className="font-bold text-sm mb-1" style={{ color: tierColor }}>{upgrade.name}</p>
                             <p className="text-xs leading-relaxed flex-1 mb-2" style={{ color: '#8a7060' }}>{upgrade.description}</p>
                             <div className="flex flex-wrap gap-1 mb-2">
-                              {upgrade.effect.attackBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#e8a050' }}>+{upgrade.effect.attackBonus} ATK</span>}
-                              {upgrade.effect.defenseBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#7ab4d4' }}>+{upgrade.effect.defenseBonus} DEF</span>}
-                              {upgrade.effect.healthBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#6adc6a' }}>+{upgrade.effect.healthBonus} HP</span>}
+                              {upgrade.effect.attackBonus && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#e8a050' }}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src="/item_icons/atk_upgrade.png" alt="ATK" className="w-2.5 h-2.5 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => e.currentTarget.style.display = 'none'} />
+                                  +{upgrade.effect.attackBonus} ATK
+                                </span>
+                              )}
+                              {upgrade.effect.defenseBonus && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#7ab4d4' }}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src="/item_icons/def_upgrade.png" alt="DEF" className="w-2.5 h-2.5 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => e.currentTarget.style.display = 'none'} />
+                                  +{upgrade.effect.defenseBonus} DEF
+                                </span>
+                              )}
+                              {upgrade.effect.healthBonus && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#6adc6a' }}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src="/item_icons/hp_upgrade.png" alt="HP" className="w-2.5 h-2.5 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => e.currentTarget.style.display = 'none'} />
+                                  +{upgrade.effect.healthBonus} HP
+                                </span>
+                              )}
                               {(upgrade.effect as any).manaBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3b6fa0', color: '#7ab4d4' }}>+{(upgrade.effect as any).manaBonus} MP</span>}
                               {(upgrade.effect as any).armorPenBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#d4a070' }}>+{(upgrade.effect as any).armorPenBonus} Pen</span>}
                               {upgrade.effect.critChanceBonus && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #3d2a14', color: '#d4a030' }}>+{Math.round(upgrade.effect.critChanceBonus * 100)}% Crit</span>}
                               {upgrade.effect.specialAbility && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,18,6,0.8)', border: '1px solid #8a6010', color: '#d4a030' }}>🌟 Special</span>}
                             </div>
                             <div className="flex items-center justify-between mt-auto">
-                              <span className="font-black text-base" style={{ color: effectiveCost === 0 ? '#60c060' : '#d4a030' }}>
-                                {effectiveCost === 0 ? 'FREE' : `💰 ${upgrade.cost}`}
+                              <span className="font-black text-base flex items-center gap-1" style={{ color: effectiveCost === 0 ? '#60c060' : '#d4a030' }}>
+                                {effectiveCost === 0 ? 'FREE' : (
+                                  <>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src="/item_icons/coins.png" alt="Coins" className="w-4 h-4 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => e.currentTarget.style.display = 'none'} />
+                                    {upgrade.cost}
+                                  </>
+                                )}
                               </span>
                               <button onClick={() => handleWeaponUpgradeWithTracking(upgrade.id)} disabled={!affordable || !onWeaponUpgrade || (isExalted && exaltedCategory === 'upgrades' && exaltedDone)}
                                 className="px-3 py-1.5 rounded-lg font-black text-xs transition-all active:scale-95 disabled:opacity-40"
@@ -625,7 +714,20 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
                           {lockedWeaponUpgrades.map(u => (
                             <div key={u.id} className="flex items-center gap-2 p-2 rounded-lg opacity-40"
                               style={{ background: 'rgba(20,12,4,0.6)', border: '1px solid #2a1a0a' }}>
-                              <span className="text-xl grayscale">{u.emoji}</span>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img 
+                                src="/item_icons/weapon_upgrade.png" 
+                                alt={u.name}
+                                className="w-12 h-12 object-contain grayscale"
+                                style={{ imageRendering: 'pixelated' }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const fallback = document.createElement('span');
+                                  fallback.className = 'text-xl grayscale';
+                                  fallback.textContent = u.emoji;
+                                  e.currentTarget.parentElement?.appendChild(fallback);
+                                }}
+                              />
                               <div>
                                 <p className="text-xs font-bold" style={{ color: '#6a4a2a' }}>{u.name}</p>
                                 <p className="text-[9px]" style={{ color: '#4a3020' }}>

@@ -178,11 +178,45 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
             <div className="flex gap-1">
               <div className="flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold"
                 style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#e8a050' }}>
-                ⚔️ {player.attack}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src="/item_icons/attack.png" 
+                  alt="Attack"
+                  className="w-3 h-3 sm:w-3.5 sm:h-3.5 object-contain"
+                  style={{ imageRendering: 'pixelated' }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent && !parent.querySelector('.emoji-fallback')) {
+                      const span = document.createElement('span');
+                      span.className = 'emoji-fallback text-[9px] sm:text-[10px]';
+                      span.textContent = '⚔️';
+                      parent.insertBefore(span, parent.firstChild);
+                    }
+                  }}
+                />
+                {player.attack}
               </div>
               <div className="flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold"
                 style={{ background: 'rgba(30,15,5,0.9)', border: '1px solid #4a3020', color: '#7ab4d4' }}>
-                🛡️ {player.defense}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src="/item_icons/def.png" 
+                  alt="Defense"
+                  className="w-3 h-3 sm:w-3.5 sm:h-3.5 object-contain"
+                  style={{ imageRendering: 'pixelated' }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent && !parent.querySelector('.emoji-fallback')) {
+                      const span = document.createElement('span');
+                      span.className = 'emoji-fallback text-[9px] sm:text-[10px]';
+                      span.textContent = '🛡️';
+                      parent.insertBefore(span, parent.firstChild);
+                    }
+                  }}
+                />
+                {player.defense}
               </div>
             </div>
             {/* Expandable advanced stats */}

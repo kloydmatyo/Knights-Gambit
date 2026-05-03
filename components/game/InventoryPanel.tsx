@@ -31,6 +31,14 @@ function getItemIconPath(itemId: string, itemType: string): string | null {
     blessing: 'blessing.png',
     // Relics
     relic_vampiric_fang: 'vampiric_fang.png',
+    relic_iron_heart: 'iron_heart.png',
+    relic_war_drum: 'war_drum.png',
+    relic_stone_skin: 'stone_skin.png',
+    relic_cursed_idol: 'cursed_idol.png',
+    relic_philosophers_stone: "philosopher's_stone.png",
+    relic_death_mask: 'death_mask.png',
+    relic_golden_chalice: 'golden_chalice.png',
+    relic_hourglass_shard: 'hourglass_shard.png',
     // Class icons (for potential use in class-specific items)
     knight: 'knight.png',
     mage: 'mage.png',

@@ -291,7 +291,7 @@ export default function CombatUI({
 
           {/* Player HP — above player sprite */}
           <div className="absolute z-10 w-36 sm:w-52 bg-black/70 rounded-lg sm:rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 border border-white/10"
-            style={{ left: '29%', bottom: 'calc(18% + 100px)', transform: 'translateX(-50%)' }}>
+            style={{ left: '29%', bottom: 'calc(30% + 120px)', transform: 'translateX(-50%)' }}>
             <div className="flex items-start justify-between mb-0.5 sm:mb-1">
               <p className="text-yellow-300 font-extrabold text-[9px] sm:text-xs tracking-widest leading-tight">{player.class.toUpperCase()}</p>
               {combatAtkMultiplier && combatAtkMultiplier !== 1 && (() => {
@@ -351,7 +351,7 @@ export default function CombatUI({
 
           {/* Enemy HP — above enemy sprite */}
           <div className="absolute z-10 w-36 sm:w-52 bg-black/70 rounded-lg sm:rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 border border-white/10"
-            style={{ left: '72%', bottom: 'calc(30% + 90px)', transform: 'translateX(-50%)' }}>
+            style={{ left: '72%', bottom: 'calc(30% + 120px)', transform: 'translateX(-50%)' }}>
             <div className="flex items-start justify-between mb-0.5 sm:mb-1">
               <p className="text-red-400 font-extrabold text-[9px] sm:text-xs tracking-widest leading-tight truncate">{enemy.name.toUpperCase()}</p>
               {enemy.baseAttack && enemy.attack !== enemy.baseAttack && (() => {
@@ -476,7 +476,7 @@ export default function CombatUI({
           </AnimatePresence>
 
           {/* Enemy sprite — top right */}
-          <div className="absolute z-10 flex flex-col items-center scale-75 sm:scale-100" style={{ left: '72%', bottom: '9%', transform: 'translateX(-50%)' }}>
+          <div className="absolute z-10 flex flex-col items-center scale-75 sm:scale-100" style={{ left: '72%', bottom: '1%', transform: 'translateX(-50%)' }}>
             <EnemySprite enemy={enemy} animState={enemyAnimState} />
           </div>
         </div>
