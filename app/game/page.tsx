@@ -183,14 +183,8 @@ export default function GamePage() {
               : [...stateAfterMove.player.statusEffects, { type: 'cursed' as const, duration: 3, value: 10 }],
           }};
           showNotification(`💀 Cursed! -${dmg} HP + Cursed for 3 turns`);
-        } else if (destiny.state === 'unlucky') {
-          const dmg = Math.floor(stateAfterMove.player.maxHealth * 0.1);
-          stateAfterMove = { ...stateAfterMove, player: {
-            ...stateAfterMove.player,
-            health: Math.max(1, stateAfterMove.player.health - dmg),
-          }};
-          showNotification(`📉 Unlucky! -${dmg} HP`);
         }
+        // Unlucky no longer applies direct HP damage
       }
     }
 
@@ -908,7 +902,7 @@ export default function GamePage() {
     if (!gameState) return;
     const base = EnemyEngine.createEnemy(type as any, gameState.currentFloor);
     const enemy = { ...base, attack: Math.floor(base.attack * 1.15) };
-    setGameState({ ...gameState, isInCombat: true, currentEnemy: enemy, activeCombatDestiny: 'unlucky' as const, combatAtkMultiplier: 0.85 });
+    setGameState({ ...gameState, isInCombat: true, currentEnemy: enemy, activeCombatDestiny: 'unlucky' as const, combatAtkMultiplier: 1.0 });
     setPhase('combat'); setCombatEnemy(enemy); setCombatLog([`[DEBUG] 📉 Unlucky! ${enemy.name} appears with +15% ATK!`]);
   };
   const debugFightEnemyFavored = (type: string) => {

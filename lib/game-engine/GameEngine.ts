@@ -229,7 +229,7 @@ export class GameEngine {
     const combatAtkMultiplier =
       resolvedDestiny === 'exalted' ? 2.0 :
       resolvedDestiny === 'favored' ? 1.2 :
-      resolvedDestiny === 'unlucky' ? 0.85 :
+      resolvedDestiny === 'unlucky' ? 1.0 :
       resolvedDestiny === 'cursed'  ? 0.8 :
       null;
 
