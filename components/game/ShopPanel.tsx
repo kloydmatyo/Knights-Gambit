@@ -39,6 +39,7 @@ function getItemIconPath(itemId: string, itemType: string): string | null {
     healing_potion: 'healing_pot.png',
     antidote: 'antidote.png',
     holy_water: 'holy_water.png',
+    iron_shield: 'iron_shield.png',
     // Upgrades
     stat_upgrade: 'upgrade.png',
     attack: 'atk_upgrade.png',

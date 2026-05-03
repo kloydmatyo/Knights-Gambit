@@ -66,6 +66,8 @@ export default function GamePage() {
   const [floorCompleteState, setFloorCompleteState] = useState<GameState | null>(null);
   const [hoveredTileId, setHoveredTileId] = useState<number | null>(null);
   const [shopDestinyState, setShopDestinyState] = useState<string | null>(null);
+  const [reviveSnapshot, setReviveSnapshot] = useState<{ gameState: GameState; upgradeState: WeaponUpgradeState; enemy: Enemy } | null>(null);
+  const [hasUsedRevive, setHasUsedRevive] = useState(false);
 
   // Detect saved runs on mount
   useEffect(() => {
@@ -232,6 +234,14 @@ export default function GamePage() {
     switch (tile.type) {
       case 'enemy': {
         const combatState = GameEngine.startCombat(stateAfterMove, destinyState);
+        // Save revive snapshot before combat
+        if (combatState.currentEnemy) {
+          setReviveSnapshot({
+            gameState: JSON.parse(JSON.stringify(combatState)),
+            upgradeState: JSON.parse(JSON.stringify(upgradeState)),
+            enemy: JSON.parse(JSON.stringify(combatState.currentEnemy))
+          });
+        }
         setGameState(combatState);
         setPhase('combat');
         setCombatEnemy(combatState.currentEnemy);
@@ -242,6 +252,14 @@ export default function GamePage() {
       }
       case 'elite': {
         const combatState = GameEngine.startCombat(stateAfterMove, destinyState);
+        // Save revive snapshot before combat
+        if (combatState.currentEnemy) {
+          setReviveSnapshot({
+            gameState: JSON.parse(JSON.stringify(combatState)),
+            upgradeState: JSON.parse(JSON.stringify(upgradeState)),
+            enemy: JSON.parse(JSON.stringify(combatState.currentEnemy))
+          });
+        }
         setGameState(combatState);
         setPhase('combat');
         setCombatEnemy(combatState.currentEnemy);
@@ -252,6 +270,14 @@ export default function GamePage() {
       }
       case 'boss': {
         const bossState = GameEngine.startCombat(stateAfterMove, destinyState);
+        // Save revive snapshot before combat
+        if (bossState.currentEnemy) {
+          setReviveSnapshot({
+            gameState: JSON.parse(JSON.stringify(bossState)),
+            upgradeState: JSON.parse(JSON.stringify(upgradeState)),
+            enemy: JSON.parse(JSON.stringify(bossState.currentEnemy))
+          });
+        }
         setGameState(bossState);
         setPhase('combat');
         setCombatEnemy(bossState.currentEnemy);
@@ -729,6 +755,29 @@ export default function GamePage() {
     setPendingChoice(null);
     setShopDestinyState(null);
   };
+  // ── Revive ────────────────────────────────────────────────────────────────────────────────
+  const handleRevive = () => {
+    if (!reviveSnapshot || hasUsedRevive) return;
+
+    // Restore game state from snapshot
+    const restoredState = { ...reviveSnapshot.gameState };
+    // Restore player HP to 50%
+    restoredState.player.health = Math.floor(restoredState.player.maxHealth * 0.5);
+    // Reset enemy to full HP
+    if (restoredState.currentEnemy) {
+      restoredState.currentEnemy.health = restoredState.currentEnemy.maxHealth;
+    }
+
+    setGameState(restoredState);
+    setUpgradeState(reviveSnapshot.upgradeState);
+    setCombatEnemy(reviveSnapshot.enemy);
+    setPhase('combat');
+    setCombatLog(['💫 Revived! You have been given a second chance!']);
+    setHasUsedRevive(true);
+    showNotification('Revived at 50% HP!');
+  };
+
+
 
   const handleResume = (save: SaveData) => {
     setActiveSlot(save.slot);
@@ -1041,7 +1090,19 @@ export default function GamePage() {
 
       <AnimatePresence>
         {phase === 'game-over' && (
-          <GameOverScreen isVictory={false} floor={gameState.currentFloor} turns={gameState.turnCount} coinsEarned={gameState.player.coins} characterClass={gameState.player.class} playerName={playerName} enemiesKilled={gameState.enemiesKilled ?? 0} onRestart={handleRestart} onMainMenu={handleMainMenu} />
+          <GameOverScreen 
+            isVictory={false} 
+            floor={gameState.currentFloor} 
+            turns={gameState.turnCount} 
+            coinsEarned={gameState.player.coins} 
+            characterClass={gameState.player.class} 
+            playerName={playerName} 
+            enemiesKilled={gameState.enemiesKilled ?? 0} 
+            onRestart={handleRestart} 
+            onMainMenu={handleMainMenu}
+            onRevive={handleRevive}
+            canRevive={!!reviveSnapshot && !hasUsedRevive}
+          />
         )}
       </AnimatePresence>
 

@@ -16,6 +16,8 @@ interface GameOverScreenProps {
   enemiesKilled: number;
   onRestart: () => void;
   onMainMenu: () => void;
+  onRevive?: () => void;
+  canRevive?: boolean;
 }
 
 const CLASS_EMOJIS: Record<string, string> = {
@@ -49,6 +51,8 @@ export default function GameOverScreen({
   enemiesKilled,
   onRestart,
   onMainMenu,
+  onRevive,
+  canRevive = false,
 }: GameOverScreenProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [playerRank, setPlayerRank] = useState<number | null>(null);
@@ -297,23 +301,34 @@ export default function GameOverScreen({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
-          <Button size="lg" onClick={restarting ? undefined : () => { setRestarting(true); setTimeout(() => onRestart(), 1500); }} className="flex-1 relative overflow-hidden">
-            {restarting ? (
-              <>
-                <motion.div
-                  className="absolute inset-0 bg-green-600 origin-left"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 1.5 }}
-                />
-                <span className="relative z-10">Starting...</span>
-              </>
-            ) : ' Play Again'}
-          </Button>
-          <Button size="lg" variant="secondary" onClick={onMainMenu} className="flex-1">
-             Main Menu
-          </Button>
+        <div className="flex flex-col gap-3">
+          {canRevive && onRevive && (
+            <Button 
+              size="lg" 
+              onClick={onRevive} 
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-lg shadow-lg"
+            >
+              💫 REVIVE (Continue from where you died)
+            </Button>
+          )}
+          <div className="flex gap-3">
+            <Button size="lg" onClick={restarting ? undefined : () => { setRestarting(true); setTimeout(() => onRestart(), 1500); }} className="flex-1 relative overflow-hidden">
+              {restarting ? (
+                <>
+                  <motion.div
+                    className="absolute inset-0 bg-green-600 origin-left"
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 1.5 }}
+                  />
+                  <span className="relative z-10">Starting...</span>
+                </>
+              ) : '🎮 Play Again'}
+            </Button>
+            <Button size="lg" variant="secondary" onClick={onMainMenu} className="flex-1">
+              🏠 Main Menu
+            </Button>
+          </div>
         </div>
       </motion.div>
     </div>
