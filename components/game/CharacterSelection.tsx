@@ -6,6 +6,7 @@ import { CharacterClass, CLASS_STATS } from '@/lib/game-engine';
 import Button from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import MusicManager from './MusicManager';
 
 const LPCCharacterCreator = dynamic(
   () => import('./LPCCharacterCreator'),
@@ -105,6 +106,9 @@ export default function CharacterSelection({ onSelect }: CharacterSelectionProps
   return (
     <div className="min-h-screen min-h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center py-4 sm:py-8 px-3 sm:px-6 safe-top safe-bottom"
       style={{ background: 'radial-gradient(ellipse at center, #2a1808 0%, #0e0804 100%)' }}>
+      {/* Music Manager */}
+      <MusicManager track="character_creation" volume={0.3} />
+      
       <div className="w-full max-w-4xl flex flex-col items-center gap-4 sm:gap-6">
 
         {/* Header */}

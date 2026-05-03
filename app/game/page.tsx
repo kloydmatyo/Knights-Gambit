@@ -898,11 +898,11 @@ export default function GamePage() {
 
   const choosableTileIds = (pendingChoice && !pendingChoice.destinyResult) ? pendingChoice.tileOptions : [];
 
-  // Determine current music track based on game phase
-  const currentMusicTrack = phase === 'combat' ? 'combat'
+  // Determine current music track based on game phase (character-selection is handled separately above)
+  const currentMusicTrack: 'home' | 'character_creation' | 'map' | 'combat' | 'shop' | null = 
+    phase === 'combat' ? 'combat'
     : (isShopOpen || isSpecialShopOpen) ? 'shop'
     : (phase === 'playing' || phase === 'dungeon-clear') ? 'map'
-    : phase === 'character-selection' ? 'character_creation'
     : null;
 
   return (
