@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boss Sprites Preview</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+      font-family: 'Courier New', monospace;
+    }
+    h1 {
+      text-align: center;
+      color: #ff6b6b;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .boss-card {
+      background: linear-gradient(135deg, #2d1b3d 0%, #1a1a2e 100%);
+      border: 3px solid #ff6b6b;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .boss-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 30px rgba(255, 107, 107, 0.5);
+    }
+    .boss-name {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #ffd93d;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+    }
+    .sprite-container {
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px solid #444;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 15px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 150px;
+    }
+    .sprite-container img {
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+      max-width: 100%;
+      height: auto;
+    }
+    .boss-info {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+      text-align: left;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+    .stat-label {
+      color: #aaa;
+      font-weight: bold;
+    }
+    .stat-value {
+      color: #ffd93d;
+      font-weight: bold;
+    }
+    .dungeon-badge {
+      display: inline-block;
+      background: #ff6b6b;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    .scale-controls {
+      margin: 10px 0;
+    }
+    .scale-btn {
+      background: #4a4a6a;
+      border: 2px solid #6b6b8b;
+      color: white;
+      padding: 8px 15px;
+      margin: 0 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      transition: all 0.2s ease;
+    }
+    .scale-btn:hover {
+      background: #5a5a7a;
+      border-color: #7b7b9b;
+    }
+    .scale-btn.active {
+      background: #ff6b6b;
+      border-color: #ff8b8b;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔥 Boss Sprites Preview 🔥</h1>
+  
+  <div class="container">
+    <!-- Boss 1 -->
+    <div class="boss-card">
+      <div class="dungeon-badge">Dungeon 1</div>
+      <div class="boss-name">The Void Tyrant</div>
+      <div class="sprite-container">
+        <img id="boss1-img" src="../public/sprites/boss/Icon15.png" alt="Boss 1" style="width: 128px; height: 128px;">
+      </div>
+      <div class="scale-controls">
+        <button class="scale-btn" onclick="scaleSprite('boss1', 64)">1x</button>
+        <button class="scale-btn active" onclick="scaleSprite('boss1', 128)">2x</button>
+        <button class="scale-btn" onclick="scaleSprite('boss1', 192)">3x</button>
+        <button class="scale-btn" onclick="scaleSprite('boss1', 256)">4x</button>
+      </div>
+      <div class="boss-info">
+        <div class="stat-row">
+          <span class="stat-label">Type:</span>
+          <span class="stat-value">boss1</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Sprite:</span>
+          <span class="stat-value">Icon15.png</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Animation:</span>
+          <span class="stat-value">Static (1 frame)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Boss 2 -->
+    <div class="boss-card">
+      <div class="dungeon-badge">Dungeon 2</div>
+      <div class="boss-name">The Crimson Colossus</div>
+      <div class="sprite-container">
+        <img id="boss2-img" src="../public/sprites/boss/Icon31.png" alt="Boss 2" style="width: 128px; height: 128px;">
+      </div>
+      <div class="scale-controls">
+        <button class="scale-btn" onclick="scaleSprite('boss2', 64)">1x</button>
+        <button class="scale-btn active" onclick="scaleSprite('boss2', 128)">2x</button>
+        <button class="scale-btn" onclick="scaleSprite('boss2', 192)">3x</button>
+        <button class="scale-btn" onclick="scaleSprite('boss2', 256)">4x</button>
+      </div>
+      <div class="boss-info">
+        <div class="stat-row">
+          <span class="stat-label">Type:</span>
+          <span class="stat-value">boss2</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Sprite:</span>
+          <span class="stat-value">Icon31.png</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Animation:</span>
+          <span class="stat-value">Static (1 frame)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Boss 3 -->
+    <div class="boss-card">
+      <div class="dungeon-badge">Dungeon 3</div>
+      <div class="boss-name">The Abyssal Warden</div>
+      <div class="sprite-container">
+        <img id="boss3-img" src="../public/sprites/boss/Icon32.png" alt="Boss 3" style="width: 128px; height: 128px;">
+      </div>
+      <div class="scale-controls">
+        <button class="scale-btn" onclick="scaleSprite('boss3', 64)">1x</button>
+        <button class="scale-btn active" onclick="scaleSprite('boss3', 128)">2x</button>
+        <button class="scale-btn" onclick="scaleSprite('boss3', 192)">3x</button>
+        <button class="scale-btn" onclick="scaleSprite('boss3', 256)">4x</button>
+      </div>
+      <div class="boss-info">
+        <div class="stat-row">
+          <span class="stat-label">Type:</span>
+          <span class="stat-value">boss3</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Sprite:</span>
+          <span class="stat-value">Icon32.png</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Animation:</span>
+          <span class="stat-value">Static (1 frame)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Boss 4 -->
+    <div class="boss-card">
+      <div class="dungeon-badge">Dungeon 4</div>
+      <div class="boss-name">The Eternal Dread</div>
+      <div class="sprite-container">
+        <img id="boss4-img" src="../public/sprites/boss/Icon41.png" alt="Boss 4" style="width: 128px; height: 128px;">
+      </div>
+      <div class="scale-controls">
+        <button class="scale-btn" onclick="scaleSprite('boss4', 64)">1x</button>
+        <button class="scale-btn active" onclick="scaleSprite('boss4', 128)">2x</button>
+        <button class="scale-btn" onclick="scaleSprite('boss4', 192)">3x</button>
+        <button class="scale-btn" onclick="scaleSprite('boss4', 256)">4x</button>
+      </div>
+      <div class="boss-info">
+        <div class="stat-row">
+          <span class="stat-label">Type:</span>
+          <span class="stat-value">boss4</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Sprite:</span>
+          <span class="stat-value">Icon41.png</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Animation:</span>
+          <span class="stat-value">Static (1 frame)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function scaleSprite(bossId, size) {
+      const img = document.getElementById(`${bossId}-img`);
+      img.style.width = size + 'px';
+      img.style.height = size + 'px';
+      
+      // Update active button
+      const card = img.closest('.boss-card');
+      const buttons = card.querySelectorAll('.scale-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

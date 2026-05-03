@@ -4,11 +4,8 @@ import { randomInt } from '@/lib/utils';
 
 // Behavior pools per enemy type — weighted toward thematic fits
 const BEHAVIOR_POOLS: Record<string, EnemyBehavior[]> = {
-  goblin:   ['berserker', 'berserker', 'glass_cannon', 'normal'],
   orc:      ['defender', 'defender', 'berserker', 'normal'],
-  orc2:     ['defender', 'berserker', 'berserker', 'normal'],
   orc3:     ['berserker', 'berserker', 'glass_cannon', 'normal'],
-  skeleton: ['regenerator', 'regenerator', 'poisoner', 'normal'],
   troll:    ['defender', 'regenerator', 'defender', 'normal'],
   slime1:   ['poisoner', 'normal', 'normal'],
   slime2:   ['regenerator', 'poisoner', 'normal'],
@@ -131,6 +128,9 @@ export class EnemyEngine {
     const floorInDungeon = getFloorInDungeon(floor);
     const dungeonScale = 1 + (dungeonNum - 1) * 0.4; // 40% stronger per dungeon
 
+    // Map dungeon number to boss sprite type
+    const bossTypes = [ENEMY_TYPES.BOSS1, ENEMY_TYPES.BOSS2, ENEMY_TYPES.BOSS3, ENEMY_TYPES.BOSS4];
+    const bossType = bossTypes[(dungeonNum - 1) % bossTypes.length];
 
     const defined = BOSS_STATS[floorInDungeon];
     if (defined) {
@@ -140,7 +140,7 @@ export class EnemyEngine {
         : defined.name;
       return {
         id: `boss-${floor}-${Date.now()}`,
-        type: ENEMY_TYPES.TROLL,
+        type: bossType,
         name,
         health: Math.floor(defined.health * dungeonScale),
         maxHealth: Math.floor(defined.health * dungeonScale),
@@ -158,7 +158,7 @@ export class EnemyEngine {
     const floorMultiplier = 1 + (floor - 1) * 0.3;
     return {
       id: `boss-${floor}-${Date.now()}`,
-      type: ENEMY_TYPES.TROLL,
+      type: bossType,
       name: `Floor ${floor} Boss`,
       health: Math.floor(250 * floorMultiplier),
       maxHealth: Math.floor(250 * floorMultiplier),

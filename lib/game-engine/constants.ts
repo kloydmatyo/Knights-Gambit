@@ -135,11 +135,8 @@ export const TRAP_TYPES = {
 
 // Enemy Types
 export const ENEMY_TYPES = {
-  GOBLIN: 'goblin',
   ORC: 'orc',
-  ORC2: 'orc2',
   ORC3: 'orc3',
-  SKELETON: 'skeleton',
   TROLL: 'troll',
   SLIME1: 'slime1',
   SLIME2: 'slime2',
@@ -151,30 +148,20 @@ export const ENEMY_TYPES = {
   PLANT2: 'plant2',
   PLANT3: 'plant3',
   BANDIT: 'bandit',
+  BOSS1: 'boss1',
+  BOSS2: 'boss2',
+  BOSS3: 'boss3',
+  BOSS4: 'boss4',
 } as const;
 
 // Enemy Stats
 export const ENEMY_STATS = {
-  goblin: {
-    name: 'Goblin',
-    baseHealth: 30,
-    baseAttack: 8,
-    baseDefense: 2,
-    coinReward: 15,
-  },
   orc: {
     name: 'Orc',
     baseHealth: 50,
     baseAttack: 12,
     baseDefense: 4,
     coinReward: 25,
-  },
-  skeleton: {
-    name: 'Skeleton',
-    baseHealth: 40,
-    baseAttack: 10,
-    baseDefense: 3,
-    coinReward: 20,
   },
   troll: {
     name: 'Troll',
@@ -246,13 +233,6 @@ export const ENEMY_STATS = {
     baseDefense: 5,
     coinReward: 36,
   },
-  orc2: {
-    name: 'Orc Warrior',
-    baseHealth: 55,
-    baseAttack: 13,
-    baseDefense: 5,
-    coinReward: 28,
-  },
   orc3: {
     name: 'Orc Berserker',
     baseHealth: 60,
@@ -266,6 +246,34 @@ export const ENEMY_STATS = {
     baseAttack: 10,
     baseDefense: 3,
     coinReward: 22,
+  },
+  boss1: {
+    name: 'Boss',
+    baseHealth: 100,
+    baseAttack: 20,
+    baseDefense: 10,
+    coinReward: 100,
+  },
+  boss2: {
+    name: 'Boss',
+    baseHealth: 100,
+    baseAttack: 20,
+    baseDefense: 10,
+    coinReward: 100,
+  },
+  boss3: {
+    name: 'Boss',
+    baseHealth: 100,
+    baseAttack: 20,
+    baseDefense: 10,
+    coinReward: 100,
+  },
+  boss4: {
+    name: 'Boss',
+    baseHealth: 100,
+    baseAttack: 20,
+    baseDefense: 10,
+    coinReward: 100,
   },
 } as const;
 
@@ -336,7 +344,7 @@ export const ENEMY_SPRITES: Partial<Record<string, {
     frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
     frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
   },
-  orc2: {
+  troll: {
     sheet: (anim) => `/sprites/orc/orc2_${anim.toLowerCase()}_without_shadow.png`,
     frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
     frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
@@ -356,6 +364,30 @@ export const ENEMY_SPRITES: Partial<Record<string, {
     frameW: { Idle: 64, Hurt: 64, Attack: 64, Run: 128, Walk: 128, Death: 64 },
     frameH: { Idle: 60, Hurt: 60, Attack: 60, Run: 128, Walk: 128, Death: 60 },
     frames: { Idle: 3, Hurt: 5, Attack: 9, Run: 4, Walk: 4, Death: 10 },
+  },
+  boss1: {
+    sheet: () => `/sprites/boss/Icon15.png`,
+    frameW: 64,
+    frameH: 64,
+    frames: { Idle: 1, Hurt: 1, Attack: 1, Run: 1, Walk: 1, Death: 1 },
+  },
+  boss2: {
+    sheet: () => `/sprites/boss/Icon31.png`,
+    frameW: 64,
+    frameH: 64,
+    frames: { Idle: 1, Hurt: 1, Attack: 1, Run: 1, Walk: 1, Death: 1 },
+  },
+  boss3: {
+    sheet: () => `/sprites/boss/Icon32.png`,
+    frameW: 64,
+    frameH: 64,
+    frames: { Idle: 1, Hurt: 1, Attack: 1, Run: 1, Walk: 1, Death: 1 },
+  },
+  boss4: {
+    sheet: () => `/sprites/boss/Icon41.png`,
+    frameW: 64,
+    frameH: 64,
+    frames: { Idle: 1, Hurt: 1, Attack: 1, Run: 1, Walk: 1, Death: 1 },
   },
 };
 
