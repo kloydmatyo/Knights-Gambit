@@ -76,8 +76,8 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
   return (
     <>
       {/* ── TOP-LEFT: Player card ── */}
-      <div className="fixed top-3 left-3 z-30" style={{ minWidth: 200 }}>
-        <div className="rounded-xl p-3 backdrop-blur-sm shadow-2xl flex flex-col gap-2"
+      <div className="fixed top-2 sm:top-3 left-2 sm:left-3 z-30 safe-top safe-left" style={{ width: 'var(--hud-width)', maxWidth: '240px' }}>
+        <div className="rounded-lg sm:rounded-xl p-2 sm:p-3 backdrop-blur-sm shadow-2xl flex flex-col gap-1.5 sm:gap-2"
           style={{
             background: cardBg,
             border: `2px solid ${cardBorder}`,
@@ -85,12 +85,12 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
           }}>
 
           {/* Avatar + class + bars */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <HpRing percent={healthPercent} health={player.health} maxHealth={player.maxHealth} />
 
-            <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0 flex-1">
               {/* Class name — engraved look */}
-              <span className="font-black text-xs uppercase tracking-[0.15em] truncate"
+              <span className="font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] truncate"
                 style={{ color: '#d4a855', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
                 {player.class}
               </span>
@@ -240,19 +240,19 @@ export default function HUD({ player, floor, turnCount, onInventoryClick, player
       </div>
 
       {/* ── TOP-RIGHT: Game info card ── */}
-      <div className="fixed top-3 right-3 z-30">
-        <div className="rounded-xl px-4 py-3 backdrop-blur-sm shadow-2xl text-right"
+      <div className="fixed top-2 sm:top-3 right-2 sm:right-3 z-30 safe-top safe-right">
+        <div className="rounded-lg sm:rounded-xl px-2 sm:px-4 py-2 sm:py-3 backdrop-blur-sm shadow-2xl text-right"
           style={{
             background: cardBg,
             border: `2px solid ${cardBorder}`,
             boxShadow: `0 0 0 1px rgba(255,180,80,0.08), 0 8px 32px rgba(0,0,0,0.8)`,
-            minWidth: 130,
+            minWidth: 'clamp(100px, 20vw, 130px)',
           }}>
-          <div className="font-black text-sm" style={{ color: '#d4a855', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+          <div className="font-black text-xs sm:text-sm" style={{ color: '#d4a855', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
             D{dungeonNum} · F{floorInDungeon}
           </div>
-          <div className="text-xs mt-0.5" style={{ color: '#6a5040' }}>Turn {turnCount}</div>
-          <div className="font-bold text-sm mt-1.5" style={{ color: '#e8c060' }}>
+          <div className="text-[10px] sm:text-xs mt-0.5" style={{ color: '#6a5040' }}>Turn {turnCount}</div>
+          <div className="font-bold text-xs sm:text-sm mt-1 sm:mt-1.5" style={{ color: '#e8c060' }}>
             💰 {player.coins}
           </div>
         </div>

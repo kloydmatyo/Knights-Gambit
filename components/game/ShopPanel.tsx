@@ -282,29 +282,29 @@ export default function ShopPanel({ isOpen, onClose, player, items, onPurchase, 
     isExalted && exaltedCategory === tab && !exaltedDone;  return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/75" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/75 no-select" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 pointer-events-none safe-top safe-bottom">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="pointer-events-auto w-full flex flex-col rounded-2xl overflow-hidden shadow-2xl"
+          className="pointer-events-auto w-full flex flex-col rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl"
           style={{
-            maxWidth: 640,
-            height: '75vh',
-            minHeight: 480,
+            maxWidth: 'min(90vw, 640px)',
+            height: 'clamp(400px, 75vh, 800px)',
+            minHeight: 'min(480px, 80vh)',
             background: 'rgba(14,10,6,0.97)',
             border: '2px solid #5a3e28',
             boxShadow: '0 0 0 1px rgba(255,180,80,0.06), 0 24px 64px rgba(0,0,0,0.9)',
           }}
         >
           {/* ── Header ── */}
-          <div className="flex items-center justify-between px-5 py-3 shrink-0"
+          <div className="flex items-center justify-between px-3 sm:px-5 py-2 sm:py-3 shrink-0"
             style={{ borderBottom: '1px solid #3d2a14' }}>
-            <h2 className="font-black text-lg" style={{ color: '#d4a030' }}>{title}</h2>
-            <button onClick={onClose} className="text-2xl leading-none transition-colors"
+            <h2 className="font-black text-base sm:text-lg" style={{ color: '#d4a030' }}>{title}</h2>
+            <button onClick={onClose} className="text-xl sm:text-2xl leading-none transition-colors btn-touch"
               style={{ color: '#6a4a2a' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#d4a030')}
               onMouseLeave={e => (e.currentTarget.style.color = '#6a4a2a')}>×</button>

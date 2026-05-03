@@ -9,12 +9,12 @@ interface DiceRollerProps {
 
 export default function DiceRoller({ onRoll, disabled }: DiceRollerProps) {
   return (
-    <div className="fixed bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-30">
+    <div className="fixed bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 safe-bottom">
       <Button
         size="lg"
         onClick={onRoll}
         disabled={disabled}
-        className="text-base sm:text-2xl px-8 sm:px-16 py-4 sm:py-8 shadow-2xl text-white font-bold uppercase tracking-wider"
+        className="text-sm sm:text-base md:text-2xl px-4 sm:px-8 md:px-16 py-3 sm:py-4 md:py-8 shadow-2xl text-white font-bold uppercase tracking-wider btn-touch no-select"
       >
         🗺️ CHOOSE PATH
       </Button>
