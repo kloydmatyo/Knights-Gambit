@@ -286,7 +286,7 @@ export default function CombatUI({
       >
         {/* ── STAGE ── */}
         <div className="relative w-full overflow-hidden" style={{ height: 'clamp(280px, 50vh, 520px)' }}>
-          <div className="absolute inset-0" style={{ backgroundImage: 'url(/background/arena_bg2.png)', backgroundSize: 'cover', backgroundPosition: 'center 40%' }} />
+          <div className="absolute inset-0" style={{ backgroundImage: 'url(/background/arena_bg3.png)', backgroundSize: 'cover', backgroundPosition: 'center 40%' }} />
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
 
           {/* Player HP — above player sprite */}
@@ -408,9 +408,9 @@ export default function CombatUI({
             >
               {playerSpriteUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={playerSpriteUrl} alt="player" className="w-20 h-20 sm:w-32 md:w-40" style={{ imageRendering: 'pixelated', objectFit: 'contain' }} />
+                <img src={playerSpriteUrl} alt="player" className="w-24 h-24 sm:w-40 md:w-48" style={{ imageRendering: 'pixelated', objectFit: 'contain' }} />
               ) : (
-                <span className="text-5xl sm:text-7xl md:text-9xl">🛡️</span>
+                <span className="text-6xl sm:text-8xl md:text-9xl">🛡️</span>
               )}
             </motion.div>
           </div>

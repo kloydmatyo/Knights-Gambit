@@ -250,14 +250,14 @@ export default function GameBoard({
                 src={playerSpriteUrl}
                 alt="player"
                 style={{
-                  width: Math.max(28, 36 * scale),
-                  height: Math.max(28, 36 * scale),
+                  width: Math.max(36, 48 * scale),
+                  height: Math.max(36, 48 * scale),
                   imageRendering: 'pixelated',
                   objectFit: 'contain',
                 }}
               />
             ) : (
-              <span style={{ fontSize: Math.max(20, 28 * scale) }}>{String.fromCodePoint(0x1F464)}</span>
+              <span style={{ fontSize: Math.max(24, 32 * scale) }}>{String.fromCodePoint(0x1F464)}</span>
             )}
           </motion.div>
         </motion.div>

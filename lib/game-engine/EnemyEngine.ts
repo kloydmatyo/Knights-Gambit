@@ -54,7 +54,7 @@ export class EnemyEngine {
    * Generate a random enemy scaled to floor (accounts for dungeon number)
    */
   static generateEnemy(floor: number): Enemy {
-    const enemyTypes = Object.keys(ENEMY_STATS) as EnemyType[];
+    const enemyTypes = (Object.keys(ENEMY_STATS) as EnemyType[]).filter(type => !type.startsWith('boss'));
     const randomType = enemyTypes[randomInt(0, enemyTypes.length - 1)];
     return this.createEnemy(randomType, floor);
   }
@@ -63,7 +63,7 @@ export class EnemyEngine {
    * Generate an elite enemy — 60% stronger than a normal enemy, better coin reward
    */
   static generateEliteEnemy(floor: number): Enemy {
-    const enemyTypes = Object.keys(ENEMY_STATS) as EnemyType[];
+    const enemyTypes = (Object.keys(ENEMY_STATS) as EnemyType[]).filter(type => !type.startsWith('boss'));
     const randomType = enemyTypes[randomInt(0, enemyTypes.length - 1)];
     const base = this.createEnemy(randomType, floor);
     return {
